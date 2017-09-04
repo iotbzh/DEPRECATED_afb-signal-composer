@@ -1,0 +1,58 @@
+{
+	"resources": [{
+		"name": "/car/demoboard/",
+		"values": [{
+			"name": "vehicleSpeed",
+			"additionnals_infos": {
+				"unit": "km/h",
+				"interval": 1000
+			},
+			"source": "CAN bus",
+			"class": "raw",
+			"type": "double",
+			"source_args": {
+				"event": "diagnostic_messages.vehicle.speed",
+				"filter": {
+					"frequency": "100",
+					"min": 10
+				}
+			}
+		}, {
+			"name": "engineSpeed",
+			"additionnals_infos": {
+				"unit": "rpm",
+				"interval": 1000
+			},
+			"source":"CAN bus",
+			"class": "raw",
+			"type": "double",
+			"source_args": {
+				"event": "diagnostic_messages.engine.speed"
+			}
+		}, {
+			"name": "fuelLevel",
+			"additionnals_infos": {
+				"unit": "litre",
+				"interval": 1000
+			},
+			"class":"raw",
+			"source":"CAN bus",
+			"type": "double",
+			"source_args": {
+				"event": "diagnostic_messages.fuel.level"
+			}
+		}, {
+			"name": "engineLoad",
+			"additionnals_infos": {
+				"unit": "Nm",
+				"interval": 1000
+			},
+			"source":"CAN bus",
+			"type":"double",
+			"class":"raw",
+			"source_args": {
+				"event": "diagnostic_messages.engine.load"
+			}
+		}]
+	}]
+}

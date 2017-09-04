@@ -1,0 +1,1 @@
+add_definitions(-DSUSE_LUA_INCDIR)

@@ -1,0 +1,85 @@
+{
+	"signals": [
+		{
+			"label": "low-can/messages.windows.front_left.open",
+			"actions": {
+				"label": "Door open event action",
+				"lua": "_Door_opened",
+				"args": {
+					"evtname": "messages.windows.front_left.open"
+				}
+			}
+		},
+		{
+			"label": "low-can/messages.windows.front_right.open",
+			"actions": {
+				"label": "Door open event action",
+				"lua": "_Door_opened",
+				"args": {
+					"evtname": "messages.windows.front_right.open"
+				}
+			}
+		},
+		{
+			"label": "low-can/messages.windows.rear_left.open",
+			"actions": {
+				"label": "Door open event action",
+				"lua": "_Door_opened",
+				"args": {
+					"evtname": "messages.windows.rear_left.open"
+				}
+			}
+		},
+		{
+			"label": "low-can/messages.windows.rear_right.open",
+			"actions": {
+				"label": "Door open event action",
+				"lua": "_Door_opened",
+				"args": {
+					"evtname": "messages.windows.rear_right.open"
+				}
+			}
+	}],
+	"virtual_signals": [
+	{
+		"label": "sig-orc/doors.open",
+		"depends_on": [
+			"front_left_doors",
+			"front_left_windows",
+			"front_right_doors",
+			"front_right_windows",
+			"rear_left_doors",
+			"rear_left_windows",
+			"rear_right_doors",
+			"rear_right_windows"
+		],
+		"actions": {
+			"label": "A door is open",
+			"lua": "_Door_opened",
+			"args": {
+				"evtname": "doors.open"
+			}
+		}
+	},
+	{
+		"label": "sig-orc/doors.average",
+		"depends_on": [
+			"front_left_doors",
+			"front_left_windows",
+			"front_right_doors",
+			"front_right_windows",
+			"rear_left_doors",
+			"rear_left_windows",
+			"rear_right_doors",
+			"rear_right_windows"
+		],
+		"actions": {
+			"label": "A door is open",
+			"lua": "_Door_average",
+			"args": {
+				"evtname": "door.average",
+				"time": 120
+			}
+		}
+	}]
+}

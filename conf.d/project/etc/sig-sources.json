@@ -1,0 +1,44 @@
+{
+	"$schema": "ToBeDone",
+	"metadata": {
+		"label": "signal-composer",
+		"info": "Signal composer Configuration",
+		"name": "afb-signal-composer",
+		"version": "1.0"
+	},
+	"onload": [{
+			"label": "onload-signal-composer",
+			"info": "onload initialisation config",
+			"require": [
+			{
+				"label": "CAN bus",
+				"api": "low-can",
+				"info": "Low level binding to handle CAN bus communications",
+				"callback": "c function to subscribe on signals",
+				"lua": "or a lua function to subscribe on signals",
+				"args": {
+					"arg": "first argument"
+				}
+			},
+			{
+				"label": "GNSS/GPS",
+				"api": "gps",
+				"info": "Low level binding which retrieve Satellite positionning values",
+				"callback": "c function to subscribe on signals",
+				"lua": "or a lua function to subscribe on signals",
+				"args": {
+					"value" : "arg"
+				}
+			},
+			{
+				"label": "Sensors",
+				"api": "mraa",
+				"info": "Low level binding which retrieve different values from several sensors like gyroscope, accelerometer, etc",
+				"callback": "c function to subscribe on signals",
+				"lua": "or a lua function to subscribe on signals",
+				"args": {
+					"sensor" : "eg"
+				}
+			}]
+		}]
+}
