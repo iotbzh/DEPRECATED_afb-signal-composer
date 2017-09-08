@@ -6,39 +6,54 @@
 		"name": "afb-signal-composer",
 		"version": "1.0"
 	},
-	"onload": [{
-			"label": "onload-signal-composer",
-			"info": "onload initialisation config",
-			"require": [
-			{
-				"label": "CAN bus",
-				"api": "low-can",
-				"info": "Low level binding to handle CAN bus communications",
-				"callback": "c function to subscribe on signals",
-				"lua": "or a lua function to subscribe on signals",
+	"sources": [
+		{
+			"api": "low-can",
+			"info": "Low level binding to handle CAN bus communications",
+			"init": {
+				"function": "c/lua (depend on name) function to initialize binding",
 				"args": {
 					"arg": "first argument"
 				}
 			},
-			{
-				"label": "GNSS/GPS",
-				"api": "gps",
-				"info": "Low level binding which retrieve Satellite positionning values",
-				"callback": "c function to subscribe on signals",
-				"lua": "or a lua function to subscribe on signals",
+			"get_signal": {
+				"function": "c/lua (depend on name) function to get signals",
 				"args": {
-					"value" : "arg"
+					"arg": "first argument"
+				}
+			}
+		},
+		{
+			"api": "gps",
+			"info": "Low level binding which retrieve Satellite positionning values",
+			"init": {
+				"function": "c/lua (depend on name) function to initialize binding",
+				"args": {
+					"arg": "first argument"
 				}
 			},
-			{
-				"label": "Sensors",
-				"api": "mraa",
-				"info": "Low level binding which retrieve different values from several sensors like gyroscope, accelerometer, etc",
-				"callback": "c function to subscribe on signals",
-				"lua": "or a lua function to subscribe on signals",
+			"get_signal": {
+				"function": "c/lua (depend on name) function to get signals",
 				"args": {
-					"sensor" : "eg"
+					"arg": "first argument"
 				}
-			}]
-		}]
+			}
+		},
+		{
+			"api": "mraa",
+			"info": "Low level binding which retrieve different values from several sensors like gyroscope, accelerometer, etc",
+			"init": {
+				"function": "c/lua (depend on name) function to initialize binding",
+				"args": {
+					"arg": "first argument"
+				}
+			},
+			"get_signal": {
+				"function": "c/lua (depend on name) function to get signals",
+				"args": {
+					"arg": "first argument"
+				}
+			}
+		}
+	]
 }

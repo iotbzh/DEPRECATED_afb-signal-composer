@@ -1,85 +1,129 @@
 {
 	"signals": [
 		{
-			"label": "low-can/messages.windows.front_left.open",
-			"actions": {
-				"label": "Door open event action",
-				"lua": "_Door_opened",
-				"args": {
-					"evtname": "messages.windows.front_left.open"
-				}
-			}
-		},
-		{
-			"label": "low-can/messages.windows.front_right.open",
-			"actions": {
-				"label": "Door open event action",
-				"lua": "_Door_opened",
-				"args": {
-					"evtname": "messages.windows.front_right.open"
-				}
-			}
-		},
-		{
-			"label": "low-can/messages.windows.rear_left.open",
-			"actions": {
-				"label": "Door open event action",
-				"lua": "_Door_opened",
+			"id": "rear_left_windows",
+			"source": "low-can/messages.windows.rear_left.open",
+			"class": "state",
+			"onReceived": {
+				"function": "_Door_opened",
 				"args": {
 					"evtname": "messages.windows.rear_left.open"
 				}
 			}
 		},
 		{
-			"label": "low-can/messages.windows.rear_right.open",
-			"actions": {
-				"label": "Door open event action",
-				"lua": "_Door_opened",
+			"id": "rear_left_door",
+			"source": "low-can/messages.doors.rear_left.open",
+			"class": "state",
+			"onReceived": {
+				"function": "_Door_opened",
+				"args": {
+					"evtname": "messages.doors.rear_left.open"
+				}
+			}
+		},
+		{
+			"id": "rear_left",
+			"source": [
+				"rear_left_windows",
+				"rear_left_doors"
+			],
+			"class": "state",
+			"onReceived": {
+				"function": "_Door_opened",
+				"args": {
+					"ojoi": "pok"
+				}
+			}
+		},
+		{
+			"id": "front_right_window",
+			"source": "low-can/messages.windows.front_right.open",
+			"class": "state",
+			"onReceived": {
+				"function": "_Door_opened",
+				"args": {
+					"evtname": "messages.windows.front_right.open"
+				}
+			}
+		},
+		{
+			"id": "rear_right_door",
+			"source": "low-can/messages.doors.rear_right.open",
+			"class": "state",
+			"onReceived": {
+				"function": "_Door_opened",
+				"args": {
+					"evtname": "messages.doors.rear_right.open"
+				}
+			}
+		},
+		{
+			"id": "rear_right_window",
+			"source": "low-can/messages.windows.rear_right.open",
+			"class": "state",
+			"onReceived": {
+				"function": "_Door_opened",
 				"args": {
 					"evtname": "messages.windows.rear_right.open"
 				}
 			}
-	}],
-	"virtual_signals": [
-	{
-		"label": "sig-orc/doors.open",
-		"depends_on": [
-			"front_left_doors",
-			"front_left_windows",
-			"front_right_doors",
-			"front_right_windows",
-			"rear_left_doors",
-			"rear_left_windows",
-			"rear_right_doors",
-			"rear_right_windows"
-		],
-		"actions": {
-			"label": "A door is open",
-			"lua": "_Door_opened",
-			"args": {
-				"evtname": "doors.open"
+		},
+		{
+			"id": "rear_right",
+			"source": [
+				"rear_right_doors",
+				"rear_right_windows"
+			],
+			"class": "state",
+			"onReceived": {
+				"function": "_Complete_Door",
+				"args": {}
+			}
+		},
+		{
+			"id": "front_left",
+			"source": [
+				"front_left_door",
+				"front_left_windows"
+			],
+			"class": "state",
+			"onReceived": {
+				"function": "_Complete_Door",
+				"args": {}
+			}
+		},
+		{
+			"id": "front_right",
+			"source": [
+				"front_right_doors",
+				"front_right_windows"
+			],
+			"class": "state",
+			"onReceived": {
+				"function": "_Complete_Door",
+				"args": {}
+			}
+		},
+		{
+			"id": "all_doors",
+			"source": [
+				"front_left_doors",
+				"front_left_windows",
+				"front_right_doors",
+				"front_right_windows",
+				"rear_left_doors",
+				"rear_left_windows",
+				"rear_right_doors",
+				"rear_right_windows"
+			],
+			"class": "state",
+			"onReceived": {
+				"function": "_Door_opened",
+				"args": {
+					"evtname": "doors.open"
+				}
 			}
 		}
-	},
-	{
-		"label": "sig-orc/doors.average",
-		"depends_on": [
-			"front_left_doors",
-			"front_left_windows",
-			"front_right_doors",
-			"front_right_windows",
-			"rear_left_doors",
-			"rear_left_windows",
-			"rear_right_doors",
-			"rear_right_windows"
-		],
-		"actions": {
-			"label": "A door is open",
-			"lua": "_Door_average",
-			"args": {
-				"evtname": "door.average",
-				"time": 120
-			}
-		}
-	}]
+	]
 }

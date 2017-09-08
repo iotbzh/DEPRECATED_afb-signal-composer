@@ -1,294 +1,136 @@
 {
-	"resources": [{
-		"group": "/car/geoloc/",
-		"values": [{
-			"name": "latitude",
-			"additionnals_infos": {
-				"unit": "degree",
-			"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "location"
+	"signals": [
+		{
+			"label": "gps/latitude",
+			"class": "state",
+			"unit": "degree",
+			"frequency": 1
+		},
+		{
+			"label": "gps/longitude",
+			"class": "state",
+			"unit": "degree",
+			"frequency": 1
+		},
+		{
+			"label": "gps/altitude",
+			"class": "state",
+			"unit": "meter",
+			"frequency": 1
+		},
+		{
+			"label": "heading",
+			"class": "state",
+			"unit": "degree",
+			"frequency": 1,
+			"dependsOn": [
+				"gps/latitude",
+				"gps/longitude"
+			],
+			"actions": {
+				"label": "Heading calculation",
+				"lua": "_Heading",
+				"args": {}
 			}
 		},
 		{
-			"name": "longitude",
-			"additionnals_infos": {
-				"unit": "degree",
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "location"
-			}
+			"label": "gps/speed",
+			"class": "temporal",
+			"unit": "m/s",
+			"frequency": 1
 		},
 		{
-			"name": "altitude",
-			"additionnals_infos": {
-				"unit": "meter",
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "location"
-			}
+			"label": "mraa/climb",
+			"class": "state",
+			"unit": "degree",
+			"frequency": 1
 		},
 		{
-			"name": "heading",
-			"additionnals_infos": {
-				"unit": "degree",
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "location"
-			}
+			"label": "mraa/roll_rate",
+			"class": "state",
+			"unit": "degree/s",
+			"frequency": 1
 		},
 		{
-			"name": "speed",
-			"additionnals_infos": {
-				"unit": "m/s",
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "location"
-			}
+			"label": "mraa/roll_rate",
+			"class": "state",
+			"unit": "degree/s",
+			"frequency": 1
 		},
 		{
-			"name": "climb",
-			"additionnals_infos": {
-				"unit": "degree",
-				"interval": 1000
-			},
-			"source": "Sensors",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"sensor": "gyro"
-			}
+			"label": "mraa/roll_rate",
+			"class": "state",
+			"unit": "degree/s",
+			"frequency": 1
 		},
 		{
-			"name": "roll_rate",
-			"additionnals_infos": {
-				"unit": "degree/s",
-				"interval": 1000
-			},
-			"source": "Sensors",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"sensor": "roll_rate"
-			}
+			"label": "gps/pdop",
+			"frequency": 1
 		},
 		{
-			"name": "roll_rate",
-			"additionnals_infos": {
-				"unit": "degree/s",
-				"interval": 1000
-			},
-			"source": "Sensors",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"sensor": "pitch_rate"
-			}
+			"label": "gps/hdop",
+			"frequency": 1
 		},
 		{
-			"name": "roll_rate",
-			"additionnals_infos": {
-				"unit": "degree/s",
-				"interval": 1000
-			},
-			"source": "Sensors",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"sensor": "yaw_rate"
-			}
+			"label": "gps/vdop",
+			"frequency": 1
 		},
 		{
-			"name": "pdop",
-			"additionnals_infos": {
-				"interval": 1000
-			},			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "location"
-			}
+			"label": "gps/used_satellites",
+			"frequency": 1
 		},
 		{
-			"name": "hdop",
-			"additionnals_infos": {
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "location"
-			}
+			"label": "gps/tracked_satellites",
+			"frequency": 1
 		},
 		{
-			"name": "vdop",
-			"additionnals_infos": {
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "location"
-			}
+			"label": "gps/visible_satellites",
+			"frequency": 1
 		},
 		{
-			"name": "used_satellites",
-			"additionnals_infos": {
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "uint8",
-			"source_args": {
-				"value": "configuration"
-			}
+			"label": "gps/sigma_hposition",
+			"class": "state",
+			"unit": "meter",
+			"frequency": 1
 		},
 		{
-			"name": "tracked_satellites",
-			"additionnals_infos": {
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "uint8",
-			"source_args": {
-				"value": "configuration"
-			}
+			"label": "gps/sigma_altitude",
+			"class": "state",
+			"unit": "meter",
+			"frequency": 1
 		},
 		{
-			"name": "visible_satellites",
-			"additionnals_infos": {
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "uint8",
-			"source_args": {
-				"value": "configuration"
-			}
+			"label": "gps/sigma_heading",
+			"class": "state",
+			"unit": "degree",
+			"frequency": 1
 		},
 		{
-			"name": "sigma_hposition",
-			"additionnals_infos": {
-				"unit": "meter",
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "configuration"
-			}
+			"label": "gps/sigma_speed",
+			"class": "temporal",
+			"unit": "m/s",
+			"frequency": 1
 		},
 		{
-			"name": "sigma_altitude",
-			"additionnals_infos": {
-				"unit": "meter",
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "configuration"
-			}
+			"label": "gps/sigma_climb",
+			"class": "state",
+			"unit": "degree",
+			"frequency": 1
 		},
 		{
-			"name": "sigma_heading",
-			"additionnals_infos": {
-				"unit": "degree",
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "configuration"
-			}
+			"label": "gps/gnss_fix_status",
+			"class": "state",
+			"frequency": 1
 		},
 		{
-			"name": "sigma_speed",
-			"additionnals_infos": {
-				"unit": "m/s",
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "configuration"
-			}
+			"label": "gps/dr_status",
+			"class": "state",
+			"frequency": 1
 		},
 		{
-			"name": "sigma_climb",
-			"additionnals_infos": {
-				"unit": "degree",
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"value": "configuration"
-			}
-		},
-		{
-			"name": "gnss_fix_status",
-			"additionnals_infos": {
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "uint16",
-			"source_args": {
-				"value": "configuration"
-			}
-		},
-		{
-			"name": "dr_status",
-			"additionnals_infos": {
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "boolean",
-			"source_args": {
-				"value": "configuration"
-			}
-		},
-		{
-			"name": "reliabilty_index",
-			"additionnals_infos": {
-				"interval": 1000
-			},
-			"source": "GNSS/GPS",
-			"class": "raw",
-			"type": "uint8_t",
-			"source_args": {
-				"value": "configuration"
-			}
-		}]
-	}]
+			"label": "gps/reliabilty_index",
+			"class": "temporal",
+			"frequency": 1
+		}
+	]
 }

@@ -1,58 +1,36 @@
 {
-	"resources": [{
-		"name": "/car/demoboard/",
-		"values": [{
-			"name": "vehicleSpeed",
-			"additionnals_infos": {
-				"unit": "km/h",
-				"interval": 1000
-			},
-			"source": "CAN bus",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"event": "diagnostic_messages.vehicle.speed",
-				"filter": {
-					"frequency": "100",
-					"min": 10
+	"signals": [
+		{
+			"label": "low-can/messages.vehicle.speed",
+			"class": "temporal",
+			"unit": "km/h",
+			"frequency": 1,
+			"actions": {
+				"label": "Unit converter",
+				"lua": "_Unit_Converter",
+				"args": {
+					"from": "km/h",
+					"to": "mi/h"
 				}
 			}
-		}, {
-			"name": "engineSpeed",
-			"additionnals_infos": {
-				"unit": "rpm",
-				"interval": 1000
-			},
-			"source":"CAN bus",
-			"class": "raw",
-			"type": "double",
-			"source_args": {
-				"event": "diagnostic_messages.engine.speed"
-			}
-		}, {
-			"name": "fuelLevel",
-			"additionnals_infos": {
-				"unit": "litre",
-				"interval": 1000
-			},
-			"class":"raw",
-			"source":"CAN bus",
-			"type": "double",
-			"source_args": {
-				"event": "diagnostic_messages.fuel.level"
-			}
-		}, {
-			"name": "engineLoad",
-			"additionnals_infos": {
-				"unit": "Nm",
-				"interval": 1000
-			},
-			"source":"CAN bus",
-			"type":"double",
-			"class":"raw",
-			"source_args": {
-				"event": "diagnostic_messages.engine.load"
-			}
-		}]
-	}]
+		},
+		{
+			"name": "low-can/diagnostic_messages.engine.speed",
+			"class": "temporal",
+			"unit": "rpm",
+			"frequency": 1
+		},
+		{
+			"name": "low-can/diagnostic_messages.fuel.level",
+			"class":"temporal",
+			"unit": "litre",
+			"frequency": 1
+		},
+		{
+			"name": "low-can/diagnostic_messages.engine.load",
+			"class":"temporal",
+			"unit": "Nm",
+			"interval": 1
+		}
+	]
 }
