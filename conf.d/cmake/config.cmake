@@ -77,7 +77,7 @@ set (PKG_REQUIRED_LIST
 # Prefix path where will be installed the files
 # Default: /usr/local (need root permission to write in)
 # ------------------------------------------------------
-#set(CMAKE_INSTALL_PREFIX $ENV{HOME}/opt)
+set(CMAKE_INSTALL_PREFIX $ENV{HOME}/opt)
 
 # Customize link option
 # -----------------------------
@@ -124,6 +124,9 @@ set (PKG_REQUIRED_LIST
 # -g
 # -O2
 # CACHE STRING "Compilation flags for RELEASE build type.")
+
+add_definitions("-DCONTROL_CONFIG_PRE=\"init\"")
+add_definitions("-DCTL_PLUGIN_MAGIC=3286576532")
 
 # (BUG!!!) as PKG_CONFIG_PATH does not work [should be an env variable]
 # ---------------------------------------------------------------------

@@ -10,50 +10,51 @@
 		{
 			"api": "low-can",
 			"info": "Low level binding to handle CAN bus communications",
-			"init": {
+			"actions": [{
+				"label": "init",
 				"function": "c/lua (depend on name) function to initialize binding",
 				"args": {
 					"arg": "first argument"
 				}
-			},
-			"get_signal": {
+			}, {
+				"label": "getSignal",
 				"function": "c/lua (depend on name) function to get signals",
 				"args": {
 					"arg": "first argument"
 				}
-			}
-		},
-		{
+			}]
+		}, {
 			"api": "gps",
 			"info": "Low level binding which retrieve Satellite positionning values",
-			"init": {
+			"actions": [{
+				"label": "init",
 				"function": "c/lua (depend on name) function to initialize binding",
 				"args": {
 					"arg": "first argument"
 				}
-			},
-			"get_signal": {
+			}, {
+				"label": "getSignal",
 				"function": "c/lua (depend on name) function to get signals",
 				"args": {
 					"arg": "first argument"
 				}
-			}
-		},
-		{
+			}]
+		}, {
 			"api": "mraa",
 			"info": "Low level binding which retrieve different values from several sensors like gyroscope, accelerometer, etc",
-			"init": {
+			"actions": [{
+				"label": "init",
 				"function": "c/lua (depend on name) function to initialize binding",
 				"args": {
 					"arg": "first argument"
 				}
-			},
-			"get_signal": {
+			}, {
+				"label": "getSignal",
 				"function": "c/lua (depend on name) function to get signals",
 				"args": {
 					"arg": "first argument"
 				}
-			}
+			}]
 		}
 	]
 }

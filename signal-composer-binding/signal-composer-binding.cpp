@@ -15,12 +15,15 @@
  * limitations under the License.
  */
 
+#include <ctl-config.h>
+
 #include "signal-composer-binding.hpp"
 #include "signal-composer-apidef.h"
 #include "wrap-json.h"
 #include "signal-composer.hpp"
 
 SignalComposer SigComp;
+static CtlConfigT *ctlConfig=NULL;
 
 /// @brief callback for receiving message from low binding. Treatment itself is made in SigComp class.
 void onEvent(const char *event, json_object *object)
@@ -46,7 +49,7 @@ void unsubscribe(afb_req request)
 }
 
 /// @brief verb that loads JSON configuration (old SigComp.json file now)
-void load(afb_req request)
+void loadConf(afb_req request)
 {
 	json_object* args = afb_req_json(request);
 	const char* confd;
@@ -79,12 +82,23 @@ int ticked(sd_event_source *source, uint64_t t, void* data)
 	return 0;
 }
 
-/// @brief Initialize the binding.
-///
-/// @return Exit code, zero if success.
-int init_service()
+int loadConf()
 {
-	AFB_DEBUG("SigComp level binding is initializing");
-	AFB_NOTICE("SigComp level binding is initialized and running");
-	return 0;
+	int errcount=0;
+
+	ctlConfig = CtlConfigLoad();
+
+	#ifdef CONTROL_SUPPORT_LUA
+		errcount += LuaLibInit();
+	#endif
+
+	return errcount;
+}
+
+int execConf()
+{
+	int err = CtlConfigExec();
+
+	AFB_DEBUG ("Signal Composer Control configuration Done errcount=%d", errcount);
+	return errcount;
 }

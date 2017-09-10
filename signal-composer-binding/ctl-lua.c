@@ -80,17 +80,17 @@ typedef enum {
  */
 
 static LuaAfbContextT *LuaCtxCheck (lua_State *luaState, int index) {
-  LuaAfbContextT *afbContext;
-  //luaL_checktype(luaState, index, LUA_TUSERDATA);
-  //afbContext = (LuaAfbContextT *)luaL_checkudata(luaState, index, CTX_TOKEN);
-  luaL_checktype(luaState, index, LUA_TLIGHTUSERDATA);
-  afbContext = (LuaAfbContextT *) lua_touserdata(luaState, index);
-  if (afbContext == NULL && afbContext->ctxMagic != CTX_MAGIC) {
-	luaL_error(luaState, "Fail to retrieve user data context=%s", CTX_TOKEN);
-	AFB_ERROR ("afbContextCheck error retrieving afbContext");
-	return NULL;
-  }
-  return afbContext;
+	LuaAfbContextT *afbContext;
+	//luaL_checktype(luaState, index, LUA_TUSERDATA);
+	//afbContext = (LuaAfbContextT *)luaL_checkudata(luaState, index, CTX_TOKEN);
+	luaL_checktype(luaState, index, LUA_TLIGHTUSERDATA);
+	afbContext = (LuaAfbContextT *) lua_touserdata(luaState, index);
+	if (afbContext == NULL && afbContext->ctxMagic != CTX_MAGIC) {
+		luaL_error(luaState, "Fail to retrieve user data context=%s", CTX_TOKEN);
+		AFB_ERROR ("afbContextCheck error retrieving afbContext");
+		return NULL;
+	}
+	return afbContext;
 }
 
 static LuaAfbContextT *LuaCtxPush (lua_State *luaState, afb_req request, void *handle, const char* info) {
@@ -265,7 +265,7 @@ static json_object *LuaPopArgs (lua_State* luaState, int start) {
 	json_object *responseJ;
 
 	int stop = lua_gettop(luaState);
-	if(stop-start <0) return NULL;
+	if(stop-start <0) goto OnErrorExit;
 
 	// start at 2 because we are using a function array lib
 	if (start == stop) {
@@ -277,13 +277,13 @@ static json_object *LuaPopArgs (lua_State* luaState, int start) {
 			json_object *argJ=LuaPopOneArg (luaState, idx);
 			if (!argJ) goto OnErrorExit;
 			json_object_array_add(responseJ, argJ);
-	}
+		}
 	}
 
 	return responseJ;
 
-  OnErrorExit:
-	return NULL;
+	OnErrorExit:
+		return NULL;
 }
 
 
@@ -660,17 +660,13 @@ int LuaCallFunc (DispatchSourceT source, DispatchActionT *action, json_object *q
 	err=lua_pcall(luaState, count, 1, 0);
 	if (err)  {
 		AFB_ERROR("LuaCallFunc Fail calling %s error=%s", func, lua_tostring(luaState,-1));
-		goto OnErrorExit;
+		return -1;
 	}
 
 	// return LUA script value
 	int rc= (int)lua_tointeger(luaState, -1);
 	return rc;
-
-  OnErrorExit:
-	return -1;
 }
-
 
 // Execute LUA code from received API request
 static void LuaDoAction (LuaDoActionT action, afb_req request) {
@@ -727,7 +723,6 @@ static void LuaDoAction (LuaDoActionT action, afb_req request) {
 			char *filename; char*fullpath;
 			char luaScriptPath[CONTROL_MAXPATH_LEN];
 			int index;
-			BPaths BindingPaths = GetBindingDirsPath();
 
 			// scan luascript search path once
 			static json_object *luaScriptPathJ =NULL;
@@ -743,10 +738,10 @@ static void LuaDoAction (LuaDoActionT action, afb_req request) {
 
 			// search for filename=script in CONTROL_LUA_PATH
 			if (!luaScriptPathJ)  {
-				strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, sizeof(luaScriptPath));
+				strncpy(luaScriptPath, CONTROL_DOSCRIPT_PRE, sizeof(luaScriptPath));
 				strncat(luaScriptPath,"-", sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
 				strncat(luaScriptPath,target, sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
-				luaScriptPathJ= ScanForConfig(BindingPaths.etcdir, CTL_SCAN_RECURSIVE,luaScriptPath,".lua");
+				luaScriptPathJ= ScanForConfig(strncat(GetBindingDirPath(), "/etc", sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) - 1), CTL_SCAN_RECURSIVE,luaScriptPath,".lua");
 			}
 			for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
 				json_object *entryJ=json_object_array_get_idx(luaScriptPathJ, index);
@@ -841,7 +836,7 @@ static int LuaTimerClear (lua_State* luaState) {
 
 	// Get Timer Handle
 	LuaAfbContextT *afbContext= LuaCtxCheck(luaState, LUA_FIST_ARG);
-	if (!afbContext) goto OnErrorExit;
+	if (!afbContext) return -1;
 
 	// retrieve useful information opaque handle
 	TimerHandleT *timerHandle = (TimerHandleT*)afbContext->handle;
@@ -850,15 +845,12 @@ static int LuaTimerClear (lua_State* luaState) {
 	TimerEvtStop(timerHandle);
 
 	return 0; //happy end
-
-OnErrorExit:
-	return 1;
 }
 static int LuaTimerGet (lua_State* luaState) {
 
 	// Get Timer Handle
 	LuaAfbContextT *afbContext= LuaCtxCheck(luaState, LUA_FIST_ARG);
-	if (!afbContext) goto OnErrorExit;
+	if (!afbContext) return 0;
 
 	// retrieve useful information opaque handle
 	TimerHandleT *timerHandle = (TimerHandleT*)afbContext->handle;
@@ -876,9 +868,6 @@ static int LuaTimerGet (lua_State* luaState) {
 	json_object_put(responseJ);
 
 	return count; // return argument
-
-OnErrorExit:
-	return 0;
 }
 
 // Timer Callback
@@ -894,7 +883,7 @@ static int LuaTimerSetCB (void *handle) {
 
 	// Push timer handle
 	LuaAfbContextT *afbContext= LuaCtxPush(luaState, NULL_AFBREQ, contextCB->handle, timerHandle->label);
-	if (!afbContext) goto OnErrorExit;
+	if (!afbContext) return 1;
 	count=1;
 
 	// Push user Context
@@ -903,7 +892,7 @@ static int LuaTimerSetCB (void *handle) {
 	int err=lua_pcall(luaState, count, LUA_MULTRET, 0);
 	if (err) {
 		AFB_ERROR ("LUA-TIMER-CB:FAIL response=%s err=%s", json_object_get_string(contextCB->context), lua_tostring(luaState,-1));
-		goto OnErrorExit;
+		return 1;
 	}
 
 	// get return parameter
@@ -916,9 +905,6 @@ static int LuaTimerSetCB (void *handle) {
 		LuaCtxFree(afbContext);
 	}
 	return 0;  // By default we are happy
-
- OnErrorExit:
-	return 1;  // stop timer
 }
 
 static int LuaTimerSet(lua_State* luaState) {
@@ -997,12 +983,12 @@ int LuaLibInit () {
 
 	// search for default policy config file
 	char fullprefix[CONTROL_MAXPATH_LEN];
-	strncpy (fullprefix, CONTROL_CONFIG_PRE "-", sizeof(fullprefix));
+	strncpy (fullprefix, CONTROL_CONFIG_PRE, sizeof(fullprefix));
 	strncat (fullprefix, GetBinderName(), sizeof(fullprefix)-strlen(fullprefix)-1);
 	strncat (fullprefix, "-", sizeof(fullprefix)-strlen(fullprefix)-1);
 
 	const char *dirList= getenv("CONTROL_LUA_PATH");
-	if (!dirList) dirList= GetBindingDirsPath().etcdir;
+	if (!dirList) dirList= strncat(GetBindingDirPath(), "/etc", sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) - 1);
 
 	json_object *luaScriptPathJ = ScanForConfig(dirList , CTL_SCAN_RECURSIVE, fullprefix, "lua");
 
@@ -1026,7 +1012,7 @@ int LuaLibInit () {
 	luaDefaultEvt->event = afb_daemon_make_event(CONTROL_LUA_EVENT);
 	if (!afb_event_is_valid(luaDefaultEvt->event)) {
 		AFB_ERROR ("POLCTL_INIT: Cannot register lua-events=%s ", CONTROL_LUA_EVENT);
-		goto OnErrorExit;;
+		goto OnErrorExit;
 	}
 
 	// load+exec any file found in LUA search path

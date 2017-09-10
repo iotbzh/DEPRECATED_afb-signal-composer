@@ -12,7 +12,8 @@
 			"postfix": "",
 			"start": null ,
 			"onevent": "onEvent",
-			"init": "init_service",
+			"preinit": "loadConf",
+			"init": "execConf",
 			"scope": "",
 			"private": false
 		}
@@ -130,7 +131,7 @@
 				"200": {"$ref": "#/components/responses/200"}
 			}
 		},
-		"/load": {
+		"/loadConf": {
 			"description": "Load config file in directory passed as argument searching for pattern 'sig' in filename",
 			"parameters": [
 				{

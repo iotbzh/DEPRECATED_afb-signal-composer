@@ -13,6 +13,7 @@ extern "C"
 };
 #endif
 
-	void onEvent(const char *event, struct json_object *object);
-	int init_service();
-	int ticked(sd_event_source *source, uint64_t t, void *data);
+void onEvent(const char *event, struct json_object *object);
+int loadConf();
+int execConf();
+int ticked(sd_event_source *source, uint64_t t, void *data);

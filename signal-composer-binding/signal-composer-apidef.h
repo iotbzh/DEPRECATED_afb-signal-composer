@@ -4,45 +4,45 @@ static const char _afb_description_v2_signals_composer[] =
     "a-3.0/default-schema.json\",\"info\":{\"description\":\"\",\"title\":\"s"
     "ignals-composer-service\",\"version\":\"4.0\",\"x-binding-c-generator\":"
     "{\"api\":\"signals-composer\",\"version\":2,\"prefix\":\"\",\"postfix\":"
-    "\"\",\"start\":null,\"onevent\":\"onEvent\",\"init\":\"init_service\",\""
-    "scope\":\"\",\"private\":false}},\"servers\":[{\"url\":\"ws://{host}:{po"
-    "rt}/api/monitor\",\"description\":\"Signals composer API connected to lo"
-    "w level AGL services\",\"variables\":{\"host\":{\"default\":\"localhost\""
-    "},\"port\":{\"default\":\"1234\"}},\"x-afb-events\":[{\"$ref\":\"#/compo"
-    "nents/schemas/afb-event\"}]}],\"components\":{\"schemas\":{\"afb-reply\""
-    ":{\"$ref\":\"#/components/schemas/afb-reply-v2\"},\"afb-event\":{\"$ref\""
-    ":\"#/components/schemas/afb-event-v2\"},\"afb-reply-v2\":{\"title\":\"Ge"
-    "neric response.\",\"type\":\"object\",\"required\":[\"jtype\",\"request\""
-    "],\"properties\":{\"jtype\":{\"type\":\"string\",\"const\":\"afb-reply\""
-    "},\"request\":{\"type\":\"object\",\"required\":[\"status\"],\"propertie"
-    "s\":{\"status\":{\"type\":\"string\"},\"info\":{\"type\":\"string\"},\"t"
-    "oken\":{\"type\":\"string\"},\"uuid\":{\"type\":\"string\"},\"reqid\":{\""
-    "type\":\"string\"}}},\"response\":{\"type\":\"object\"}}},\"afb-event-v2"
-    "\":{\"type\":\"object\",\"required\":[\"jtype\",\"event\"],\"properties\""
-    ":{\"jtype\":{\"type\":\"string\",\"const\":\"afb-event\"},\"event\":{\"t"
-    "ype\":\"string\"},\"data\":{\"type\":\"object\"}}}},\"x-permissions\":{}"
-    ",\"responses\":{\"200\":{\"description\":\"A complex object array respon"
-    "se\",\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"#/compone"
-    "nts/schemas/afb-reply\"}}}}}},\"paths\":{\"/subscribe\":{\"description\""
-    ":\"Subscribe to a signal object\",\"parameters\":[{\"in\":\"query\",\"na"
-    "me\":\"event\",\"required\":false,\"schema\":{\"type\":\"string\"}}],\"r"
-    "esponses\":{\"200\":{\"$ref\":\"#/components/responses/200\"}}},\"/unsub"
-    "scribe\":{\"description\":\"Unsubscribe previously suscribed signal obje"
-    "cts.\",\"parameters\":[{\"in\":\"query\",\"name\":\"event\",\"required\""
-    ":false,\"schema\":{\"type\":\"string\"}}],\"responses\":{\"200\":{\"$ref"
-    "\":\"#/components/responses/200\"}}},\"/get\":{\"description\":\"Get inf"
-    "ormations about a resource or element\",\"responses\":{\"200\":{\"$ref\""
-    ":\"#/components/responses/200\"}}},\"/load\":{\"description\":\"Load con"
-    "fig file in directory passed as argument searching for pattern 'sig' in "
-    "filename\",\"parameters\":[{\"in\":\"query\",\"name\":\"path\",\"require"
-    "d\":true,\"schema\":{\"type\":\"string\"}}],\"responses\":{\"200\":{\"$r"
-    "ef\":\"#/components/responses/200\"}}}}}"
+    "\"\",\"start\":null,\"onevent\":\"onEvent\",\"preinit\":\"loadConf\",\"i"
+    "nit\":\"execConf\",\"scope\":\"\",\"private\":false}},\"servers\":[{\"ur"
+    "l\":\"ws://{host}:{port}/api/monitor\",\"description\":\"Signals compose"
+    "r API connected to low level AGL services\",\"variables\":{\"host\":{\"d"
+    "efault\":\"localhost\"},\"port\":{\"default\":\"1234\"}},\"x-afb-events\""
+    ":[{\"$ref\":\"#/components/schemas/afb-event\"}]}],\"components\":{\"sch"
+    "emas\":{\"afb-reply\":{\"$ref\":\"#/components/schemas/afb-reply-v2\"},\""
+    "afb-event\":{\"$ref\":\"#/components/schemas/afb-event-v2\"},\"afb-reply"
+    "-v2\":{\"title\":\"Generic response.\",\"type\":\"object\",\"required\":"
+    "[\"jtype\",\"request\"],\"properties\":{\"jtype\":{\"type\":\"string\",\""
+    "const\":\"afb-reply\"},\"request\":{\"type\":\"object\",\"required\":[\""
+    "status\"],\"properties\":{\"status\":{\"type\":\"string\"},\"info\":{\"t"
+    "ype\":\"string\"},\"token\":{\"type\":\"string\"},\"uuid\":{\"type\":\"s"
+    "tring\"},\"reqid\":{\"type\":\"string\"}}},\"response\":{\"type\":\"obje"
+    "ct\"}}},\"afb-event-v2\":{\"type\":\"object\",\"required\":[\"jtype\",\""
+    "event\"],\"properties\":{\"jtype\":{\"type\":\"string\",\"const\":\"afb-"
+    "event\"},\"event\":{\"type\":\"string\"},\"data\":{\"type\":\"object\"}}"
+    "}},\"x-permissions\":{},\"responses\":{\"200\":{\"description\":\"A comp"
+    "lex object array response\",\"content\":{\"application/json\":{\"schema\""
+    ":{\"$ref\":\"#/components/schemas/afb-reply\"}}}}}},\"paths\":{\"/subscr"
+    "ibe\":{\"description\":\"Subscribe to a signal object\",\"parameters\":["
+    "{\"in\":\"query\",\"name\":\"event\",\"required\":false,\"schema\":{\"ty"
+    "pe\":\"string\"}}],\"responses\":{\"200\":{\"$ref\":\"#/components/respo"
+    "nses/200\"}}},\"/unsubscribe\":{\"description\":\"Unsubscribe previously"
+    " suscribed signal objects.\",\"parameters\":[{\"in\":\"query\",\"name\":"
+    "\"event\",\"required\":false,\"schema\":{\"type\":\"string\"}}],\"respon"
+    "ses\":{\"200\":{\"$ref\":\"#/components/responses/200\"}}},\"/get\":{\"d"
+    "escription\":\"Get informations about a resource or element\",\"response"
+    "s\":{\"200\":{\"$ref\":\"#/components/responses/200\"}}},\"/loadConf\":{"
+    "\"description\":\"Load config file in directory passed as argument searc"
+    "hing for pattern 'sig' in filename\",\"parameters\":[{\"in\":\"query\",\""
+    "name\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}],\"r"
+    "esponses\":{\"200\":{\"$ref\":\"#/components/responses/200\"}}}}}"
 ;
 
  void subscribe(struct afb_req req);
  void unsubscribe(struct afb_req req);
  void get(struct afb_req req);
- void load(struct afb_req req);
+ void loadConf(struct afb_req req);
 
 static const struct afb_verb_v2 _afb_verbs_v2_signals_composer[] = {
     {
@@ -67,8 +67,8 @@ static const struct afb_verb_v2 _afb_verbs_v2_signals_composer[] = {
         .session = AFB_SESSION_NONE_V2
     },
     {
-        .verb = "load",
-        .callback = load,
+        .verb = "loadConf",
+        .callback = loadConf,
         .auth = NULL,
         .info = "Load config file in directory passed as argument searching for pattern 'sig' in filename",
         .session = AFB_SESSION_NONE_V2
@@ -87,8 +87,8 @@ const struct afb_binding_v2 afbBindingV2 = {
     .specification = _afb_description_v2_signals_composer,
     .info = "",
     .verbs = _afb_verbs_v2_signals_composer,
-    .preinit = NULL,
-    .init = init_service,
+    .preinit = loadConf,
+    .init = execConf,
     .onevent = onEvent,
     .noconcurrency = 0
 };
