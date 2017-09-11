@@ -34,9 +34,9 @@ typedef struct TimerHandleS {
     sd_event_source *evtSource;
 } TimerHandleT;
 
-PUBLIC int TimerEvtInit (void);
-PUBLIC afb_event TimerEvtGet(void);
-PUBLIC void TimerEvtStart(TimerHandleT *timerHandle, timerCallbackT callback, void *context);
-PUBLIC void TimerEvtStop(TimerHandleT *timerHandle);
+int TimerEvtInit (void);
+afb_event TimerEvtGet(void);
+void TimerEvtStart(TimerHandleT *timerHandle, timerCallbackT callback, void *context);
+void TimerEvtStop(TimerHandleT *timerHandle);
 
 #endif // CTL_TIMER_INCLUDE

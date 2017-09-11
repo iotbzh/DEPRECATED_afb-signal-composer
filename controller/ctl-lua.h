@@ -21,7 +21,9 @@
 #ifndef _LUA_CTL_INCLUDE_
 #define _LUA_CTL_INCLUDE_
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 // prefix start debug script
 #ifndef CONTROL_DOSCRIPT_PRE
@@ -38,16 +40,19 @@
 #define CONTROL_LUA_PATH CONTROL_CONFIG_PATH
 #endif
 
+#define AFB_BINDING_VERSION 2
+#include <afb/afb-binding.h>
+
+#include <json-c/json.h>
 // standard lua include file
-#ifdef CONTROL_SUPPORT_LUA
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-#endif
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 #include "ctl-timer.h"
+#include "ctl-config.h"
 
-PUBLIC int LuaLibInit ();
+int LuaLibInit ();
 
 typedef int (*Lua2cFunctionT)(char *funcname, json_object *argsJ);
 typedef int (*Lua2cWrapperT) (lua_State* luaState, char *funcname, Lua2cFunctionT callback);
@@ -64,14 +69,14 @@ typedef enum {
 } LuaDoActionT;
 
 
-PUBLIC int LuaConfigLoad();
-PUBLIC int LuaConfigExec();
-PUBLIC void LuaL2cNewLib(const char *label, luaL_Reg *l2cFunc, int count);
-PUBLIC int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT callback);
-PUBLIC int LuaCallFunc (CtlActionT *action, json_object *queryJ) ;
-PUBLIC void ctlapi_lua_docall (afb_req request);
-PUBLIC void ctlapi_lua_dostring (afb_req request);
-PUBLIC void ctlapi_lua_doscript (afb_req request);
+int LuaConfigLoad();
+int LuaConfigExec();
+void LuaL2cNewLib(const char *label, luaL_Reg *l2cFunc, int count);
+int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT callback);
+int LuaCallFunc (CtlActionT *action, json_object *queryJ) ;
+void ctlapi_lua_docall (afb_req request);
+void ctlapi_lua_dostring (afb_req request);
+void ctlapi_lua_doscript (afb_req request);
 
 
 #endif

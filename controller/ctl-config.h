@@ -21,7 +21,10 @@
 #ifndef _CTL_CONFIG_INCLUDE_
 #define _CTL_CONFIG_INCLUDE_
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #define AFB_BINDING_VERSION 2
 #include <afb/afb-binding.h>
 #include <json-c/json.h>
@@ -72,7 +75,7 @@ typedef struct ConfigSectionS {
   const char *label;
   const char *info;
   int (*loadCB)(struct ConfigSectionS *section, json_object *sectionJ);
-  void *handle;  
+  void *handle;
 } CtlSectionT;
 
 typedef struct {
@@ -84,30 +87,25 @@ typedef struct {
     CtlSectionT *sections;
 } CtlConfigT;
 
-
 #ifdef CONTROL_SUPPORT_LUA
   #include "ctl-lua.h"
-#else
- typedef void* Lua2cWrapperT;
 #endif
 
-
 // ctl-action.c
-PUBLIC CtlActionT *ActionLoad(json_object *actionsJ);
-PUBLIC int ActionExecOne(CtlActionT* action, json_object *queryJ);
-PUBLIC int ActionLoadOne(CtlActionT *action, json_object *actionJ);
+CtlActionT *ActionLoad(json_object *actionsJ);
+int ActionExecOne(CtlActionT* action, json_object *queryJ);
+int ActionLoadOne(CtlActionT *action, json_object *actionJ);
 
 // ctl-config.c
-PUBLIC CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections);
-PUBLIC int CtlConfigExec(CtlConfigT *ctlConfig);
+CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections);
+int CtlConfigExec(CtlConfigT *ctlConfig);
 
 // ctl-onload.c
-PUBLIC int OnloadConfig(CtlSectionT *section, json_object *actionsJ);
-
+int OnloadConfig(CtlSectionT *section, json_object *actionsJ);
 
 // ctl-plugin.c
-PUBLIC int PluginConfig(CtlSectionT *section, json_object *pluginsJ);
-PUBLIC int PluginGetCB (CtlActionT *action , json_object *callbackJ);
+int PluginConfig(CtlSectionT *section, json_object *pluginsJ);
+int PluginGetCB (CtlActionT *action , json_object *callbackJ);
 
 
 #endif /* _CTL_CONFIG_INCLUDE_ */

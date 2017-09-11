@@ -1,6 +1,7 @@
 #pragma once
 
 #include <systemd/sd-event.h>
+#include <ctl-config.h>
 
 #ifdef __cplusplus
 	#include <cstddef>
@@ -16,4 +17,3 @@ extern "C"
 void onEvent(const char *event, struct json_object *object);
 int loadConf();
 int execConf();
-int ticked(sd_event_source *source, uint64_t t, void *data);

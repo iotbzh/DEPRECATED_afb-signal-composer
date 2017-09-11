@@ -23,19 +23,19 @@
 #include "ctl-config.h"
 
 // onload section receive one action or an array of actions
-PUBLIC int OnloadConfig(CtlSectionT *section, json_object *actionsJ) {
+int OnloadConfig(CtlSectionT *section, json_object *actionsJ) {
     CtlActionT *actions;
-     
+
     // Load time parse actions in config file
     if (actionsJ != NULL) {
         actions= ActionLoad(actionsJ);
         section->handle=actions;
-        
+
         if (!actions) {
             AFB_ERROR ("OnloadLoad config fail processing onload actions");
             goto OnErrorExit;
         }
-        
+
     } else {
         // Exec time process onload action now
         actions=(CtlActionT*)section->handle;
@@ -46,7 +46,7 @@ PUBLIC int OnloadConfig(CtlSectionT *section, json_object *actionsJ) {
 
         for (int idx=0; actions[idx].source.label != NULL; idx ++) {
             ActionExecOne(&actions[idx], NULL);
-        }              
+        }
     }
 
     return 0;

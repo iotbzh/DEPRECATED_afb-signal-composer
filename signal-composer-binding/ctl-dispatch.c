@@ -26,7 +26,10 @@
 #include <filescan-utils.h>
 #include <wrap-json.h>
 
+#ifdef CONTROL_SUPPORT_LUA
 #include "ctl-lua.h"
+#endif
+
 #include "signal-composer-binding.hpp"
 
 typedef void*(*DispatchPluginInstallCbT)(const char* label, const char*version, const char*info);

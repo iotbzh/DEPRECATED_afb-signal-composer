@@ -32,7 +32,9 @@
 #include <filescan-utils.h>
 #include <wrap-json.h>
 
+#ifdef CONTROL_SUPPORT_LUA
 #include "ctl-lua.h"
+#endif
 
 #define LUA_FIST_ARG 2  // when using luaL_newlib calllback receive libtable as 1st arg
 #define LUA_MSG_MAX_LENGTH 512

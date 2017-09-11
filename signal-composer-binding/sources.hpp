@@ -17,29 +17,16 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
-#include <vector>
+#include <signal-composer-binding.hpp>
+#include <ctl-config.h>
 
-class Signal;
-
-class Signal
-{
+class Source {
 private:
 	std::string api_;
-	std::string name_;
-	std::vector<> history_;
-	float frequency_;
-	st::string unit_;
-	float min_;
-	float max_;
-	float last_;
+	std::string info_;
+	CtlActionT initJ_;
+	CtlActionT getSignalJ_;
 
-	std::vector<std::shared_ptr<Signal>> Observers_;
 public:
-	void notify();
-	void infiniteRecursionCheck();
-	void attach();
-	void detach();
-	void notify();
-}
+	Source(std::string api, std::string info, CtlActionT init, CtlActionT getSignal);
+};

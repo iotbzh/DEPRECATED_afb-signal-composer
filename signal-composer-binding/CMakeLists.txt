@@ -21,7 +21,7 @@
 PROJECT_TARGET_ADD(signal-composer)
 
 	# Define project Targets
-	add_library(${TARGET_NAME} MODULE ${TARGET_NAME}-binding.cpp ${TARGET_NAME}.cpp ctl-lua.c ctl-dispatch.c)
+	add_library(${TARGET_NAME} MODULE ${TARGET_NAME}-binding.cpp ${TARGET_NAME}.cpp signal-composer.cpp sources.cpp)
 
 	# Binder exposes a unique public entry point
 	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
@@ -37,5 +37,6 @@ PROJECT_TARGET_ADD(signal-composer)
 	# Library dependencies (include updates automatically)
 	TARGET_LINK_LIBRARIES(${TARGET_NAME}
 		afb-utilities
+		afb-controller
 		${link_libraries}
 	)

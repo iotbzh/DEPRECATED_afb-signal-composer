@@ -20,15 +20,14 @@
 #ifndef _CTL_PLUGIN_INCLUDE_
 #define _CTL_PLUGIN_INCLUDE_
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #include <json-c/json.h>
 
 #ifndef CTL_PLUGIN_MAGIC
   #define CTL_PLUGIN_MAGIC 852369147
-#endif
-
-#ifndef PUBLIC
-  #define PUBLIC
 #endif
 
 #ifndef STATIC

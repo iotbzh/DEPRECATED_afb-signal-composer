@@ -611,7 +611,7 @@ STATIC int LuaAfbEventMake(lua_State* luaState) {
 }
 
 // Function call from LUA when lua2c plugin L2C is used
-PUBLIC int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT callback) {
+int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT callback) {
 
     json_object *argsJ= LuaPopArgs(luaState, LUA_FIST_ARG+1);
     int response = (*callback) (funcname, argsJ);
@@ -622,7 +622,7 @@ PUBLIC int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT call
 }
 
 // Call a Lua function from a control action
-PUBLIC int LuaCallFunc (CtlActionT *action, json_object *queryJ) {
+int LuaCallFunc (CtlActionT *action, json_object *queryJ) {
 
     int err, count;
 
@@ -820,15 +820,15 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
     return;
 }
 
-PUBLIC void ctlapi_execlua (afb_req request) {
+void ctlapi_execlua (afb_req request) {
     LuaDoAction (LUA_DOSTRING, request);
 }
 
-PUBLIC void ctlapi_request (afb_req request) {
+void ctlapi_request (afb_req request) {
     LuaDoAction (LUA_DOCALL, request);
 }
 
-PUBLIC void ctlapi_debuglua (afb_req request) {
+void ctlapi_debuglua (afb_req request) {
     LuaDoAction (LUA_DOSCRIPT, request);
 }
 
@@ -958,7 +958,7 @@ OnErrorExit:
 }
 
 // Register a new L2c list of LUA user plugin commands
-PUBLIC void LuaL2cNewLib(const char *label, luaL_Reg *l2cFunc, int count) {
+void LuaL2cNewLib(const char *label, luaL_Reg *l2cFunc, int count) {
     // luaL_newlib(luaState, l2cFunc); macro does not work with pointer :(
     luaL_checkversion(luaState);
     lua_createtable(luaState, 0, count+1);
@@ -987,8 +987,8 @@ static const luaL_Reg afbFunction[] = {
 };
 
 // Load Lua Interpreter
-PUBLIC int LuaConfigLoad () {
-    
+int LuaConfigLoad () {
+
 
     // open a new LUA interpretor
     luaState = luaL_newstate();
@@ -1003,16 +1003,16 @@ PUBLIC int LuaConfigLoad () {
     // redirect print to AFB_NOTICE
     luaL_newlib(luaState, afbFunction);
     lua_setglobal(luaState, "AFB");
-    
+
     return 0;
-    
+
  OnErrorExit:
     return 1;
 }
 
 // Create Binding Event at Init Exec Time
-PUBLIC int LuaConfigExec () {
-    
+int LuaConfigExec () {
+
     int err, index;
     // create default lua event to send test pause/resume
     luaDefaultEvt=calloc(1,sizeof(LuaAfbEvent));
@@ -1032,11 +1032,11 @@ PUBLIC int LuaConfigExec () {
     const char *dirList= getenv("CONTROL_LUA_PATH");
     if (!dirList) dirList=CONTROL_LUA_PATH;
 
-    // special case for no lua even when avaliable 
+    // special case for no lua even when avaliable
     if (!strcasecmp ("/dev/null", dirList)) {
         return 0;
     }
-    
+
     json_object *luaScriptPathJ = ScanForConfig(dirList , CTL_SCAN_RECURSIVE, fullprefix, "lua");
 
     // load+exec any file found in LUA search path

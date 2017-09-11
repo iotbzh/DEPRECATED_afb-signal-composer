@@ -61,14 +61,14 @@ OnErrorExit:
     return -1;
 }
 
-PUBLIC void TimerEvtStop(TimerHandleT *timerHandle) {
+void TimerEvtStop(TimerHandleT *timerHandle) {
 
     sd_event_source_unref(timerHandle->evtSource);
     free (timerHandle);
 }
 
 
-PUBLIC void TimerEvtStart(TimerHandleT *timerHandle, timerCallbackT callback, void *context) {
+void TimerEvtStart(TimerHandleT *timerHandle, timerCallbackT callback, void *context) {
     uint64_t usec;
 
     // populate CB handle
@@ -80,13 +80,13 @@ PUBLIC void TimerEvtStart(TimerHandleT *timerHandle, timerCallbackT callback, vo
     sd_event_add_time(afb_daemon_get_event_loop(), &timerHandle->evtSource, CLOCK_MONOTONIC, usec+timerHandle->delay*1000, 250, TimerNext, timerHandle);
 }
 
-PUBLIC afb_event TimerEvtGet(void) {
+afb_event TimerEvtGet(void) {
     return afbevt;
 }
 
 
 // Create Binding Event at Init
-PUBLIC int TimerEvtInit () {
+int TimerEvtInit () {
 
     // create binder event to send test pause/resume
     afbevt = afb_daemon_make_event("control");

@@ -15,31 +15,6 @@
  * limitations under the License.
 */
 
-#pragma once
-
-#include <string>
-#include <memory>
-#include <vector>
-
-class Signal;
-
-class Signal
-{
-private:
-	std::string api_;
-	std::string name_;
-	std::vector<> history_;
-	float frequency_;
-	st::string unit_;
-	float min_;
-	float max_;
-	float last_;
-
-	std::vector<std::shared_ptr<Signal>> Observers_;
-public:
-	void notify();
-	void infiniteRecursionCheck();
-	void attach();
-	void detach();
-	void notify();
-}
+Source(std::string api, std::string info, json_object* initJ, json_object* getSignalJ):
+	api_(api), info_(info), init_(init), getSignalJ(getSignalJ)
+{}

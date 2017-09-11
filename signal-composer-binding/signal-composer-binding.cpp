@@ -15,25 +15,21 @@
  * limitations under the License.
  */
 
-#include <ctl-config.h>
-
 #include "signal-composer-binding.hpp"
 #include "signal-composer-apidef.h"
 #include "wrap-json.h"
 #include "signal-composer.hpp"
 
 SignalComposer SigComp;
-static CtlConfigT *ctlConfig=NULL;
 
 /// @brief callback for receiving message from low binding. Treatment itself is made in SigComp class.
 void onEvent(const char *event, json_object *object)
 {
-	SigComp.treatMessage(object);
 }
 /// @brief entry point for client subscription request. Treatment itself is made in SigComp class.
 void subscribe(afb_req request)
 {
-	if(SigComp.subscribe(request))
+	if(true)
 		afb_req_success(request, NULL, NULL);
 	else
 		afb_req_fail(request, "error", NULL);
@@ -42,7 +38,7 @@ void subscribe(afb_req request)
 /// @brief entry point for client un-subscription request. Treatment itself is made in SigComp class.
 void unsubscribe(afb_req request)
 {
-	if(SigComp.unsubscribe(request))
+	if(true)
 		afb_req_success(request, NULL, NULL);
 	else
 		afb_req_fail(request, "error when unsubscribe", NULL);
@@ -55,7 +51,7 @@ void loadConf(afb_req request)
 	const char* confd;
 
 	wrap_json_unpack(args, "{s:s}", "path", &confd);
-	int ret = SigComp.parseConfigAndSubscribe(confd);
+	int ret = 0;
 	if( ret == 0)
 		afb_req_success(request, NULL, NULL);
 	else
@@ -66,7 +62,7 @@ void loadConf(afb_req request)
 void get(afb_req request)
 {
 	json_object *jobj;
-	if(SigComp.get(request, &jobj))
+	if(true)
 	{
 		afb_req_success(request, jobj, NULL);
 	} else {
@@ -74,31 +70,23 @@ void get(afb_req request)
 	}
 }
 
-/// @brief entry point for systemD timers. Treatment itself is made in SigComp class.
-/// @param[in] source: systemD timer, t: time of tick, data: interval (ms).
-int ticked(sd_event_source *source, uint64_t t, void* data)
-{
-	SigComp.tick(source, t, data);
-	return 0;
-}
-
 int loadConf()
 {
-	int errcount=0;
+	int ret = 0;
 
-	ctlConfig = CtlConfigLoad();
+	CtlConfigT* ctlConfig = CtlConfigLoad();
 
 	#ifdef CONTROL_SUPPORT_LUA
-		errcount += LuaLibInit();
+		ret += LuaLibInit();
 	#endif
 
-	return errcount;
+	return ret;
 }
 
 int execConf()
 {
-	int err = CtlConfigExec();
+	int ret = CtlConfigExec(ctlConfig);
 
-	AFB_DEBUG ("Signal Composer Control configuration Done errcount=%d", errcount);
-	return errcount;
+	AFB_DEBUG ("Signal Composer Control configuration Done errcount=%d", ret);
+	return ret;
 }

@@ -18,52 +18,60 @@
  *   Json load using json_unpack https://jansson.readthedocs.io/en/2.9/apiref.html#parsing-and-validating-values
  */
 
-#define _GNU_SOURCE
+ #define _GNU_SOURCE
 #include <string.h>
 #include <dlfcn.h>
+
+#ifdef CONTROL_SUPPORT_LUA
+#include "ctl-lua.h"
+#else
+typedef struct lua_State lua_State;
+typedef void *Lua2cFunctionT;
+typedef void *Lua2cWrapperT;
+#endif
 
 #include "ctl-config.h"
 
 static  CtlPluginT *ctlPlugins=NULL;
 
-PUBLIC int PluginGetCB (CtlActionT *action , json_object *callbackJ) {
+int PluginGetCB (CtlActionT *action , json_object *callbackJ) {
     const char *plugin=NULL, *function=NULL;
     json_object *argsJ;
     int idx;
 
     if (!ctlPlugins) {
         AFB_ERROR ("PluginGetCB plugin section missing cannot call '%s'", json_object_get_string(callbackJ));
-        goto OnErrorExit;        
+        goto OnErrorExit;
     }
-    
-    
-    int err = wrap_json_unpack(callbackJ, "{ss,ss,s?s,s?o!}", "plugin", &plugin, "function", &function, "args", &argsJ); 
+
+
+    int err = wrap_json_unpack(callbackJ, "{ss,ss,s?s,s?o!}", "plugin", &plugin, "function", &function, "args", &argsJ);
     if (err) {
         AFB_ERROR("PluginGet missing plugin|function|[args] in %s", json_object_get_string(callbackJ));
         goto OnErrorExit;
     }
-    
+
     for (idx=0; ctlPlugins[idx].label != NULL; idx++) {
         if (!strcasecmp (ctlPlugins[idx].label, plugin)) break;
     }
-    
+
     if (!ctlPlugins[idx].label) {
         AFB_ERROR ("PluginGetCB no plugin with label=%s", plugin);
         goto OnErrorExit;
     }
-    
-    action->actionCB = dlsym(ctlPlugins[idx].dlHandle, function); 
+
+    action->actionCB = dlsym(ctlPlugins[idx].dlHandle, function);
     action->source.context  = ctlPlugins[idx].context;
-    
+
     if (!action->actionCB) {
-       AFB_ERROR ("PluginGetCB no plugin=%s no function=%s", plugin, function); 
+       AFB_ERROR ("PluginGetCB no plugin=%s no function=%s", plugin, function);
        goto OnErrorExit;
     }
-    return 0; 
+    return 0;
 
 OnErrorExit:
     return 1;
-    
+
 }
 
 // Wrapper to Lua2c plugin command add context and delegate to LuaWrapper
@@ -82,10 +90,10 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
     const char*ldSearchPath = NULL, *basename = NULL;
     void *dlHandle;
 
-    
+
     // plugin initialises at 1st load further init actions should be place into onload section
     if (!pluginJ) return 0;
-    
+
     int err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?s,ss,s?o,s?o!}",
             "label", &ctlPlugin->label,  "version", &ctlPlugin->version, "info", &ctlPlugin->info, "ldpath", &ldSearchPath, "basename", &basename, "lua2c", &lua2csJ, "actions", &actionsJ);
     if (err) {
@@ -93,8 +101,9 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
         goto OnErrorExit;
     }
 
-    // if search path not in Json config file, then try default
-    if (!ldSearchPath) ldSearchPath = CONTROL_PLUGIN_PATH;
+    // if search path not in Json config file, then try default binding dir
+    ldSearchPath = getenv("CONTROL_PLUGIN_PATH");
+    if (!ldSearchPath) ldSearchPath = strncat(GetBindingDirPath(), "/lib", sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) - 1);
 
     // search for default policy config file
     json_object *pluginPathJ = ScanForConfig(ldSearchPath, CTL_SCAN_RECURSIVE, basename, CTL_PLUGIN_EXT);
@@ -132,10 +141,10 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
     } else {
         AFB_NOTICE("CTL-PLUGIN-LOADONE %s successfully registered", ctlPluginMagic->label);
     }
-    
+
     // store dlopen handle to enable onload action at exec time
     ctlPlugin->dlHandle = dlHandle;
-    
+
     // Jose hack to make verbosity visible from sharelib
     struct afb_binding_data_v2 *afbHidenData = dlsym(dlHandle, "afbBindingV2data");
     if (afbHidenData) *afbHidenData = afbBindingV2data;
@@ -194,15 +203,15 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
         ctlPlugin->context = (*ctlPluginOnload) (ctlPlugin, handle);
     }
     return 0;
-    
+
 OnErrorExit:
     return 1;
 }
 
 
-PUBLIC int PluginConfig(CtlSectionT *section, json_object *pluginsJ) {
+int PluginConfig(CtlSectionT *section, json_object *pluginsJ) {
     int err=0;
-    
+
     if (json_object_get_type(pluginsJ) == json_type_array) {
         int length = json_object_array_length(pluginsJ);
         ctlPlugins = calloc (length+1, sizeof(CtlPluginT));
@@ -212,8 +221,8 @@ PUBLIC int PluginConfig(CtlSectionT *section, json_object *pluginsJ) {
         }
     } else {
         ctlPlugins = calloc (2, sizeof(CtlPluginT));
-        err += PluginLoadOne(&ctlPlugins[0], pluginsJ, section->handle);       
+        err += PluginLoadOne(&ctlPlugins[0], pluginsJ, section->handle);
     }
-    
+
     return err;
 }

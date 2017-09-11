@@ -25,7 +25,7 @@
 #include "ctl-config.h"
 
 
-PUBLIC int ActionExecOne(CtlActionT* action, json_object *queryJ) {
+int ActionExecOne(CtlActionT* action, json_object *queryJ) {
     int err;
 
 
@@ -50,7 +50,7 @@ PUBLIC int ActionExecOne(CtlActionT* action, json_object *queryJ) {
                     json_object_object_add(queryJ, "args", action->argsJ);
                 }
             }
-            
+
             json_object_object_add(queryJ, "label", json_object_new_string(action->source.label));
 
             int err = afb_service_call_sync(action->api, action->call, queryJ, &returnJ);
@@ -96,7 +96,7 @@ OnErrorExit:
 
 // unpack individual action object
 
-PUBLIC int ActionLoadOne(CtlActionT *action, json_object *actionJ) {
+int ActionLoadOne(CtlActionT *action, json_object *actionJ) {
     char *api = NULL, *verb = NULL, *lua = NULL;
     int err, modeCount = 0;
     json_object *callbackJ=NULL;
@@ -123,10 +123,10 @@ PUBLIC int ActionLoadOne(CtlActionT *action, json_object *actionJ) {
 
     if (callbackJ) {
         action->type = CTL_TYPE_CB;
-        modeCount++;        
+        modeCount++;
         err = PluginGetCB (action, callbackJ);
         if (err) goto OnErrorExit;
-        
+
     }
 
     // make sure at least one mode is selected
@@ -145,7 +145,7 @@ OnErrorExit:
     return 1;
 };
 
-PUBLIC CtlActionT *ActionLoad(json_object *actionsJ) {
+CtlActionT *ActionLoad(json_object *actionsJ) {
     int err;
     CtlActionT *actions;
 

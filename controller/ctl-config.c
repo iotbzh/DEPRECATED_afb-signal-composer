@@ -28,8 +28,8 @@
 
 // Load control config file
 
-PUBLIC char* CtlConfigSearch(const char *dirList) {
-    int index, err;
+char* CtlConfigSearch(const char *dirList) {
+    int index;
     char controlFile [CONTROL_MAXPATH_LEN];
 
     strncpy(controlFile, CONTROL_CONFIG_PRE "-", CONTROL_MAXPATH_LEN);
@@ -44,7 +44,7 @@ PUBLIC char* CtlConfigSearch(const char *dirList) {
 
         char *filename;
         char*fullpath;
-        err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
+        int err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
         if (err) {
             AFB_ERROR("CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
             return NULL;
@@ -65,7 +65,7 @@ PUBLIC char* CtlConfigSearch(const char *dirList) {
     return NULL;
 }
 
-PUBLIC int CtlConfigExec(CtlConfigT *ctlConfig) {
+int CtlConfigExec(CtlConfigT *ctlConfig) {
     // best effort to initialise everything before starting
     if (ctlConfig->requireJ) {
 
@@ -102,7 +102,7 @@ OnErrorExit:
     return 1;
 }
 
-PUBLIC CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
+CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
     json_object *ctlConfigJ;
     CtlConfigT *ctlConfig = calloc(1, sizeof (CtlConfigT));
     int err;
@@ -112,7 +112,7 @@ PUBLIC CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
     if (err) goto OnErrorExit;
 #endif
 
-    // Search for config in filepath  
+    // Search for config in filepath
     filepath = CtlConfigSearch(filepath);
 
     if (!filepath) {
@@ -145,7 +145,7 @@ PUBLIC CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
             err = afb_daemon_rename_api(ctlConfig->api);
             if (err) AFB_WARNING("Fail to rename api to:%s", ctlConfig->api);
         }
-        
+
     }
 
     //load config sections
