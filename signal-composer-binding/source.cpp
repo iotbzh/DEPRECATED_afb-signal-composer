@@ -15,6 +15,28 @@
  * limitations under the License.
 */
 
-Source(std::string api, std::string info, json_object* initJ, json_object* getSignalJ):
-	api_(api), info_(info), init_(init), getSignalJ(getSignalJ)
+#include "source.hpp"
+
+Source::Source()
 {}
+
+Source::Source(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal):
+	api_(api), info_(info), init_(init), getSignal_(getSignal)
+{}
+
+std::string Source::api()
+{
+	return api_;
+}
+
+void Source::addSignal(const std::string& id, std::vector<std::string>& sources, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived)
+{
+	std::shared_ptr<Signal> sig = std::make_shared<Signal>(id, sources, unit, frequency, onReceived);
+
+	signals_.push_back(sig);
+}
+
+std::vector<std::shared_ptr<Signal>> Source::getSignals()
+{
+	return signals_;
+}

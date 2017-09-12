@@ -25,6 +25,10 @@
 #define _GNU_SOURCE
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define AFB_BINDING_VERSION 2
 #include <afb/afb-binding.h>
 #include <json-c/json.h>
@@ -107,5 +111,8 @@ int OnloadConfig(CtlSectionT *section, json_object *actionsJ);
 int PluginConfig(CtlSectionT *section, json_object *pluginsJ);
 int PluginGetCB (CtlActionT *action , json_object *callbackJ);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _CTL_CONFIG_INCLUDE_ */

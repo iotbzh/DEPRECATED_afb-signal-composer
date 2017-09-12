@@ -17,16 +17,26 @@
 
 #pragma once
 
-#include <signal-composer-binding.hpp>
+#include <memory>
 #include <ctl-config.h>
+#include <signal-composer-binding.hpp>
+
+#include "signal.hpp"
 
 class Source {
 private:
 	std::string api_;
 	std::string info_;
-	CtlActionT initJ_;
-	CtlActionT getSignalJ_;
+	CtlActionT* init_;
+	CtlActionT* getSignal_;
+
+	std::vector<std::shared_ptr<Signal>> signals_;
 
 public:
-	Source(std::string api, std::string info, CtlActionT init, CtlActionT getSignal);
+	Source();
+	Source(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal);
+
+	std::string api();
+	void addSignal(const std::string& id, std::vector<std::string>& sources, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived);
+	std::vector<std::shared_ptr<Signal>> getSignals();
 };

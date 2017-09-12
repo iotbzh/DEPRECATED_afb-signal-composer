@@ -16,38 +16,43 @@
 */
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <string>
 #include <ctl-config.h>
 #include <json-c/json.h>
 #include <systemd/sd-event.h>
-extern "C"
-{
-	#define AFB_BINDING_VERSION 2
-	#include <afb/afb-binding.h>
-};
 
-#include "sources.hpp"
+#include "source.hpp"
+#include "signal-composer-binding.hpp"
 
 class bindingApp
 {
 private:
-	CtlConfigT ctlConfig_;
+	CtlConfigT* ctlConfig_;
 
 	static CtlSectionT ctlSections_[]; ///< Config Section definition (note: controls section index should match handle retrieval in)
-	std::vector<Source> Sources_;
+	std::vector<Source> sourcesList_;
 
-	bindingApp(std::string filepath);
+	explicit bindingApp(const std::string& filepath);
+	bindingApp();
 	~bindingApp();
 
+	CtlActionT* convert2Action(const std::string& name, json_object* action);
+
 	int loadOneSource(json_object* sourcesJ);
-	int loadSources(struct ConfigSectionT *section, json_object *sectionJ);
-	void convert2Action(std::string& name, json_object* action);
+	static int loadSources(CtlSectionT* section, json_object *sectionJ);
 
 	int loadOneSignal(json_object* signalsJ);
-	int loadSignals(struct ConfigSectionT *section, json_object *sectionJ);
+	static int loadSignals(CtlSectionT* section, json_object *sectionJ);
+
+	Source* getSource(const std::string& api);
 
 public:
-	static bindingApp& instance(std::string confFile);
+	static bindingApp& instance();
+	void loadConfig(const std::string& filepath);
 	void loadSignalsFile(std::string signalsFile);
-}
+
+	std::vector<std::shared_ptr<Signal>> getAllSignals();
+	CtlConfigT* ctlConfig();
+};

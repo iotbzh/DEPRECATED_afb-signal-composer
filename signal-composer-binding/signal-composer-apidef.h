@@ -1,19 +1,19 @@
 
-static const char _afb_description_v2_signals_composer[] =
+static const char _afb_description_v2_signal_composer[] =
     "{\"openapi\":\"3.0.0\",\"$schema\":\"http:iot.bzh/download/openapi/schem"
     "a-3.0/default-schema.json\",\"info\":{\"description\":\"\",\"title\":\"s"
     "ignals-composer-service\",\"version\":\"4.0\",\"x-binding-c-generator\":"
-    "{\"api\":\"signals-composer\",\"version\":2,\"prefix\":\"\",\"postfix\":"
-    "\"\",\"start\":null,\"onevent\":\"onEvent\",\"preinit\":\"loadConf\",\"i"
-    "nit\":\"execConf\",\"scope\":\"\",\"private\":false}},\"servers\":[{\"ur"
-    "l\":\"ws://{host}:{port}/api/monitor\",\"description\":\"Signals compose"
-    "r API connected to low level AGL services\",\"variables\":{\"host\":{\"d"
-    "efault\":\"localhost\"},\"port\":{\"default\":\"1234\"}},\"x-afb-events\""
-    ":[{\"$ref\":\"#/components/schemas/afb-event\"}]}],\"components\":{\"sch"
-    "emas\":{\"afb-reply\":{\"$ref\":\"#/components/schemas/afb-reply-v2\"},\""
-    "afb-event\":{\"$ref\":\"#/components/schemas/afb-event-v2\"},\"afb-reply"
-    "-v2\":{\"title\":\"Generic response.\",\"type\":\"object\",\"required\":"
-    "[\"jtype\",\"request\"],\"properties\":{\"jtype\":{\"type\":\"string\",\""
+    "{\"api\":\"signal-composer\",\"version\":2,\"prefix\":\"\",\"postfix\":\""
+    "\",\"start\":null,\"onevent\":\"onEvent\",\"preinit\":\"loadConf\",\"ini"
+    "t\":\"execConf\",\"scope\":\"\",\"private\":false}},\"servers\":[{\"url\""
+    ":\"ws://{host}:{port}/api/monitor\",\"description\":\"Signals composer A"
+    "PI connected to low level AGL services\",\"variables\":{\"host\":{\"defa"
+    "ult\":\"localhost\"},\"port\":{\"default\":\"1234\"}},\"x-afb-events\":["
+    "{\"$ref\":\"#/components/schemas/afb-event\"}]}],\"components\":{\"schem"
+    "as\":{\"afb-reply\":{\"$ref\":\"#/components/schemas/afb-reply-v2\"},\"a"
+    "fb-event\":{\"$ref\":\"#/components/schemas/afb-event-v2\"},\"afb-reply-"
+    "v2\":{\"title\":\"Generic response.\",\"type\":\"object\",\"required\":["
+    "\"jtype\",\"request\"],\"properties\":{\"jtype\":{\"type\":\"string\",\""
     "const\":\"afb-reply\"},\"request\":{\"type\":\"object\",\"required\":[\""
     "status\"],\"properties\":{\"status\":{\"type\":\"string\"},\"info\":{\"t"
     "ype\":\"string\"},\"token\":{\"type\":\"string\"},\"uuid\":{\"type\":\"s"
@@ -44,7 +44,7 @@ static const char _afb_description_v2_signals_composer[] =
  void get(struct afb_req req);
  void loadConf(struct afb_req req);
 
-static const struct afb_verb_v2 _afb_verbs_v2_signals_composer[] = {
+static const struct afb_verb_v2 _afb_verbs_v2_signal_composer[] = {
     {
         .verb = "subscribe",
         .callback = subscribe,
@@ -83,10 +83,10 @@ static const struct afb_verb_v2 _afb_verbs_v2_signals_composer[] = {
 };
 
 const struct afb_binding_v2 afbBindingV2 = {
-    .api = "signals-composer",
-    .specification = _afb_description_v2_signals_composer,
+    .api = "signal-composer",
+    .specification = _afb_description_v2_signal_composer,
     .info = "",
-    .verbs = _afb_verbs_v2_signals_composer,
+    .verbs = _afb_verbs_v2_signal_composer,
     .preinit = loadConf,
     .init = execConf,
     .onevent = onEvent,

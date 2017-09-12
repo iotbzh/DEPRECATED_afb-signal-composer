@@ -6,7 +6,7 @@
 		"title": "signals-composer-service",
 		"version": "4.0",
 		"x-binding-c-generator": {
-			"api": "signals-composer",
+			"api": "signal-composer",
 			"version": 2,
 			"prefix": "",
 			"postfix": "",
