@@ -1,0 +1,19 @@
+{
+	"$schema": "ToBeDone",
+	"metadata": {
+		"label": "Signal Composer",
+		"version": "1.0",
+		"api": "signal-composer",
+		"info": "Signal composer Configuration",
+		"require": ["low-can"],
+		"files": ["sources", "sig-doors"]
+	},
+	"plugins": [
+		{
+			"label": "Door handle",
+			"version": "1.0",
+			"info": "Manage all doors and windows status",
+			"basename": "doors"
+		}
+	]
+}

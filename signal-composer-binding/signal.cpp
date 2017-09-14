@@ -15,72 +15,111 @@
  * limitations under the License.
 */
 
+#include <memory>
+
 #include "signal.hpp"
+#include "signal-composer.hpp"
 
-Signal::Signal()
-{}
-
-Signal(std::string& id,
-	std::vector<std::string>& sources,
-	std::string& unit,
-	float frequency,
-	CtlActionT* onReceived)
+Signal::Signal(const std::string& id,
+			std::vector<std::string>& sources,
+			const std::string& unit,
+			double frequency,
+			CtlActionT* onReceived)
 :id_(id),
- sources_(sources),
- unit_(unit),
+ sourcesSig_(sources),
  frequency_(frequency),
+ unit_(unit),
  onReceived_(onReceived)
-{
-	for (const std::string& src: sources)
-	{
-		if(src.find("/") == std::string::npos)
-		{
-			AFB_NOTICE("Attaching %s to %s", sig->id(), src);
-			if(sig.attach(src))
-				{AFB_WARNING("Can't attach. Is %s exists ?", src);}
-		}
-	}
-}
+{}
 
 Signal::operator bool() const
 {
-	if(!id_ || !api_ || !signalName_)
+	if(id_.empty())
 		{return false;}
 	return true;
 }
 
-int Signal::recursionCheck(const std::string& origId)
+bool Signal::operator ==(const Signal& other) const
 {
-	for (const auto& obs: Observers_)
+	if(id_ == other.id_) {return true;}
+	return false;
+}
+
+bool Signal::operator==(const std::string& aName) const
+{
+	if(id_ == aName) {return true;}
+	for( const std::string& src : sourcesSig_)
 	{
-		if( id_ == obs.id())
-			{return -1;}
-		if( origId == obs.id())
-			{return -1;}
-		if(! obs.recursionCheck(origId))
-			{return -1;}
+		if(src == aName) {return true;}
 	}
-	return 0;
+	return false;
 }
 
 std::string Signal::id() const
 {
 	return id_;
 }
+void update(double timestamp, double value)
+{
+	AFB_NOTICE("Got an update from observed signal");
+}
 
-int Signal::recursionCheck()
+int Signal::onReceivedCB(json_object *queryJ)
+{
+	return ActionExecOne(onReceived_, queryJ);
+}
+
+void Signal::attach(Signal* obs)
+{
+	Observers_.push_back(obs);
+}
+
+void Signal::attachToSources(bindingApp& bApp)
+{
+	for (const std::string& srcSig: sourcesSig_)
+	{
+		if(srcSig.find("/") == std::string::npos)
+		{
+			std::shared_ptr<Signal> sig = bApp.searchSignal(srcSig);
+			if(sig)
+			{
+				AFB_NOTICE("Attaching %s to %s", id_.c_str(), srcSig.c_str());
+				sig->attach(this);
+				continue;
+			}
+			AFB_WARNING("Can't attach. Is %s exists ?", srcSig.c_str());
+		}
+	}
+}
+
+void Signal::notify()
+{
+	for (int i = 0; i < Observers_.size(); ++i)
+	  Observers_[i]->update(timestamp_, value_);
+}
+
+int Signal::recursionCheck(const std::string& origId)
 {
 	for (const auto& obs: Observers_)
 	{
-		if( id_ == obs.id())
+		if( id_ == obs->id())
 			{return -1;}
-		if(! obs.recursionCheck(id_))
+		if( origId == obs->id())
+			{return -1;}
+		if(! obs->recursionCheck(origId))
 			{return -1;}
 	}
 	return 0;
 }
 
-void update(double timestamp, double value)
+int Signal::recursionCheck()
 {
-	AFB_NOTICE("Got an update from observed signal");
+	for (const auto& obs: Observers_)
+	{
+		if( id_ == obs->id())
+			{return -1;}
+		if( obs->recursionCheck(id_))
+			{return -1;}
+	}
+	return 0;
 }

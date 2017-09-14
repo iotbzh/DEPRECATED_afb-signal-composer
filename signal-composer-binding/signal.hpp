@@ -19,40 +19,43 @@
 
 #include <map>
 #include <string>
-#include <memory>
 #include <vector>
 #include <ctl-config.h>
 
-#include "observer.hpp"
+class bindingApp;
 
-class Signal;
-
-//TODO: claneys: define observer and observable interface then inherit
-class Signal: public Observer, public Subject
+class Signal
 {
 private:
 	std::string id_;
-	std::vector<std::string> sources_;
-	std::map<long, double> history_; ///< history_ - Hold signal value history in map with <timestamp, value>
+	std::vector<std::string> sourcesSig_;
+	long long int timestamp_;
+	double value_;
+	std::map<long long int, double> history_; ///< history_ - Hold signal value history in map with <timestamp, value>
 	double frequency_;
 	std::string unit_;
 	CtlActionT* onReceived_;
+	std::vector<Signal*> Observers_;
 
-	std::vector<std::shared_ptr<Signal>> observers_;
-
+	void attach(Signal *obs);
 	int recursionCheck(const std::string& origId);
+
 public:
-	Signal();
 	Signal(const std::string& id, std::vector<std::string>& sources, const std::string& unit, double frequency, CtlActionT* onReceived);
 	explicit operator bool() const;
+	bool operator==(const Signal& other) const;
+	bool operator==(const std::string& aName) const;
 
 	std::string id() const;
 
-	int recursionCheck();
-	/* virtual */ void update(double timestamp, double value);
+	void update(long long int timestamp, double value);
+	int onReceivedCB(json_object *queryJ);
+	void attachToSources(bindingApp& bApp);
+	void notify();
 
-	virtual double average() const;
-	virtual double min() const;
-	virtual double max() const;
-	double lastValue() const;
+	//virtual double average() const;
+	//virtual double min() const;
+	//virtual double max() const;
+	//double lastValue() const;
+	int recursionCheck();
 };

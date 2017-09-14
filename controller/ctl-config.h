@@ -75,11 +75,11 @@ typedef struct {
 } DispatchHandleT;
 
 typedef struct ConfigSectionS {
-  const char *key;
-  const char *label;
-  const char *info;
-  int (*loadCB)(struct ConfigSectionS *section, json_object *sectionJ);
-  void *handle;
+    const char *key;
+    const char *label;
+    const char *info;
+    int (*loadCB)(struct ConfigSectionS *section, json_object *sectionJ);
+    void *handle;
 } CtlSectionT;
 
 typedef struct {
@@ -88,6 +88,7 @@ typedef struct {
     const char *info;
     const char *version;
     json_object *requireJ;
+    json_object *filesJ;
     CtlSectionT *sections;
 } CtlConfigT;
 

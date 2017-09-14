@@ -15,16 +15,21 @@
  * limitations under the License.
 */
 
+#include <string.h>
+
 #include "signal-composer.hpp"
 
 CtlSectionT bindingApp::ctlSections_[] = {
-	[0]={.key="sources" ,.label = "sources", .info=nullptr,
-		 .loadCB=loadSources,
+	[0]={.key="plugins" ,.label = "plugins", .info=nullptr,
+		.loadCB=PluginConfig,
+		.handle=nullptr},
+	[1]={.key="sources" ,.label = "sources", .info=nullptr,
+		 .loadCB=loadSourcesAPI,
 		 .handle=nullptr},
-	[1]={.key="signals" , .label= "signals", .info=nullptr,
+	[2]={.key="signals" , .label= "signals", .info=nullptr,
 		 .loadCB=loadSignals,
 		 .handle=nullptr},
-	[2]={.key=nullptr, .label=nullptr, .info=nullptr,
+	[3]={.key=nullptr, .label=nullptr, .info=nullptr,
 		 .loadCB=nullptr,
 		 .handle=nullptr}
 };
@@ -32,9 +37,16 @@ CtlSectionT bindingApp::ctlSections_[] = {
 bindingApp::bindingApp()
 {}
 
-void bindingApp::loadConfig(const std::string& filepath)
+bindingApp::~bindingApp()
+{
+	free(ctlConfig_);
+}
+
+int bindingApp::loadConfig(const std::string& filepath)
 {
 	ctlConfig_ = CtlConfigLoad(filepath.c_str(), ctlSections_);
+	if(ctlConfig_ != nullptr) {return 0;}
+	return -1;
 }
 
 bindingApp& bindingApp::instance()
@@ -43,7 +55,7 @@ bindingApp& bindingApp::instance()
 	return bApp;
 }
 
-Source* bindingApp::getSource(const std::string& api)
+SourceAPI* bindingApp::getSourceAPI(const std::string& api)
 {
 	for(auto& source: sourcesList_)
 	{
@@ -53,46 +65,53 @@ Source* bindingApp::getSource(const std::string& api)
 	return nullptr;
 }
 
-CtlActionT* bindingApp::convert2Action(const std::string& name, json_object* action)
+CtlActionT* bindingApp::convert2Action(const std::string& name, json_object* actionJ)
 {
-	json_object *functionArgsJ = nullptr;
-	const char* function;
+	json_object *functionArgsJ = nullptr, *action = nullptr;
+	char *function;
+	const char *plugin;
 
-	if(action &&
-		wrap_json_unpack(action, "{ss,s?o !}", "function", &function, "args", &functionArgsJ))
+	if(actionJ &&
+		!wrap_json_unpack(actionJ, "{ss,s?s,s?o !}", "function", &function,
+			"plugin", &plugin,
+			"args", &functionArgsJ))
 	{
-		std::string functionS = function;
-		json_object* action = nullptr;
-		ssize_t sep;
-		if(functionS.find("lua") != std::string::npos)
+		action = nullptr;
+		if(::strcasestr(function, "lua"))
 		{
-			wrap_json_pack(&action, "{ss,s?s,s?o,s?s,s?s,s?s,s?o !}",
-			"label", name,
+			wrap_json_pack(&action, "{ss,ss,so*}",
+			"label", name.c_str(),
 			"lua", function,
 			"args", functionArgsJ);
 		}
-		else if( (sep = functionS.find_first_of("/")) != std::string::npos)
+		else if(strstr(function, "/"))
 		{
-			std::string api  = functionS.substr(0, sep);
-			std::string verb = functionS.substr(sep);
-			wrap_json_pack(&action, "{ss,s?s,s?o,s?s,s?s,s?s,s?o !}",
-			"label", name,
+			const char* api = strsep(&function, "/");
+			//std::string api  = functionS.substr(0, sep);
+			//std::string verb = functionS.substr(sep);
+			wrap_json_pack(&action, "{ss,ss,ss,so*}",
+			"label", name.c_str(),
 			"api", api,
-			"verb", verb,
+			"verb", function,
 			"args", functionArgsJ);
 		}
 		else
 		{
-			wrap_json_pack(&action, "{ss,s?s,s?o,s?s,s?s,s?s,s?o !}",
-			"label", name,
-			"callback", function,
-			"args", functionArgsJ);
+			json_object *callbackJ = nullptr;
+			wrap_json_pack(&callbackJ, "{ss,ss,so*}",
+				"plugin", plugin,
+				"function", function,
+				"args", functionArgsJ);
+			wrap_json_pack(&action, "{ss,so}",
+				"label", name.c_str(),
+				"callback", callbackJ);
 		}
 	}
-	return ActionLoad(action);
+	if(action) {return ActionLoad(action);}
+	return nullptr;
 }
 
-int bindingApp::loadOneSource(json_object* sourceJ)
+int bindingApp::loadOneSourceAPI(json_object* sourceJ)
 {
 	json_object *initJ = nullptr, *getSignalJ = nullptr;
 	CtlActionT *initCtl, *getSignalCtl;
@@ -109,44 +128,53 @@ int bindingApp::loadOneSource(json_object* sourceJ)
 		return err;
 	}
 
-	initCtl = convert2Action("init", initJ);
-	getSignalCtl =convert2Action("getSignal", getSignalJ);
+	if(ctlConfig_ && ctlConfig_->requireJ)
+	{
+		const char* requireS = json_object_to_json_string(ctlConfig_->requireJ);
+		if(!strcasestr(requireS, api))
+			{AFB_WARNING("Caution! You don't specify the API source as required in the metadata section. This API '%s' may not be initialized", api);}
+	}
 
-	sourcesList_.push_back(Source(api, info, initCtl, getSignalCtl));
+	if(initJ) {initCtl = convert2Action("init", initJ);}
+	if(getSignalJ) {getSignalCtl = convert2Action("getSignal", getSignalJ);}
+
+	sourcesList_.push_back(SourceAPI(api, info, initCtl, getSignalCtl));
 
 	return err;
 }
 
-int bindingApp::loadSources(CtlSectionT* section, json_object *sourcesJ)
+int bindingApp::loadSourcesAPI(CtlSectionT* section, json_object *sourcesJ)
 {
 	int err = 0;
 	bindingApp& bApp = instance();
-	// add the signal composer itself as source
 	json_object *sigCompJ = nullptr;
-	wrap_json_pack(&sigCompJ, "{ss,ss,so,so !}",
-	"api", "signal-composer",
-	"info", "Api on behalf the virtual signals are sent",
-	"init", nullptr,
-	"getSignal", nullptr);
 
-	json_object_array_add(sourcesJ, sigCompJ);
-
-	if (json_object_get_type(sourcesJ) == json_type_array)
+	// add the signal composer itself as source
+	if(sourcesJ)
 	{
-		int count = json_object_array_length(sourcesJ);
+		wrap_json_pack(&sigCompJ, "{ss,ss}",
+		"api", "signal-composer",
+		"info", "Api on behalf the virtual signals are sent");
 
-		for (int idx = 0; idx < count; idx++)
+		json_object_array_add(sourcesJ, sigCompJ);
+
+		if (json_object_get_type(sourcesJ) == json_type_array)
 		{
-			json_object *sourceJ = json_object_array_get_idx(sourcesJ, idx);
-			err = bApp.loadOneSource(sourceJ);
-			if (err) return err;
+			int count = json_object_array_length(sourcesJ);
+
+			for (int idx = 0; idx < count; idx++)
+			{
+				json_object *sourceJ = json_object_array_get_idx(sourcesJ, idx);
+				err = bApp.loadOneSourceAPI(sourceJ);
+				if (err) return err;
+			}
 		}
-	}
-	else
-	{
-		if ((err = bApp.loadOneSource(sourcesJ))) return err;
-		if ((err = bApp.loadOneSource(sigCompJ))) return err;
-	}
+		else
+		{
+			if ((err = bApp.loadOneSourceAPI(sourcesJ))) return err;
+			if (sigCompJ && (err = bApp.loadOneSourceAPI(sigCompJ))) return err;
+		}
+}
 
 	return err;
 }
@@ -172,7 +200,7 @@ int bindingApp::loadOneSignal(json_object* signalJ)
 			"onReceived", &onReceivedJ);
 	if (err)
 	{
-		AFB_ERROR("Missing something id|source|class|[unit]|[frequency]|onReceived in %s", json_object_get_string(signalJ));
+		AFB_ERROR("Missing something id|source|[class]|[unit]|[frequency]|[onReceived] in %s", json_object_get_string(signalJ));
 		return err;
 	}
 
@@ -183,7 +211,7 @@ int bindingApp::loadOneSignal(json_object* signalJ)
 		int count = json_object_array_length(sourcesJ);
 		for(int i = 0; i < count; i++)
 		{
-			std::string sourceStr = json_object_get_string(sourcesJ);
+			std::string sourceStr = json_object_get_string(json_object_array_get_idx(sourcesJ, i));
 			if( (sep = sourceStr.find("/")) != std::string::npos)
 			{
 				AFB_ERROR("Signal composition needs to use signal 'id', don't use full low level signal name");
@@ -203,12 +231,13 @@ int bindingApp::loadOneSignal(json_object* signalJ)
 	}
 
 	// Set default sClass is not specified
-	sClass = "state";
+	sClass = !sClass ? "state" : sClass;
+	unit = !unit ? "" : unit;
 
 	// Get an action handler
 	onReceivedCtl = convert2Action("onReceived", onReceivedJ);
 
-	Source* src = getSource(api);
+	SourceAPI* src = getSourceAPI(api) ? getSourceAPI(api):getSourceAPI("signal-composer");
 	if( src != nullptr)
 		{src->addSignal(id, sourcesV, sClass, unit, frequency, onReceivedCtl);}
 	else
@@ -237,6 +266,28 @@ int bindingApp::loadSignals(CtlSectionT* section, json_object *signalsJ)
 		{err = bApp.loadOneSignal(signalsJ);}
 
 	return err;
+}
+
+std::shared_ptr<Signal> bindingApp::searchSignal(const std::string& aName)
+{
+	std::string api;
+	size_t sep = aName.find_first_of("/");
+	if(sep != std::string::npos)
+	{
+		api = aName.substr(0, sep);
+		SourceAPI* source = getSourceAPI(api);
+		return source->searchSignal(aName);
+	}
+	else
+	{
+		std::vector<std::shared_ptr<Signal>> allSignals = getAllSignals();
+		for (std::shared_ptr<Signal>& sig : allSignals)
+		{
+			if(sig->id() == aName)
+				{return sig;}
+		}
+	}
+	return nullptr;
 }
 
 std::vector<std::shared_ptr<Signal>> bindingApp::getAllSignals()

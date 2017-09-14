@@ -15,6 +15,7 @@
  * limitations under the License.
 */
 
+#include <string>
 #include <string.h>
 // afb-utilities
 #include <wrap-json.h>
@@ -29,6 +30,14 @@
 /// @brief callback for receiving message from low binding. Treatment itself is made in SigComp class.
 void onEvent(const char *event, json_object *object)
 {
+	AFB_DEBUG("Received event json: %s", json_object_to_json_string(object));
+	bindingApp& bApp = bindingApp::instance();
+
+	std::shared_ptr<Signal> sig = bApp.searchSignal(event);
+	if(sig != nullptr)
+	{
+		sig->onReceivedCB(object);
+	}
 }
 /// @brief entry point for client subscription request. Treatment itself is made in SigComp class.
 void subscribe(afb_req request)
@@ -55,20 +64,18 @@ void loadConf(afb_req request)
 	const char* confd;
 
 	wrap_json_unpack(args, "{s:s}", "path", &confd);
-	int ret = 0;
-	if( ret == 0)
+	if(true)
 		afb_req_success(request, NULL, NULL);
 	else
-		afb_req_fail_f(request, "Loading configuration or subscription error", "Error code: %d", ret);
+		afb_req_fail_f(request, "Loading configuration or subscription error", "Error code: -1");
 }
 
 /// @brief entry point for get requests. Treatment itself is made in SigComp class.
 void get(afb_req request)
 {
-	json_object *jobj;
 	if(true)
 	{
-		afb_req_success(request, jobj, NULL);
+		afb_req_success(request, NULL, NULL);
 	}
 	else
 	{
@@ -83,7 +90,7 @@ int loadConf()
 		sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) -1);
 
 	bindingApp& bApp = bindingApp::instance();
-	bApp.loadConfig(rootdir);
+	ret = bApp.loadConfig(rootdir);
 
 	#ifdef CONTROL_SUPPORT_LUA
 		ret += LuaConfigLoad();
@@ -98,6 +105,10 @@ int execConf()
 	int ret = CtlConfigExec(bApp.ctlConfig());
 	std::vector<std::shared_ptr<Signal>> allSignals = bApp.getAllSignals();
 	ssize_t sigCount = allSignals.size();
+	for( std::shared_ptr<Signal>& sig: allSignals)
+	{
+		sig->attachToSources(bApp);
+	}
 
 	for(auto& sig: allSignals)
 	{

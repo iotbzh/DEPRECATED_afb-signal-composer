@@ -18,12 +18,10 @@
 #pragma once
 
 #include <memory>
-#include <ctl-config.h>
-#include <signal-composer-binding.hpp>
 
 #include "signal.hpp"
 
-class Source {
+class SourceAPI {
 private:
 	std::string api_;
 	std::string info_;
@@ -33,10 +31,12 @@ private:
 	std::vector<std::shared_ptr<Signal>> signals_;
 
 public:
-	Source();
-	Source(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal);
+	SourceAPI();
+	SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal);
 
-	std::string api();
+	std::string api() const;
 	void addSignal(const std::string& id, std::vector<std::string>& sources, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived);
-	std::vector<std::shared_ptr<Signal>> getSignals();
+
+	std::vector<std::shared_ptr<Signal>> getSignals() const;
+	std::shared_ptr<Signal> searchSignal(const std::string& name) const;
 };

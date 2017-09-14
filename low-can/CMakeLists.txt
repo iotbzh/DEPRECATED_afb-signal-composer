@@ -1,8 +1,7 @@
 ###########################################################################
 # Copyright 2015, 2016, 2017 IoT.bzh
 #
-# author: Fulup Ar Foll <fulup@iot.bzh>
-# contrib: Romain Forlot <romain.forlot@iot.bzh>
+# author: Romain Forlot <romain.forlot@iot.bzh>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,27 +16,25 @@
 # limitations under the License.
 ###########################################################################
 
-# Add target to project dependency list
-PROJECT_TARGET_ADD(signal-composer)
 
-	# Define project Targets
-	add_library(${TARGET_NAME} MODULE ${TARGET_NAME}-binding.cpp ${TARGET_NAME}.cpp source.cpp signal.cpp)
 
-	# Binder exposes a unique public entry point
-	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
-		PREFIX "afb-"
-		LABELS "BINDINGV2"
-		LINK_FLAGS ${BINDINGS_LINK_FLAG}
-		OUTPUT_NAME ${TARGET_NAME}
-	)
+PROJECT_TARGET_ADD(doors)
 
-	TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME}
-		PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-	)
+    # Define targets
+    ADD_LIBRARY(${TARGET_NAME} MODULE ${TARGET_NAME}.c)
 
-	# Library dependencies (include updates automatically)
-	TARGET_LINK_LIBRARIES(${TARGET_NAME}
-		afb-utilities
-		afb-controller
-		${link_libraries}
-	)
+    # Alsa Plugin properties
+    SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+        LABELS "PLUGIN"
+        PREFIX ""
+        SUFFIX ".ctlso"
+        OUTPUT_NAME ${TARGET_NAME}
+    )
+
+    # Library dependencies (include updates automatically)
+    TARGET_LINK_LIBRARIES(${TARGET_NAME}
+        afb-utilities
+        ${link_libraries}
+    )
+
+    include_directories("../controller")

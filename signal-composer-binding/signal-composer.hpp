@@ -19,12 +19,8 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <ctl-config.h>
-#include <json-c/json.h>
-#include <systemd/sd-event.h>
 
 #include "source.hpp"
-#include "signal-composer-binding.hpp"
 
 class bindingApp
 {
@@ -32,7 +28,7 @@ private:
 	CtlConfigT* ctlConfig_;
 
 	static CtlSectionT ctlSections_[]; ///< Config Section definition (note: controls section index should match handle retrieval in)
-	std::vector<Source> sourcesList_;
+	std::vector<SourceAPI> sourcesList_;
 
 	explicit bindingApp(const std::string& filepath);
 	bindingApp();
@@ -40,19 +36,19 @@ private:
 
 	CtlActionT* convert2Action(const std::string& name, json_object* action);
 
-	int loadOneSource(json_object* sourcesJ);
-	static int loadSources(CtlSectionT* section, json_object *sectionJ);
+	int loadOneSourceAPI(json_object* sourcesJ);
+	static int loadSourcesAPI(CtlSectionT* section, json_object *sectionJ);
 
 	int loadOneSignal(json_object* signalsJ);
 	static int loadSignals(CtlSectionT* section, json_object *sectionJ);
 
-	Source* getSource(const std::string& api);
-
 public:
 	static bindingApp& instance();
-	void loadConfig(const std::string& filepath);
-	void loadSignalsFile(std::string signalsFile);
+	int loadConfig(const std::string& filepath);
+	//void loadSignalsFile(std::string signalsFile);
 
+	SourceAPI* getSourceAPI(const std::string& api);
+	std::shared_ptr<Signal> searchSignal(const std::string& aName);
 	std::vector<std::shared_ptr<Signal>> getAllSignals();
 	CtlConfigT* ctlConfig();
 };

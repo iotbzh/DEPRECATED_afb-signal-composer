@@ -44,8 +44,7 @@ int PluginGetCB (CtlActionT *action , json_object *callbackJ) {
         goto OnErrorExit;
     }
 
-
-    int err = wrap_json_unpack(callbackJ, "{ss,ss,s?s,s?o!}", "plugin", &plugin, "function", &function, "args", &argsJ);
+    int err = wrap_json_unpack(callbackJ, "{ss,ss,s?o!}", "plugin", &plugin, "function", &function, "args", &argsJ);
     if (err) {
         AFB_ERROR("PluginGet missing plugin|function|[args] in %s", json_object_get_string(callbackJ));
         goto OnErrorExit;
@@ -87,7 +86,8 @@ STATIC int DispatchOneL2c(lua_State* luaState, char *funcname, Lua2cFunctionT ca
 
 STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* handle) {
     json_object *lua2csJ = NULL, *actionsJ = NULL;
-    const char*ldSearchPath = NULL, *basename = NULL;
+    const char *basename = NULL;
+    char *ldSearchPath = NULL;
     void *dlHandle;
 
 
@@ -95,15 +95,23 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
     if (!pluginJ) return 0;
 
     int err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?s,ss,s?o,s?o!}",
-            "label", &ctlPlugin->label,  "version", &ctlPlugin->version, "info", &ctlPlugin->info, "ldpath", &ldSearchPath, "basename", &basename, "lua2c", &lua2csJ, "actions", &actionsJ);
+            "label", &ctlPlugin->label,
+            "version", &ctlPlugin->version,
+            "info", &ctlPlugin->info,
+            "ldpath", &ldSearchPath,
+            "basename", &basename,
+            "lua2c", &lua2csJ,
+            "actions", &actionsJ);
     if (err) {
         AFB_ERROR("CTL-PLUGIN-LOADONE Plugin missing label|basename|version|[info]|[ldpath]|[lua2c]|[actions] in:\n-- %s", json_object_get_string(pluginJ));
         goto OnErrorExit;
     }
 
     // if search path not in Json config file, then try default binding dir
-    ldSearchPath = getenv("CONTROL_PLUGIN_PATH");
-    if (!ldSearchPath) ldSearchPath = strncat(GetBindingDirPath(), "/lib", sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) - 1);
+    if (!ldSearchPath) ldSearchPath = getenv("CONTROL_PLUGIN_PATH");
+    if (!ldSearchPath) {
+        ldSearchPath = strncat(GetBindingDirPath(), "/lib", sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) - 1);
+    }
 
     // search for default policy config file
     json_object *pluginPathJ = ScanForConfig(ldSearchPath, CTL_SCAN_RECURSIVE, basename, CTL_PLUGIN_EXT);
@@ -145,7 +153,7 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
     // store dlopen handle to enable onload action at exec time
     ctlPlugin->dlHandle = dlHandle;
 
-    // Jose hack to make verbosity visible from sharelib
+    // Jose hack to make verbosity visible from sharedlib
     struct afb_binding_data_v2 *afbHidenData = dlsym(dlHandle, "afbBindingV2data");
     if (afbHidenData) *afbHidenData = afbBindingV2data;
 
@@ -207,7 +215,6 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
 OnErrorExit:
     return 1;
 }
-
 
 int PluginConfig(CtlSectionT *section, json_object *pluginsJ) {
     int err=0;

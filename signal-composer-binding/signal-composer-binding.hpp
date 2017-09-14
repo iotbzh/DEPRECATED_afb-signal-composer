@@ -1,8 +1,5 @@
 #pragma once
 
-#include <systemd/sd-event.h>
-#include <ctl-config.h>
-
 extern "C"
 {
 	#define AFB_BINDING_VERSION 2

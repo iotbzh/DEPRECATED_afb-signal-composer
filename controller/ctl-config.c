@@ -28,12 +28,16 @@
 
 // Load control config file
 
-char* CtlConfigSearch(const char *dirList) {
+char* CtlConfigSearch(const char *dirList, const char* fileName) {
     int index;
     char controlFile [CONTROL_MAXPATH_LEN];
 
-    strncpy(controlFile, CONTROL_CONFIG_PRE "-", CONTROL_MAXPATH_LEN);
-    strncat(controlFile, GetBinderName(), CONTROL_MAXPATH_LEN);
+    if(fileName) {
+        strncpy(controlFile, fileName, CONTROL_MAXPATH_LEN);
+    } else {
+        strncpy(controlFile, CONTROL_CONFIG_PRE "-", CONTROL_MAXPATH_LEN);
+        strncat(controlFile, GetBinderName(), CONTROL_MAXPATH_LEN);
+    }
 
     // search for default dispatch config file
     json_object* responseJ = ScanForConfig(dirList, CTL_SCAN_RECURSIVE, controlFile, ".json");
@@ -97,9 +101,6 @@ int CtlConfigExec(CtlConfigT *ctlConfig) {
         errcount += ctlConfig->sections[idx].loadCB(&ctlConfig->sections[idx], NULL);
     }
     return errcount;
-
-OnErrorExit:
-    return 1;
 }
 
 CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
@@ -112,18 +113,22 @@ CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
     if (err) goto OnErrorExit;
 #endif
 
-    // Search for config in filepath
-    filepath = CtlConfigSearch(filepath);
-
-    if (!filepath) {
-        AFB_ERROR("CTL-LOAD-CONFIG No JSON Config found invalid JSON %s ", filepath);
-        goto OnErrorExit;
+    json_object* loadJSON(const char* fileName)
+    {
+        // Search for config in filepath
+        const char* filepathFound = CtlConfigSearch(filepath, fileName);
+        if(!filepathFound)
+        {
+            AFB_ERROR("CTL-LOAD-CONFIG No JSON Config found in %s", filepath);
+            return NULL;
+        }
+        return json_object_from_file(filepathFound);
     }
 
     // Load JSON file
-    ctlConfigJ = json_object_from_file(filepath);
+    ctlConfigJ = loadJSON(NULL);
     if (!ctlConfigJ) {
-        AFB_ERROR("CTL-LOAD-CONFIG Not invalid JSON %s ", filepath);
+        AFB_ERROR("CTL-LOAD-CONFIG Invalid JSON %s ", filepath);
         goto OnErrorExit;
     }
 
@@ -132,9 +137,13 @@ CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
     json_object *metadataJ;
     int done = json_object_object_get_ex(ctlConfigJ, "metadata", &metadataJ);
     if (done) {
-        CtlConfigT *ctlConfig = calloc(1, sizeof (CtlConfigT));
-        err = wrap_json_unpack(metadataJ, "{ss,ss,ss,s?s,s?o !}", "label", &ctlConfig->label, "version", &ctlConfig->version
-                , "api", &ctlConfig->api, "info", &ctlConfig->info, "require", &ctlConfig->requireJ);
+        err = wrap_json_unpack(metadataJ, "{ss,ss,ss,s?s,s?o,s?o !}",
+        "label", &ctlConfig->label,
+        "version", &ctlConfig->version,
+        "api", &ctlConfig->api,
+        "info", &ctlConfig->info,
+        "require", &ctlConfig->requireJ,
+		"files",&ctlConfig->filesJ);
         if (err) {
             AFB_ERROR("CTL-LOAD-CONFIG:METADATA Missing something label|api|version|[info]|[require] in:\n-- %s", json_object_get_string(metadataJ));
             goto OnErrorExit;
@@ -145,22 +154,52 @@ CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
             err = afb_daemon_rename_api(ctlConfig->api);
             if (err) AFB_WARNING("Fail to rename api to:%s", ctlConfig->api);
         }
-
     }
 
     //load config sections
     err = 0;
     ctlConfig->sections = sections;
+
     for (int idx = 0; sections[idx].key != NULL; idx++) {
         json_object * sectionJ;
         int done = json_object_object_get_ex(ctlConfigJ, sections[idx].key, &sectionJ);
         if (!done) {
-            AFB_ERROR("CtlConfigLoad: fail to find '%s' section in config '%s'", sections[idx].key, filepath);
-            err++;
+            json_object* configJ = NULL;
+            const char* fileName;
+            AFB_DEBUG("CtlConfigLoad: fail to find '%s' section in config '%s'. Searching deeper", sections[idx].key, filepath);
+            if (json_object_get_type(ctlConfig->filesJ) == json_type_array) {
+                int filesEnd = json_object_array_length(ctlConfig->filesJ);
+                for (int jdx = 0; jdx < filesEnd; jdx++) {
+                    fileName = json_object_get_string(json_object_array_get_idx(ctlConfig->filesJ, jdx));
+                    configJ = loadJSON(fileName);
+                    if(json_object_object_get_ex(configJ, sections[idx].key, &sectionJ))
+                    {
+                        const char* k = sections[idx].key;
+                        err += sections[idx].loadCB(&sections[idx], sectionJ);
+                        done++;
+                    }
+                }
+                if(!done) {
+                    AFB_ERROR("CtlConfigLoad: fail to find '%s' section in config '%s' with '%s' in its name", sections[idx].key, filepath, fileName);
+                    err++;
+                }
+                if(err) {goto OnErrorExit;}
+            } else {
+                fileName = json_object_get_string(ctlConfig->filesJ);
+                configJ = loadJSON(fileName);
+                if(json_object_object_get_ex(configJ, sections[idx].key, &sectionJ)) {
+                    err += sections[idx].loadCB(&sections[idx], sectionJ);
+                    done++;
+                }
+                else {
+                    AFB_ERROR("CtlConfigLoad: fail to find '%s' section in config '%s' with '%s' in its name", sections[idx].key, filepath, fileName);
+                    err++;
+                }
+                if(err) {goto OnErrorExit;}
+            }
         } else {
             err += sections[idx].loadCB(&sections[idx], sectionJ);
         }
-
     }
     if (err) goto OnErrorExit;
 

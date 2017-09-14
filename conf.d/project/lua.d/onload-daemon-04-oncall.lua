@@ -22,7 +22,7 @@
 _count=0
 
 -- Display receive arguments and echo them to caller
-function _Simple_Echo_Args (request, args)
+function _LUA_Simple_Echo_Args (request, args)
     _count=_count+1
     AFB:notice("LUA OnCall Echo Args count=%d args=%s", count, args)
 
