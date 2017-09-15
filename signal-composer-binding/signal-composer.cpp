@@ -114,7 +114,7 @@ CtlActionT* bindingApp::convert2Action(const std::string& name, json_object* act
 int bindingApp::loadOneSourceAPI(json_object* sourceJ)
 {
 	json_object *initJ = nullptr, *getSignalJ = nullptr;
-	CtlActionT *initCtl, *getSignalCtl;
+	CtlActionT *initCtl = nullptr, *getSignalCtl = nullptr;
 	const char *api, *info;
 
 	int err = wrap_json_unpack(sourceJ, "{ss,s?s,s?o,s?o !}",
@@ -205,7 +205,6 @@ int bindingApp::loadOneSignal(json_object* signalJ)
 	}
 
 	// Process sources JSON object
-	// TODO: claneys, really needs to factorize JSON array processing
 	if (json_object_get_type(sourcesJ) == json_type_array)
 	{
 		int count = json_object_array_length(sourcesJ);
@@ -251,19 +250,22 @@ int bindingApp::loadSignals(CtlSectionT* section, json_object *signalsJ)
 	int err = 0;
 	bindingApp& bApp = instance();
 
-	if (json_object_get_type(signalsJ) == json_type_array)
+	if(signalsJ)
 	{
-		int count = json_object_array_length(signalsJ);
-
-		for (int idx = 0; idx < count; idx++)
+		if (json_object_get_type(signalsJ) == json_type_array)
 		{
-			json_object *signalJ = json_object_array_get_idx(signalsJ, idx);
-			err = bApp.loadOneSignal(signalJ);
-			if (err) return err;
+			int count = json_object_array_length(signalsJ);
+
+			for (int idx = 0; idx < count; idx++)
+			{
+				json_object *signalJ = json_object_array_get_idx(signalsJ, idx);
+				err = bApp.loadOneSignal(signalJ);
+				if (err) return err;
+			}
 		}
+		else
+			{err = bApp.loadOneSignal(signalsJ);}
 	}
-	else
-		{err = bApp.loadOneSignal(signalsJ);}
 
 	return err;
 }
@@ -305,4 +307,17 @@ std::vector<std::shared_ptr<Signal>> bindingApp::getAllSignals()
 CtlConfigT* bindingApp::ctlConfig()
 {
 	return ctlConfig_;
+}
+
+int bindingApp::execSubscription() const
+{
+	int err = 0;
+	for(const SourceAPI& srcAPI: sourcesList_)
+	{
+		if (srcAPI.api() != std::string(ctlConfig_->api))
+		{
+			err += srcAPI.makeSubscription();
+		}
+	}
+	return err;
 }

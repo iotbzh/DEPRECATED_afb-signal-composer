@@ -85,41 +85,44 @@ void get(afb_req request)
 
 int loadConf()
 {
-	int ret = 0;
+	int err = 0;
 	const char* rootdir = strncat(GetBindingDirPath(), "/etc",
 		sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) -1);
 
 	bindingApp& bApp = bindingApp::instance();
-	ret = bApp.loadConfig(rootdir);
+	err = bApp.loadConfig(rootdir);
 
 	#ifdef CONTROL_SUPPORT_LUA
-		ret += LuaConfigLoad();
+		err += LuaConfigLoad();
 	#endif
 
-	return ret;
+	return err;
 }
 
 int execConf()
 {
 	bindingApp& bApp = bindingApp::instance();
-	int ret = CtlConfigExec(bApp.ctlConfig());
+	int err = 0;
+	CtlConfigExec(bApp.ctlConfig());
 	std::vector<std::shared_ptr<Signal>> allSignals = bApp.getAllSignals();
 	ssize_t sigCount = allSignals.size();
 	for( std::shared_ptr<Signal>& sig: allSignals)
 	{
-		sig->attachToSources(bApp);
+		sig->attachToSourceSignals(bApp);
 	}
 
 	for(auto& sig: allSignals)
 	{
-		if( (ret = sig->recursionCheck()) )
+		if( (err += sig->recursionCheck()) )
 		{
 			AFB_ERROR("There is an infinite recursion loop in your signals definition. Root coming from signal: %s", sig->id().c_str());
-			return ret;
+			return err;
 		}
 	}
 
+	bApp.execSubscription();
+
 	AFB_DEBUG("Signal Composer Control configuration Done.\n signals=%d", (int)sigCount);
 
-	return ret;
+	return err;
 }

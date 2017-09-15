@@ -10,10 +10,10 @@
 	},
 	"plugins": [
 		{
-			"label": "Door handle",
+			"label": "low-can-callbacks",
 			"version": "1.0",
-			"info": "Manage all doors and windows status",
-			"basename": "doors"
+			"info": "Manage interaction with low-can service",
+			"basename": "low-can"
 		}
 	]
 }

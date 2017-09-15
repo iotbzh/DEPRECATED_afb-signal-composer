@@ -33,19 +33,39 @@ void SourceAPI::addSignal(const std::string& id, std::vector<std::string>& sourc
 {
 	std::shared_ptr<Signal> sig = std::make_shared<Signal>(id, sources, unit, frequency, onReceived);
 
-	signals_.push_back(sig);
+	signalsList_.push_back(sig);
 }
 
 std::vector<std::shared_ptr<Signal>> SourceAPI::getSignals() const
 {
-	return signals_;
+	return signalsList_;
 }
 
 std::shared_ptr<Signal> SourceAPI::searchSignal(const std::string& name) const
 {
-	for (auto& sig: signals_)
+	for (auto& sig: signalsList_)
 	{
 		if(*sig == name) {return sig;}
 	}
 	return nullptr;
+}
+
+int SourceAPI::makeSubscription() const
+{
+	int err = 0;
+	if(getSignal_)
+	{
+		for(std::shared_ptr<Signal> sig: signalsList_)
+		{
+			json_object* lowSignalNameJ = sig->toJSON();
+			if(!lowSignalNameJ)
+			{
+				AFB_ERROR("Error building JSON query object to subscribe to for signal %s", sig->id().c_str());
+				return -1;
+			}
+			err += ActionExecOne(getSignal_, lowSignalNameJ);
+		}
+	}
+
+	return err;
 }

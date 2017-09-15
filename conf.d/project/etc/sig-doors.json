@@ -39,7 +39,7 @@
 				"rear_left_door"
 			],
 			"onReceived": {
-				"plugin": "Door handle",
+				"plugin": "low-can-callbacks",
 				"function": "isOpen",
 				"args": {
 					"ojoi": "pok"
@@ -53,7 +53,7 @@
 				"rear_right_window"
 			],
 			"onReceived": {
-				"plugin": "Door handle",
+				"plugin": "low-can-callbacks",
 				"function": "isOpen",
 				"args": {}
 			}
@@ -65,7 +65,7 @@
 				"front_left_window"
 			],
 			"onReceived": {
-				"plugin": "Door handle",
+				"plugin": "low-can-callbacks",
 				"function": "isOpen",
 				"args": {}
 			}
@@ -77,7 +77,7 @@
 				"front_right_window"
 			],
 			"onReceived": {
-				"plugin": "Door handle",
+				"plugin": "low-can-callbacks",
 				"function": "isOpen",
 				"args": {}
 			}
@@ -95,7 +95,7 @@
 				"rear_right_window"
 			],
 			"onReceived": {
-				"plugin": "Door handle",
+				"plugin": "low-can-callbacks",
 				"function": "isOpen",
 				"args": {
 					"evtname": "doors.open"

@@ -28,7 +28,6 @@
 int ActionExecOne(CtlActionT* action, json_object *queryJ) {
     int err;
 
-
     switch (action->type) {
         case CTL_TYPE_API:
         {
@@ -146,7 +145,7 @@ OnErrorExit:
 };
 
 CtlActionT *ActionLoad(json_object *actionsJ) {
-    int err;
+    int err = 0;
     CtlActionT *actions;
 
     // action array is close with a nullvalue;

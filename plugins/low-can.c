@@ -51,6 +51,51 @@ CTLP_ONLOAD(plugin, api) {
 	return (void*)allDoorCtx;
 }
 
+CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
+	json_object* signalArrayJ = NULL, *subscribeArgsJ = NULL, *subscribeFilterJ = NULL, *responseJ = NULL;
+	const char* unit = NULL;
+	double frequency = 0;
+	int err = 0;
+
+	err = wrap_json_unpack(eventJ, "{so,s?s,s?F !}",
+		"signal", &signalArrayJ,
+		"unit", &unit,
+		"frequency", &frequency);
+	if(err)
+	{
+		AFB_ERROR("Problem to unpack JSON object eventJ: %s",
+		json_object_to_json_string(eventJ));
+		return err;
+	}
+
+	if(frequency >= 0)
+	{
+		wrap_json_pack(&subscribeFilterJ, "{sf}", "frequency", frequency);
+	}
+
+	for (int idx = 0; idx < json_object_array_length(signalArrayJ); idx++)
+	{
+		json_object* aSignalJ = json_object_array_get_idx(signalArrayJ, idx);
+		err = wrap_json_pack(&subscribeArgsJ, "{ss, so*}",
+		"event", json_object_get_string(aSignalJ),
+		"filter", subscribeFilterJ);
+		if(err)
+		{
+			AFB_ERROR("Error building subscription query object");
+			return err;
+		}
+		AFB_DEBUG("Calling subscribe with %s", json_object_to_json_string_ext(subscribeArgsJ, JSON_C_TO_STRING_PRETTY));
+		err = afb_service_call_sync("low-can", "subscribe", subscribeArgsJ, &responseJ);
+		if(err)
+		{
+			AFB_ERROR("Can't find api 'low-can'");
+			return err;
+		}
+	}
+
+	return err;
+}
+
 CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
 
 	const char* eventName;

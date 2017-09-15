@@ -47,8 +47,10 @@ public:
 	int loadConfig(const std::string& filepath);
 	//void loadSignalsFile(std::string signalsFile);
 
+	CtlConfigT* ctlConfig();
+	std::vector<std::shared_ptr<Signal>> getAllSignals();
 	SourceAPI* getSourceAPI(const std::string& api);
 	std::shared_ptr<Signal> searchSignal(const std::string& aName);
-	std::vector<std::shared_ptr<Signal>> getAllSignals();
-	CtlConfigT* ctlConfig();
+
+	int execSubscription() const;
 };

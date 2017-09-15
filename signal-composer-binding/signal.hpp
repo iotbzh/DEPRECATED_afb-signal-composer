@@ -28,7 +28,7 @@ class Signal
 {
 private:
 	std::string id_;
-	std::vector<std::string> sourcesSig_;
+	std::vector<std::string> signalSigList_;
 	long long int timestamp_;
 	double value_;
 	std::map<long long int, double> history_; ///< history_ - Hold signal value history in map with <timestamp, value>
@@ -46,11 +46,12 @@ public:
 	bool operator==(const Signal& other) const;
 	bool operator==(const std::string& aName) const;
 
-	std::string id() const;
+	const std::string id() const;
+	json_object* toJSON() const;
 
 	void update(long long int timestamp, double value);
 	int onReceivedCB(json_object *queryJ);
-	void attachToSources(bindingApp& bApp);
+	void attachToSourceSignals(bindingApp& bApp);
 	void notify();
 
 	//virtual double average() const;

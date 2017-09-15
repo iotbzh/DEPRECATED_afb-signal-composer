@@ -10,7 +10,8 @@
 				}
 		},
 			"getSignal": {
-				"function": "_LUA_Simple_Echo_Args",
+				"plugin": "low-can-callbacks",
+				"function": "subscribeToLow",
 				"args": {
 					"arg": "first argument"
 				}

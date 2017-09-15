@@ -153,10 +153,6 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
     // store dlopen handle to enable onload action at exec time
     ctlPlugin->dlHandle = dlHandle;
 
-    // Jose hack to make verbosity visible from sharedlib
-    struct afb_binding_data_v2 *afbHidenData = dlsym(dlHandle, "afbBindingV2data");
-    if (afbHidenData) *afbHidenData = afbBindingV2data;
-
     // Push lua2cWrapper @ into plugin
     Lua2cWrapperT *lua2cInPlug = dlsym(dlHandle, "Lua2cWrap");
 #ifndef CONTROL_SUPPORT_LUA
@@ -219,16 +215,31 @@ OnErrorExit:
 int PluginConfig(CtlSectionT *section, json_object *pluginsJ) {
     int err=0;
 
-    if (json_object_get_type(pluginsJ) == json_type_array) {
-        int length = json_object_array_length(pluginsJ);
-        ctlPlugins = calloc (length+1, sizeof(CtlPluginT));
-        for (int idx=0; idx < length; idx++) {
-            json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
-            err += PluginLoadOne(&ctlPlugins[idx], pluginJ, section->handle);
+    if (ctlPlugins)
+    {
+        int pluginsCount = (sizeof(ctlPlugins) / sizeof(CtlPluginT)) + 1;
+        for(int idx = 0; idx < pluginsCount; idx++)
+        {
+            // Jose hack to make verbosity visible from sharedlib and
+            // be able to call verb from others api inside the binder
+            struct afb_binding_data_v2 *afbHidenData = dlsym(ctlPlugins[idx].dlHandle, "afbBindingV2data");
+            if (afbHidenData) *afbHidenData = afbBindingV2data;
         }
-    } else {
-        ctlPlugins = calloc (2, sizeof(CtlPluginT));
-        err += PluginLoadOne(&ctlPlugins[0], pluginsJ, section->handle);
+        return 0;
+    }
+    else
+    {
+        if (json_object_get_type(pluginsJ) == json_type_array) {
+            int length = json_object_array_length(pluginsJ);
+            ctlPlugins = calloc (length+1, sizeof(CtlPluginT));
+            for (int idx=0; idx < length; idx++) {
+                json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
+                err += PluginLoadOne(&ctlPlugins[idx], pluginJ, section->handle);
+            }
+        } else {
+            ctlPlugins = calloc (2, sizeof(CtlPluginT));
+            err += PluginLoadOne(&ctlPlugins[0], pluginsJ, section->handle);
+        }
     }
 
     return err;

@@ -28,7 +28,7 @@ private:
 	CtlActionT* init_;
 	CtlActionT* getSignal_;
 
-	std::vector<std::shared_ptr<Signal>> signals_;
+	std::vector<std::shared_ptr<Signal>> signalsList_;
 
 public:
 	SourceAPI();
@@ -39,4 +39,6 @@ public:
 
 	std::vector<std::shared_ptr<Signal>> getSignals() const;
 	std::shared_ptr<Signal> searchSignal(const std::string& name) const;
+
+	int makeSubscription() const;
 };

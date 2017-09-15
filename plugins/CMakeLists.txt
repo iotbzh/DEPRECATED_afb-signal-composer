@@ -18,7 +18,7 @@
 
 
 
-PROJECT_TARGET_ADD(doors)
+PROJECT_TARGET_ADD(low-can)
 
     # Define targets
     ADD_LIBRARY(${TARGET_NAME} MODULE ${TARGET_NAME}.c)

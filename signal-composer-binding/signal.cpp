@@ -26,7 +26,7 @@ Signal::Signal(const std::string& id,
 			double frequency,
 			CtlActionT* onReceived)
 :id_(id),
- sourcesSig_(sources),
+ signalSigList_(sources),
  frequency_(frequency),
  unit_(unit),
  onReceived_(onReceived)
@@ -48,17 +48,46 @@ bool Signal::operator ==(const Signal& other) const
 bool Signal::operator==(const std::string& aName) const
 {
 	if(id_ == aName) {return true;}
-	for( const std::string& src : sourcesSig_)
+	for( const std::string& src : signalSigList_)
 	{
 		if(src == aName) {return true;}
 	}
 	return false;
 }
 
-std::string Signal::id() const
+const std::string Signal::id() const
 {
 	return id_;
 }
+
+json_object* Signal::toJSON() const
+{
+	json_object* queryJ = nullptr;
+	std::vector<std::string> lowSignalName;
+	for (const std::string& src: signalSigList_ )
+	{
+		ssize_t sep = src.find_first_of("/");
+		if(sep != std::string::npos)
+		{
+			lowSignalName.push_back(src.substr(sep+1));
+		}
+	}
+	json_object* nameArray = json_object_new_array();
+	for (const std::string& lowSig: lowSignalName)
+	{
+		json_object_array_add(nameArray, json_object_new_string(lowSig.c_str()));
+	}
+	/*json_object_object_add(queryJ, "signal", nameArray);
+	json_object_object_add(queryJ, "unit", json_object_new_string(unit_.c_str()));
+	json_object_object_add(queryJ, "unit", json_object_new_double(frequency_));*/
+	wrap_json_pack(&queryJ, "{so,ss*,sf*}",
+			"signal", nameArray,
+			"unit", unit_.c_str(),
+			"frequency", frequency_);
+
+	return queryJ;
+}
+
 void update(double timestamp, double value)
 {
 	AFB_NOTICE("Got an update from observed signal");
@@ -74,9 +103,9 @@ void Signal::attach(Signal* obs)
 	Observers_.push_back(obs);
 }
 
-void Signal::attachToSources(bindingApp& bApp)
+void Signal::attachToSourceSignals(bindingApp& bApp)
 {
-	for (const std::string& srcSig: sourcesSig_)
+	for (const std::string& srcSig: signalSigList_)
 	{
 		if(srcSig.find("/") == std::string::npos)
 		{
