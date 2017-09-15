@@ -47,7 +47,7 @@ CTLP_ONLOAD(plugin, api) {
 	allDoorsCtxT *allDoorCtx = (allDoorsCtxT*)calloc (1, sizeof(allDoorsCtxT));
 	memset(allDoorCtx, 0, sizeof(allDoorsCtxT));
 
-	AFB_NOTICE ("Low-can door plugin: label='%s' version='%s' info='%s'", plugin->label, plugin->version, plugin->info);
+	AFB_NOTICE ("Low-can plugin: label='%s' version='%s' info='%s'", plugin->label, plugin->version, plugin->info);
 	return (void*)allDoorCtx;
 }
 

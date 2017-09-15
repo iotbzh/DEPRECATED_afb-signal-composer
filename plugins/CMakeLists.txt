@@ -16,9 +16,28 @@
 # limitations under the License.
 ###########################################################################
 
-
-
 PROJECT_TARGET_ADD(low-can)
+
+    # Define targets
+    ADD_LIBRARY(${TARGET_NAME} MODULE ${TARGET_NAME}.c)
+
+    # Alsa Plugin properties
+    SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+        LABELS "PLUGIN"
+        PREFIX ""
+        SUFFIX ".ctlso"
+        OUTPUT_NAME ${TARGET_NAME}
+    )
+
+    # Library dependencies (include updates automatically)
+    TARGET_LINK_LIBRARIES(${TARGET_NAME}
+        afb-utilities
+        ${link_libraries}
+    )
+
+    include_directories("../controller")
+
+PROJECT_TARGET_ADD(gps)
 
     # Define targets
     ADD_LIBRARY(${TARGET_NAME} MODULE ${TARGET_NAME}.c)
