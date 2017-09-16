@@ -44,10 +44,16 @@
 #include <afb/afb-binding.h>
 
 #include <json-c/json.h>
-// standard lua include file
+
+#ifdef SUSE_LUA_INCDIR
+#include <lua5.3/lua.h>
+#include <lua5.3/lauxlib.h>
+#include <lua5.3/lualib.h>
+#else
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#endif
 
 #include "ctl-timer.h"
 #include "ctl-config.h"
