@@ -71,7 +71,7 @@ void loadConf(afb_req request)
 }
 
 /// @brief entry point for get requests. Treatment itself is made in SigComp class.
-void get(afb_req request)
+void list(afb_req request)
 {
 	if(true)
 	{
@@ -81,6 +81,34 @@ void get(afb_req request)
 	{
 		afb_req_fail(request, "error", NULL);
 	}
+}
+
+/// @brief entry point for get requests.
+void get(struct afb_req request)
+{
+	int err = 0;
+	struct json_object* args = nullptr, *ans = nullptr,
+	*options = nullptr;
+	const char* sig;
+
+	args = afb_req_json(request);
+
+	// Process about Raw CAN message on CAN bus directly
+	err = wrap_json_unpack(args, "{ss,s?o!}", "signals", &sig,
+			"options", &options);
+	if(err)
+	{
+		AFB_ERROR("Can't process your request '%s'. Valid arguments are: string for 'signal' and JSON object for 'options' (optionnal)", json_object_to_json_string_ext(args, JSON_C_TO_STRING_PRETTY));
+		afb_req_fail(request, "error", NULL);
+		return;
+	}
+
+	ans = bindingApp::instance().getSignalValue(sig, options);
+
+	if (ans)
+		afb_req_success(request, ans, NULL);
+	else
+		afb_req_fail(request, "error", NULL);
 }
 
 int loadConf()

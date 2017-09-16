@@ -285,7 +285,7 @@ std::shared_ptr<Signal> bindingApp::searchSignal(const std::string& aName)
 		std::vector<std::shared_ptr<Signal>> allSignals = getAllSignals();
 		for (std::shared_ptr<Signal>& sig : allSignals)
 		{
-			if(sig->id() == aName)
+			if(*sig == aName)
 				{return sig;}
 		}
 	}
@@ -320,4 +320,61 @@ int bindingApp::execSubscription() const
 		}
 	}
 	return err;
+}
+
+json_object* bindingApp::getSignalValue(const std::string& sig, json_object* options)
+{
+	const char **opts = nullptr;
+	json_object *response = nullptr;
+
+	wrap_json_unpack(options, "{s?s?s?s?!}",
+		&opts[0],
+		&opts[1],
+		&opts[2],
+		&opts[3]);
+
+	std::shared_ptr<Signal> sigP = searchSignal(sig);
+	wrap_json_pack(&response, "{ss}",
+		"signal", sigP->id().c_str());
+	for(int idx=0; idx < sizeof(opts); idx++)
+	{
+		bool avg = false, min = false, max = false, last = false;
+		if (strcasestr(opts[idx], "average") && !avg)
+		{
+			avg = true;
+			double value = sigP->average();
+			json_object_object_add(response, "average",
+				json_object_new_double(value));
+		}
+		if (strcasestr(opts[idx], "min") && !min)
+		{
+			min = true;
+			double value = sigP->minimum();
+			json_object_object_add(response, "min",
+				json_object_new_double(value));
+		}
+		if (strcasestr(opts[idx], "max") && !max)
+		{
+			max = true;
+			double value = sigP->maximum();
+			json_object_object_add(response, "max",
+				json_object_new_double(value));
+		}
+		if (strcasestr(opts[idx], "last") && !last)
+		{
+			last = true;
+			double value = sigP->last();
+			json_object_object_add(response, "last",
+				json_object_new_double(value));
+		}
+	}
+
+	if (!opts)
+	{
+		double value = sigP->last();
+		json_object_object_add(response, "last",
+			json_object_new_double(value));
+	}
+
+	return response;
 }

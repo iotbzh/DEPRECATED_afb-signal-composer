@@ -32,16 +32,19 @@ static const char _afb_description_v2_signal_composer[] =
     "\"event\",\"required\":false,\"schema\":{\"type\":\"string\"}}],\"respon"
     "ses\":{\"200\":{\"$ref\":\"#/components/responses/200\"}}},\"/get\":{\"d"
     "escription\":\"Get informations about a resource or element\",\"response"
-    "s\":{\"200\":{\"$ref\":\"#/components/responses/200\"}}},\"/loadConf\":{"
-    "\"description\":\"Load config file in directory passed as argument searc"
-    "hing for pattern 'sig' in filename\",\"parameters\":[{\"in\":\"query\",\""
-    "name\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}],\"r"
-    "esponses\":{\"200\":{\"$ref\":\"#/components/responses/200\"}}}}}"
+    "s\":{\"200\":{\"$ref\":\"#/components/responses/200\"}}},\"/list\":{\"de"
+    "scription\":\"List all signals already configured\",\"responses\":{\"200"
+    "\":{\"$ref\":\"#/components/responses/200\"}}},\"/loadConf\":{\"descript"
+    "ion\":\"Load config file in directory passed as argument searching for p"
+    "attern 'sig' in filename\",\"parameters\":[{\"in\":\"query\",\"name\":\""
+    "path\",\"required\":true,\"schema\":{\"type\":\"string\"}}],\"responses\""
+    ":{\"200\":{\"$ref\":\"#/components/responses/200\"}}}}}"
 ;
 
  void subscribe(struct afb_req req);
  void unsubscribe(struct afb_req req);
  void get(struct afb_req req);
+ void list(struct afb_req req);
  void loadConf(struct afb_req req);
 
 static const struct afb_verb_v2 _afb_verbs_v2_signal_composer[] = {
@@ -64,6 +67,13 @@ static const struct afb_verb_v2 _afb_verbs_v2_signal_composer[] = {
         .callback = get,
         .auth = NULL,
         .info = "Get informations about a resource or element",
+        .session = AFB_SESSION_NONE_V2
+    },
+    {
+        .verb = "list",
+        .callback = list,
+        .auth = NULL,
+        .info = "List all signals already configured",
         .session = AFB_SESSION_NONE_V2
     },
     {

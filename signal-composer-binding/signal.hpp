@@ -54,9 +54,9 @@ public:
 	void attachToSourceSignals(bindingApp& bApp);
 	void notify();
 
-	//virtual double average() const;
-	//virtual double min() const;
-	//virtual double max() const;
-	//double lastValue() const;
+	double average(int seconds = 0) const;
+	double minimum() const;
+	double maximum() const;
+	double last() const;
 	int recursionCheck();
 };

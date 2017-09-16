@@ -131,6 +131,12 @@
 				"200": {"$ref": "#/components/responses/200"}
 			}
 		},
+		"/list": {
+			"description": "List all signals already configured",
+			"responses": {
+				"200": {"$ref": "#/components/responses/200"}
+			}
+		},
 		"/loadConf": {
 			"description": "Load config file in directory passed as argument searching for pattern 'sig' in filename",
 			"parameters": [

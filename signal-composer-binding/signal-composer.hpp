@@ -51,6 +51,7 @@ public:
 	std::vector<std::shared_ptr<Signal>> getAllSignals();
 	SourceAPI* getSourceAPI(const std::string& api);
 	std::shared_ptr<Signal> searchSignal(const std::string& aName);
+	json_object* getSignalValue(const std::string& sig, json_object* options);
 
 	int execSubscription() const;
 };

@@ -15,6 +15,8 @@
  * limitations under the License.
 */
 
+#include <float.h>
+#include <fnmatch.h>
 #include <memory>
 
 #include "signal.hpp"
@@ -45,12 +47,12 @@ bool Signal::operator ==(const Signal& other) const
 	return false;
 }
 
-bool Signal::operator==(const std::string& aName) const
+bool Signal::operator ==(const std::string& aName) const
 {
-	if(id_ == aName) {return true;}
+	if(! fnmatch(aName.c_str(), id_.c_str(), FNM_CASEFOLD)) {return true;}
 	for( const std::string& src : signalSigList_)
 	{
-		if(src == aName) {return true;}
+		if(! fnmatch(aName.c_str(), src.c_str(), FNM_CASEFOLD)) {return true;}
 	}
 	return false;
 }
@@ -151,4 +153,34 @@ int Signal::recursionCheck()
 			{return -1;}
 	}
 	return 0;
+}
+
+double Signal::average(int seconds) const
+{
+	return 0.0;
+}
+double Signal::minimum() const
+{
+	double min = DBL_MAX;
+	for (auto& v : history_)
+	{
+		double temp_min = v.second;
+		if(temp_min < min) { min = temp_min;}
+	}
+	return min;
+}
+
+double Signal::maximum() const
+{
+	double max = 0.0;
+	for (auto& v : history_)
+	{
+		double temp_max = v.second;
+		if(temp_max > max) { max = temp_max;}
+	}
+	return max;
+}
+double Signal::last() const
+{
+	return history_.rbegin()->second;
 }
