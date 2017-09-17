@@ -21,6 +21,9 @@
  #define _GNU_SOURCE
 #include <string.h>
 #include <dlfcn.h>
+#include <link.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifdef CONTROL_SUPPORT_LUA
 #include "ctl-lua.h"
@@ -202,7 +205,8 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
         }
     }
 #endif
-    DispatchPluginInstallCbT ctlPluginOnload = dlsym(dlHandle, "CtlPluginOnload");
+
+DispatchPluginInstallCbT ctlPluginOnload = dlsym(dlHandle, "CtlPluginOnload");
     if (ctlPluginOnload) {
         ctlPlugin->context = (*ctlPluginOnload) (ctlPlugin, handle);
     }

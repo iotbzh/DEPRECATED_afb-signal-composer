@@ -22,6 +22,8 @@
 #include "signal.hpp"
 #include "signal-composer.hpp"
 
+#define MICRO 1000000
+
 Signal::Signal(const std::string& id,
 			std::vector<std::string>& sources,
 			const std::string& unit,
@@ -29,6 +31,8 @@ Signal::Signal(const std::string& id,
 			CtlActionT* onReceived)
 :id_(id),
  signalSigList_(sources),
+ timestamp_(0.0),
+ value_({0,0,0,0,0,""}),
  frequency_(frequency),
  unit_(unit),
  onReceived_(onReceived)
@@ -90,14 +94,21 @@ json_object* Signal::toJSON() const
 	return queryJ;
 }
 
-void update(double timestamp, double value)
+void Signal::update(long long int timestamp, struct SignalValue value)
 {
-	AFB_NOTICE("Got an update from observed signal");
+	AFB_NOTICE("Got an update from observed signal. Timestamp: %lld, vb: %d, vn: %lf, vs: %s", timestamp, value.boolVal, value.numVal, value.strVal.c_str());
 }
 
+/// @brief Notify observers that there is a change and execute callback defined
+/// when signal is received
+///
+/// @param[in] queryJ - JSON query object to transmit to callback function
+///
+/// @return 0 if OK, -1 or other if not.
 int Signal::onReceivedCB(json_object *queryJ)
 {
-	return ActionExecOne(onReceived_, queryJ);
+	notify();
+	return onReceived_ ? ActionExecOne(onReceived_, queryJ) : 0;
 }
 
 void Signal::attach(Signal* obs)
@@ -157,15 +168,49 @@ int Signal::recursionCheck()
 
 double Signal::average(int seconds) const
 {
-	return 0.0;
+	long long int begin = history_.begin()->first,
+		end = begin+(seconds*MICRO);
+	double total = 0.0;
+	int nbElt = 0;
+
+	for (const auto& val: history_)
+	{
+		if(val.first >= end)
+			{break;}
+		if(val.second.hasNum)
+		{
+			total += val.second.numVal;
+		nbElt++;
+		}
+		else
+		{
+			AFB_ERROR("There isn't numerical value to compare with in that signal '%s'. Stored value : bool %d, num %lf, str: %s",
+			id_.c_str(),
+			val.second.boolVal,
+			val.second.numVal,
+			val.second.strVal.c_str());
+			break;
+		}
+	}
+
+	return total / nbElt;
 }
 double Signal::minimum() const
 {
 	double min = DBL_MAX;
 	for (auto& v : history_)
 	{
-		double temp_min = v.second;
-		if(temp_min < min) { min = temp_min;}
+		if(v.second.hasNum && v.second.numVal < min)
+			{min = v.second.numVal;}
+		else
+		{
+			AFB_ERROR("There isn't numerical value to compare with in that signal '%s'. Stored value : bool %d, num %lf, str: %s",
+			id_.c_str(),
+			v.second.boolVal,
+			v.second.numVal,
+			v.second.strVal.c_str());
+			break;
+		}
 	}
 	return min;
 }
@@ -175,12 +220,21 @@ double Signal::maximum() const
 	double max = 0.0;
 	for (auto& v : history_)
 	{
-		double temp_max = v.second;
-		if(temp_max > max) { max = temp_max;}
+		if(v.second.hasNum && v.second.hasNum > max)
+			{max = v.second.numVal;}
+		else
+		{
+			AFB_ERROR("There isn't numerical value to compare with in that signal '%s'. Stored value : bool %d, num %lf, str: %s",
+			id_.c_str(),
+			v.second.boolVal,
+			v.second.numVal,
+			v.second.strVal.c_str());
+			break;
+		}
 	}
 	return max;
 }
-double Signal::last() const
+struct SignalValue Signal::last() const
 {
 	return history_.rbegin()->second;
 }

@@ -24,19 +24,29 @@
 
 class bindingApp;
 
+struct SignalValue {
+	bool hasBool = false;
+	bool boolVal;
+	bool hasNum = false;
+	double numVal;
+	bool hasStr = false;
+	std::string strVal;
+};
+
 class Signal
 {
 private:
 	std::string id_;
 	std::vector<std::string> signalSigList_;
 	long long int timestamp_;
-	double value_;
-	std::map<long long int, double> history_; ///< history_ - Hold signal value history in map with <timestamp, value>
+	struct SignalValue value_;
+	std::map<long long int, struct SignalValue> history_; ///< history_ - Hold signal value history in map with <timestamp, value>
 	double frequency_;
 	std::string unit_;
 	CtlActionT* onReceived_;
 	std::vector<Signal*> Observers_;
 
+	void notify();
 	void attach(Signal *obs);
 	int recursionCheck(const std::string& origId);
 
@@ -49,14 +59,13 @@ public:
 	const std::string id() const;
 	json_object* toJSON() const;
 
-	void update(long long int timestamp, double value);
+	void update(long long int timestamp,  struct SignalValue value);
 	int onReceivedCB(json_object *queryJ);
 	void attachToSourceSignals(bindingApp& bApp);
-	void notify();
 
 	double average(int seconds = 0) const;
 	double minimum() const;
 	double maximum() const;
-	double last() const;
+	struct SignalValue last() const;
 	int recursionCheck();
 };

@@ -16,8 +16,6 @@
  *
 */
 
-#define _GNU_SOURCE  // needed for vasprintf
-
 #define AFB_BINDING_VERSION 2
 #include <afb/afb-binding.h>
 #include <systemd/sd-event.h>
@@ -28,6 +26,12 @@
 #include "ctl-plugin.h"
 #include "wrap-json.h"
 
+
+#include "signal-composer.hpp"
+
+extern "C"
+{
+
 CTLP_REGISTER("low-can");
 
 typedef struct {
@@ -36,19 +40,33 @@ typedef struct {
 } doorT;
 
 typedef struct {
-	doorT* front_left;
-	doorT* front_right;
-	doorT* rear_left;
-	doorT* rear_right;
+	doorT front_left;
+	doorT front_right;
+	doorT rear_left;
+	doorT rear_right;
 } allDoorsCtxT;
 
-// Call at initialisation time
-CTLP_ONLOAD(plugin, api) {
-	allDoorsCtxT *allDoorCtx = (allDoorsCtxT*)calloc (1, sizeof(allDoorsCtxT));
-	memset(allDoorCtx, 0, sizeof(allDoorsCtxT));
+typedef struct {
+	bindingApp* bApp;
+	allDoorsCtxT allDoorsCtx;
+} lowCANCtxT;
 
-	AFB_NOTICE ("Low-can plugin: label='%s' version='%s' info='%s'", plugin->label, plugin->version, plugin->info);
-	return (void*)allDoorCtx;
+// Call at initialisation time
+CTLP_ONLOAD(plugin, bAppHandle)
+{
+	lowCANCtxT *pluginCtx= (lowCANCtxT*)calloc (1, sizeof(lowCANCtxT));
+	allDoorsCtxT allDoorsCtx = allDoorsCtxT();
+	::memset(&allDoorsCtx, 0, sizeof(allDoorsCtxT));
+	pluginCtx->allDoorsCtx = allDoorsCtx;
+
+	pluginCtx->bApp = (bindingApp*)bAppHandle;
+
+	AFB_NOTICE ("Low-can plugin: label='%s' version='%s' info='%s'",
+		plugin->label,
+		plugin->version,
+		plugin->info);
+
+	return (void*)pluginCtx;
 }
 
 CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
@@ -97,28 +115,27 @@ CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
 }
 
 CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
-
 	const char* eventName;
-	json_object *eventStatus = NULL;
-	long long int *timestamp = NULL;
-	allDoorsCtxT *ctx=(allDoorsCtxT*)context;
+	bool eventStatus;
+	double timestamp;
+	lowCANCtxT *pluginCtx=(lowCANCtxT*)context;
 
-	AFB_DEBUG("Here is the situation: source:%s, args:%s, event:%s,\n fld: %s, flw: %s, frd: %s, frw: %s, rld: %s, rlw: %s, rrd: %s, rrw: %s",
+	AFB_NOTICE("This is the situation: source:%s, args:%s, event:%s,\n fld: %s, flw: %s, frd: %s, frw: %s, rld: %s, rlw: %s, rrd: %s, rrw: %s",
 		source->label,
 		json_object_to_json_string(argsJ),
 		json_object_to_json_string(eventJ),
-		ctx->front_left->door ? "true":"false",
-		ctx->front_left->window ? "true":"false",
-		ctx->front_right->door ? "true":"false",
-		ctx->front_right->window ? "true":"false",
-		ctx->rear_left->door ? "true":"false",
-		ctx->rear_left->window ? "true":"false",
-		ctx->rear_right->door ? "true":"false",
-		ctx->rear_right->window ? "true":"false"
+		pluginCtx->allDoorsCtx.front_left.door ? "true":"false",
+		pluginCtx->allDoorsCtx.front_left.window ? "true":"false",
+		pluginCtx->allDoorsCtx.front_right.door ? "true":"false",
+		pluginCtx->allDoorsCtx.front_right.window ? "true":"false",
+		pluginCtx->allDoorsCtx.rear_left.door ? "true":"false",
+		pluginCtx->allDoorsCtx.rear_left.window ? "true":"false",
+		pluginCtx->allDoorsCtx.rear_right.door ? "true":"false",
+		pluginCtx->allDoorsCtx.rear_right.window ? "true":"false"
 	);
 
-	int err = wrap_json_unpack(eventJ, "{ss,sb,s?F}",
-		"event", &eventName,
+	int err = wrap_json_unpack(eventJ, "{ss,s?b,s?F}",
+		"name", &eventName,
 		"value", &eventStatus,
 		"timestamp", &timestamp);
 	if(err)
@@ -129,29 +146,30 @@ CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
 
 	if(strcasestr(eventName, "front_left"))
 	{
-		if(strcasestr(eventName, "door")) {ctx->front_left->door = eventStatus;}
-		else if(strcasestr(eventName, "window")) {ctx->front_left->window = eventStatus;}
+		if(strcasestr(eventName, "door")) {pluginCtx->allDoorsCtx.front_left.door = eventStatus;}
+		else if(strcasestr(eventName, "window")) {pluginCtx->allDoorsCtx.front_left.window = eventStatus;}
 		else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", json_object_to_json_string(eventJ));}
 	}
 	else if(strcasestr(eventName, "front_right"))
 	{
-		if(strcasestr(eventName, "door")) {ctx->front_right->door = eventStatus;}
-		else if(strcasestr(eventName, "window")) {ctx->front_right->window = eventStatus;}
+		if(strcasestr(eventName, "door")) {pluginCtx->allDoorsCtx.front_right.door = eventStatus;}
+		else if(strcasestr(eventName, "window")) {pluginCtx->allDoorsCtx.front_right.window = eventStatus;}
 		else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", json_object_to_json_string(eventJ));}
 	}
 	else if(strcasestr(eventName, "rear_left"))
 	{
-		if(strcasestr(eventName, "door")) {ctx->rear_left->door = eventStatus;}
-		else if(strcasestr(eventName, "window")) {ctx->rear_left->window = eventStatus;}
+		if(strcasestr(eventName, "door")) {pluginCtx->allDoorsCtx.rear_left.door = eventStatus;}
+		else if(strcasestr(eventName, "window")) {pluginCtx->allDoorsCtx.rear_left.window = eventStatus;}
 		else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", json_object_to_json_string(eventJ));}
 	}
 	else if(strcasestr(eventName, "rear_right"))
 	{
-		if(strcasestr(eventName, "door")) {ctx->rear_right->door = eventStatus;}
-		else if(strcasestr(eventName, "window")) {ctx->rear_right->window = eventStatus;}
+		if(strcasestr(eventName, "door")) {pluginCtx->allDoorsCtx.rear_right.door = eventStatus;}
+		else if(strcasestr(eventName, "window")) {pluginCtx->allDoorsCtx.rear_right.window = eventStatus;}
 		else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", json_object_to_json_string(eventJ));}
 	}
 	else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", json_object_to_json_string(eventJ));}
 
 	return 0;
+}
 }

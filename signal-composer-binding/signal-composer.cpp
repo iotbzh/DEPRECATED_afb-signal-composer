@@ -22,7 +22,7 @@
 CtlSectionT bindingApp::ctlSections_[] = {
 	[0]={.key="plugins" ,.label = "plugins", .info=nullptr,
 		.loadCB=PluginConfig,
-		.handle=nullptr},
+		.handle=&bindingApp::instance()},
 	[1]={.key="sources" ,.label = "sources", .info=nullptr,
 		 .loadCB=loadSourcesAPI,
 		 .handle=nullptr},
@@ -363,17 +363,43 @@ json_object* bindingApp::getSignalValue(const std::string& sig, json_object* opt
 		if (strcasestr(opts[idx], "last") && !last)
 		{
 			last = true;
-			double value = sigP->last();
-			json_object_object_add(response, "last",
-				json_object_new_double(value));
+			struct SignalValue value = sigP->last();
+			if(value.hasBool)
+			{
+				json_object_object_add(response, "last",
+					json_object_new_boolean(value.boolVal));
+			}
+			if(value.hasNum)
+			{
+				json_object_object_add(response, "last",
+					json_object_new_double(value.numVal));
+			}
+			if(value.hasStr)
+			{
+				json_object_object_add(response, "last",
+					json_object_new_string(value.strVal.c_str()));
+			}
 		}
 	}
 
 	if (!opts)
 	{
-		double value = sigP->last();
-		json_object_object_add(response, "last",
-			json_object_new_double(value));
+		struct SignalValue value = sigP->last();
+		if(value.hasBool)
+		{
+			json_object_object_add(response, "last",
+				json_object_new_boolean(value.boolVal));
+		}
+		if(value.hasNum)
+		{
+			json_object_object_add(response, "last",
+				json_object_new_double(value.numVal));
+		}
+		if(value.hasStr)
+		{
+			json_object_object_add(response, "last",
+				json_object_new_string(value.strVal.c_str()));
+		}
 	}
 
 	return response;
