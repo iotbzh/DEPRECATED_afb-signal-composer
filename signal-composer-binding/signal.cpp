@@ -84,9 +84,6 @@ json_object* Signal::toJSON() const
 	{
 		json_object_array_add(nameArray, json_object_new_string(lowSig.c_str()));
 	}
-	/*json_object_object_add(queryJ, "signal", nameArray);
-	json_object_object_add(queryJ, "unit", json_object_new_string(unit_.c_str()));
-	json_object_object_add(queryJ, "unit", json_object_new_double(frequency_));*/
 	wrap_json_pack(&queryJ, "{so,ss*,sf*}",
 			"signal", nameArray,
 			"unit", unit_.c_str(),
@@ -95,6 +92,24 @@ json_object* Signal::toJSON() const
 	return queryJ;
 }
 
+
+/// @brief Set Signal timestamp and value property when an incoming
+/// signal arrived. Called by a plugin because treatment can't be
+/// standard as signals sources format could changes. See low-can plugin
+/// example.
+///
+/// @param[in] timestamp - timestamp of occured signal
+/// @param[in] value - value of change
+void Signal::set(long long int timestamp, struct SignalValue& value)
+{
+	timestamp_ = timestamp;
+	value_ = value;
+}
+
+/// @brief Observer method called when a Observable Signal has changes.
+///
+/// @param[in] timestamp - timestamp of occured signal
+/// @param[in] value - value of change
 void Signal::update(long long int timestamp, struct SignalValue value)
 {
 	AFB_NOTICE("Got an update from observed signal. Timestamp: %lld, vb: %d, vn: %lf, vs: %s", timestamp, value.boolVal, value.numVal, value.strVal.c_str());
@@ -108,15 +123,23 @@ void Signal::update(long long int timestamp, struct SignalValue value)
 /// @return 0 if OK, -1 or other if not.
 int Signal::onReceivedCB(json_object *queryJ)
 {
+	int err = onReceived_ ? ActionExecOne(onReceived_, queryJ) : 0;
 	notify();
-	return onReceived_ ? ActionExecOne(onReceived_, queryJ) : 0;
+	return err;
 }
 
+/// @brief Make a Signal observer observes a Signal observable
+///
+/// @param[in] obs - pointer to a Signal observable
 void Signal::attach(Signal* obs)
 {
 	Observers_.push_back(obs);
 }
 
+/// @brief Make a Signal observer observes Signals observables
+/// set in its observable vector.
+///
+/// @param[in] bApp - bindinApp instance
 void Signal::attachToSourceSignals(bindingApp& bApp)
 {
 	for (const std::string& srcSig: signalSigList_)
@@ -135,12 +158,20 @@ void Signal::attachToSourceSignals(bindingApp& bApp)
 	}
 }
 
+/// @brief Call update() method on observer Signal with
+/// current Signal timestamp and value
 void Signal::notify()
 {
 	for (int i = 0; i < Observers_.size(); ++i)
 	  Observers_[i]->update(timestamp_, value_);
 }
 
+/// @brief Inner recursion check. Argument is the Signal id coming
+/// from the original Signal that made a recursion check.
+///
+/// @param[in] origId - name of the origine of the recursion check
+///
+/// @return 0 if no infinite loop detected, -1 if not.
 int Signal::recursionCheck(const std::string& origId)
 {
 	for (const auto& obs: Observers_)
@@ -155,6 +186,12 @@ int Signal::recursionCheck(const std::string& origId)
 	return 0;
 }
 
+/// @brief Recursion check to ensure that there is no infinite loop
+/// in the Observers/Observables structure.
+/// This will check that observer signal is not the same than itself
+/// then trigger the check against the following eventuals observers
+///
+/// @return 0 if no infinite loop detected, -1 if not.
 int Signal::recursionCheck()
 {
 	for (const auto& obs: Observers_)
@@ -167,6 +204,11 @@ int Signal::recursionCheck()
 	return 0;
 }
 
+/// @brief Make an average over the last X 'seconds'
+///
+/// @param[in] seconds - period to calculate the average
+///
+/// @return Average value
 double Signal::average(int seconds) const
 {
 	long long int begin = history_.begin()->first;
@@ -198,7 +240,12 @@ double Signal::average(int seconds) const
 
 	return total / nbElt;
 }
-double Signal::minimum() const
+
+/// @brief Find minimum in the recorded values
+///
+/// @param[in] seconds - period to find the minimum
+///
+/// @return Minimum value contained in the history
 double Signal::minimum(int seconds) const
 {
 	long long int begin = history_.begin()->first;
@@ -226,7 +273,11 @@ double Signal::minimum(int seconds) const
 	return min;
 }
 
-double Signal::maximum() const
+/// @brief Find maximum in the recorded values
+///
+/// @param[in] seconds - period to find the maximum
+///
+/// @return Maximum value contained in the history
 double Signal::maximum(int seconds) const
 {
 	long long int begin = history_.begin()->first;
@@ -253,6 +304,10 @@ double Signal::maximum(int seconds) const
 	}
 	return max;
 }
+
+/// @brief Return last value recorded
+///
+/// @return Last value
 struct SignalValue Signal::last() const
 {
 	return history_.rbegin()->second;

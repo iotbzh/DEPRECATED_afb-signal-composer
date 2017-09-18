@@ -39,7 +39,7 @@ void onEvent(const char *event, json_object *object)
 		sig->onReceivedCB(object);
 	}
 }
-/// @brief entry point for client subscription request. Treatment itself is made in SigComp class.
+/// @brief entry point for client subscription request.
 void subscribe(afb_req request)
 {
 	if(true)
@@ -48,7 +48,7 @@ void subscribe(afb_req request)
 		afb_req_fail(request, "error", NULL);
 }
 
-/// @brief entry point for client un-subscription request. Treatment itself is made in SigComp class.
+/// @brief entry point for client un-subscription request.
 void unsubscribe(afb_req request)
 {
 	if(true)
@@ -70,7 +70,7 @@ void loadConf(afb_req request)
 		afb_req_fail_f(request, "Loading configuration or subscription error", "Error code: -1");
 }
 
-/// @brief entry point for get requests. Treatment itself is made in SigComp class.
+/// @brief entry point to list available signals
 void list(afb_req request)
 {
 	if(true)
@@ -87,11 +87,9 @@ void list(afb_req request)
 void get(struct afb_req request)
 {
 	int err = 0;
-	struct json_object* args = nullptr, *ans = nullptr,
+	struct json_object* args = afb_req_json(request), *ans = nullptr,
 	*options = nullptr;
 	const char* sig;
-
-	args = afb_req_json(request);
 
 	// Process about Raw CAN message on CAN bus directly
 	err = wrap_json_unpack(args, "{ss,s?o!}", "signals", &sig,
