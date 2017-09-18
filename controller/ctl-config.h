@@ -49,15 +49,12 @@ extern "C" {
   #define CTL_PLUGIN_EXT ".ctlso"
 #endif
 
-
-
 typedef enum {
     CTL_TYPE_NONE=0,
     CTL_TYPE_API,
     CTL_TYPE_CB,
     CTL_TYPE_LUA,
 } CtlActionTypeT;
-
 
 typedef struct {
     CtlActionTypeT type;

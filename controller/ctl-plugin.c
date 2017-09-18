@@ -35,7 +35,7 @@ typedef void *Lua2cWrapperT;
 
 #include "ctl-config.h"
 
-static  CtlPluginT *ctlPlugins=NULL;
+static CtlPluginT *ctlPlugins=NULL;
 
 int PluginGetCB (CtlActionT *action , json_object *callbackJ) {
     const char *plugin=NULL, *function=NULL;
@@ -221,12 +221,12 @@ int PluginConfig(CtlSectionT *section, json_object *pluginsJ) {
 
     if (ctlPlugins)
     {
-        int pluginsCount = (sizeof(ctlPlugins) / sizeof(CtlPluginT)) + 1;
-        for(int idx = 0; idx < pluginsCount; idx++)
+        int idx = 0;
+        while(ctlPlugins[idx].label != NULL)
         {
             // Jose hack to make verbosity visible from sharedlib and
             // be able to call verb from others api inside the binder
-            struct afb_binding_data_v2 *afbHidenData = dlsym(ctlPlugins[idx].dlHandle, "afbBindingV2data");
+            struct afb_binding_data_v2 *afbHidenData = dlsym(ctlPlugins[idx++].dlHandle, "afbBindingV2data");
             if (afbHidenData) *afbHidenData = afbBindingV2data;
         }
         return 0;
