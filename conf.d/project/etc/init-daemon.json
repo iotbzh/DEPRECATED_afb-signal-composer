@@ -14,6 +14,12 @@
 			"version": "1.0",
 			"info": "Manage interaction with low-can service",
 			"basename": "low-can"
+		},
+		{
+			"label": "gps-callbacks",
+			"version": "1.0",
+			"info": "Manage interaction with gps service",
+			"basename": "gps"
 		}
 	]
 }
