@@ -1,11 +1,12 @@
 {
 	"signals": [
 		{
-			"label": "low-can/messages.vehicle.speed",
+			"id": "vehicle_speed",
+			"event": "low-can/messages.vehicle.speed",
 			"class": "temporal",
 			"unit": "km/h",
 			"frequency": 1,
-			"actions": {
+			"onReceived": {
 				"label": "Unit converter",
 				"lua": "_Unit_Converter",
 				"args": {
@@ -15,22 +16,25 @@
 			}
 		},
 		{
-			"name": "low-can/diagnostic_messages.engine.speed",
+			"id": "engine_speed",
+			"event": "low-can/diagnostic_messages.engine.speed",
 			"class": "temporal",
 			"unit": "rpm",
 			"frequency": 1
 		},
 		{
-			"name": "low-can/diagnostic_messages.fuel.level",
+			"id": "fuel_level",
+			"event": "low-can/diagnostic_messages.fuel.level",
 			"class":"temporal",
 			"unit": "litre",
 			"frequency": 1
 		},
 		{
-			"name": "low-can/diagnostic_messages.engine.load",
+			"id": "engine_load",
+			"event": "low-can/diagnostic_messages.engine.load",
 			"class":"temporal",
 			"unit": "Nm",
-			"interval": 1
+			"frequency": 1
 		}
 	]
 }

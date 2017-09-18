@@ -37,13 +37,16 @@ class Signal
 {
 private:
 	std::string id_;
-	std::vector<std::string> signalSigList_;
+	std::string event_;
+	std::vector<std::string> dependsSigV_;
 	long long int timestamp_;
 	struct SignalValue value_;
 	std::map<long long int, struct SignalValue> history_; ///< history_ - Hold signal value history in map with <timestamp, value>
 	double frequency_;
 	std::string unit_;
 	CtlActionT* onReceived_;
+	json_object* getSignalsArgs_;
+
 	std::vector<Signal*> Observers_;
 
 	void notify();
@@ -51,7 +54,8 @@ private:
 	int recursionCheck(const std::string& origId);
 
 public:
-	Signal(const std::string& id, std::vector<std::string>& sources, const std::string& unit, double frequency, CtlActionT* onReceived);
+	Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
+	Signal(const std::string& id, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived);
 	explicit operator bool() const;
 	bool operator==(const Signal& other) const;
 	bool operator==(const std::string& aName) const;

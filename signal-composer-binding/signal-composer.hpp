@@ -28,7 +28,7 @@ private:
 	CtlConfigT* ctlConfig_;
 
 	static CtlSectionT ctlSections_[]; ///< Config Section definition (note: controls section index should match handle retrieval in)
-	std::vector<SourceAPI> sourcesList_;
+	std::vector<SourceAPI> sourcesListV_;
 
 	explicit bindingApp(const std::string& filepath);
 	bindingApp();
@@ -37,15 +37,16 @@ private:
 	CtlActionT* convert2Action(const std::string& name, json_object* action);
 
 	int loadOneSourceAPI(json_object* sourcesJ);
-	static int loadSourcesAPI(CtlSectionT* section, json_object *sectionJ);
+	static int loadSourcesAPI(CtlSectionT* section, json_object *signalsJ);
 
 	int loadOneSignal(json_object* signalsJ);
-	static int loadSignals(CtlSectionT* section, json_object *sectionJ);
+	static int loadSignals(CtlSectionT* section, json_object *signalsJ);
 
 public:
 	static bindingApp& instance();
+	static std::vector<std::string> parseURI(const std::string& uri);
 	int loadConfig(const std::string& filepath);
-	//void loadSignalsFile(std::string signalsFile);
+	int loadSignals(json_object* signalsJ);
 
 	CtlConfigT* ctlConfig();
 	std::vector<std::shared_ptr<Signal>> getAllSignals();
@@ -53,7 +54,7 @@ public:
 	std::shared_ptr<Signal> searchSignal(const std::string& aName);
 	json_object* getSignalValue(const std::string& sig, json_object* options);
 
-	int execSubscription() const;
+	int execSubscription();
 };
 
 struct pluginCBT

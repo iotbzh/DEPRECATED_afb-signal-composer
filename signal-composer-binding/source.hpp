@@ -26,19 +26,19 @@ private:
 	std::string api_;
 	std::string info_;
 	CtlActionT* init_;
-	CtlActionT* getSignal_;
+	CtlActionT* getSignals_;
 
-	std::vector<std::shared_ptr<Signal>> signalsList_;
+	std::map<std::shared_ptr<Signal>, bool> signalsMap_;
 
 public:
 	SourceAPI();
 	SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal);
 
 	std::string api() const;
-	void addSignal(const std::string& id, std::vector<std::string>& sources, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived);
+	void addSignal(const std::string& id, const std::string& event, std::vector<std::string>& sources, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 
 	std::vector<std::shared_ptr<Signal>> getSignals() const;
 	std::shared_ptr<Signal> searchSignal(const std::string& name) const;
 
-	int makeSubscription() const;
+	int makeSubscription();
 };

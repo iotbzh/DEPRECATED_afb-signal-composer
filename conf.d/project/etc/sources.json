@@ -4,14 +4,13 @@
 			"api": "low-can",
 			"info": "Low level binding to handle CAN bus communications",
 			"init": {
-				"function": "low-can/subscribe",
+				"function": "api://low-can/subscribe",
 				"args": {
 					"event": "message*"
 				}
-		},
-			"getSignal": {
-				"plugin": "low-can-callbacks",
-				"function": "subscribeToLow",
+			},
+			"getSignals": {
+				"function": "plugin://low-can-callbacks/subscribeToLow",
 				"args": {
 					"arg": "first argument"
 				}
@@ -20,13 +19,13 @@
 			"api": "gps",
 			"info": "Low level binding which retrieve Satellite positionning values",
 			"init": {
-				"function": "_LUA_Simple_Echo_Args",
+				"function": "api://gps/location",
 				"args": {
 					"arg1": "first argument"
 				}
-		},
-			"getSignal": {
-				"function": "_LUA_Simple_Echo_Args",
+			},
+			"getSignals": {
+				"function": "lua://_Simple_Echo_Args",
 				"args": {
 					"arg": "first argument"
 				}
@@ -35,13 +34,13 @@
 			"api": "mraa",
 			"info": "Low level binding which retrieve different values from several sensors like gyroscope, accelerometer, etc",
 			"init": {
-				"function": "_LUA_Simple_Echo_Args",
+				"function": "lua://_Simple_Echo_Args",
 				"args": {
 					"arg1": "first argument"
 				}
-		},
-			"getSignal": {
-				"function": "_LUA_Simple_Echo_Args",
+			},
+			"getSignals": {
+				"function": "lua://_Simple_Echo_Args",
 				"args": {
 					"arg": "first argument"
 				}

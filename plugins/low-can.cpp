@@ -77,15 +77,18 @@ CTLP_ONLOAD(plugin, bAppHandle)
 }
 
 CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
-	json_object* signalArrayJ = NULL, *subscribeArgsJ = NULL, *subscribeFilterJ = NULL, *responseJ = NULL;
-	const char* unit = NULL;
+	json_object* dependsArrayJ = nullptr, *subscribeArgsJ = nullptr, *subscribeFilterJ = nullptr, *responseJ = nullptr, *filterJ = nullptr;
+	const char *id = nullptr, *event = nullptr, *unit = nullptr;
 	double frequency = 0;
 	int err = 0;
 
-	err = wrap_json_unpack(eventJ, "{so,s?s,s?F !}",
-		"signal", &signalArrayJ,
+	err = wrap_json_unpack(eventJ, "{ss,s?s,s?o,s?s,s?F,s?o !}",
+		"id", &id,
+		"event", &event,
+		"depends", &dependsArrayJ,
 		"unit", &unit,
-		"frequency", &frequency);
+		"frequency", &frequency,
+		"getSignalsArgs", &filterJ);
 	if(err)
 	{
 		AFB_ERROR("Problem to unpack JSON object eventJ: %s",
@@ -93,29 +96,27 @@ CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
 		return err;
 	}
 
-	if(frequency > 0)
-	{
-		wrap_json_pack(&subscribeFilterJ, "{sf}", "frequency", frequency);
-	}
+	if(frequency > 0 && !filterJ)
+		{wrap_json_pack(&subscribeFilterJ, "{sf}", "frequency", frequency);}
+	else
+		{subscribeFilterJ = filterJ;}
 
-	for (int idx = 0; idx < json_object_array_length(signalArrayJ); idx++)
+	std::string eventStr = std::string(event);
+	std::string lowEvent = eventStr.substr(eventStr.find("/")+1);
+	err = wrap_json_pack(&subscribeArgsJ, "{ss, so*}",
+	"event", lowEvent.c_str(),
+	"filter", subscribeFilterJ);
+	if(err)
 	{
-		json_object* aSignalJ = json_object_array_get_idx(signalArrayJ, idx);
-		err = wrap_json_pack(&subscribeArgsJ, "{ss, so*}",
-		"event", json_object_get_string(aSignalJ),
-		"filter", subscribeFilterJ);
-		if(err)
-		{
-			AFB_ERROR("Error building subscription query object");
-			return err;
-		}
-		AFB_DEBUG("Calling subscribe with %s", json_object_to_json_string_ext(subscribeArgsJ, JSON_C_TO_STRING_PRETTY));
-		err = afb_service_call_sync("low-can", "subscribe", subscribeArgsJ, &responseJ);
-		if(err)
-		{
-			AFB_ERROR("Can't find api 'low-can'");
-			return err;
-		}
+		AFB_ERROR("Error building subscription query object");
+		return err;
+	}
+	AFB_DEBUG("Calling subscribe with %s", json_object_to_json_string_ext(subscribeArgsJ, JSON_C_TO_STRING_PRETTY));
+	err = afb_service_call_sync("low-can", "subscribe", subscribeArgsJ, &responseJ);
+	if(err)
+	{
+		AFB_ERROR("Can't find api 'low-can'");
+		return err;
 	}
 
 	return err;

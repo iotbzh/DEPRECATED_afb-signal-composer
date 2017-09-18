@@ -39,6 +39,7 @@ void onEvent(const char *event, json_object *object)
 		sig->onReceivedCB(object);
 	}
 }
+
 /// @brief entry point for client subscription request.
 void subscribe(afb_req request)
 {
@@ -60,14 +61,19 @@ void unsubscribe(afb_req request)
 /// @brief verb that loads JSON configuration (old SigComp.json file now)
 void loadConf(afb_req request)
 {
-	json_object* args = afb_req_json(request);
-	const char* confd;
+	json_object* args = afb_req_json(request), *fileJ;
+	const char* filepath;
 
-	wrap_json_unpack(args, "{s:s}", "path", &confd);
-	if(true)
-		afb_req_success(request, NULL, NULL);
+	wrap_json_unpack(args, "{s:s}", "filepath", &filepath);
+	fileJ = json_object_from_file(filepath);
+
+	if(bindingApp::instance().loadSignals(fileJ))
+		{afb_req_fail_f(request, "Loading configuration or subscription error", "Error code: -1");}
 	else
-		afb_req_fail_f(request, "Loading configuration or subscription error", "Error code: -1");
+	{
+
+		afb_req_success(request, NULL, NULL);
+	}
 }
 
 /// @brief entry point to list available signals
@@ -79,7 +85,7 @@ void list(afb_req request)
 	for(auto& sig: allSignals)
 		{json_object_array_add(allSignalsJ, sig->toJSON());}
 
-	if(json_object_array_length(allSignalsJ))
+	if(json_object_array_length(allSignalsJ) && !execConf())
 	{
 		afb_req_success(request, allSignalsJ, NULL);
 	}

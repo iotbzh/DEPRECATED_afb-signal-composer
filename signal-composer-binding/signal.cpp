@@ -24,18 +24,32 @@
 
 #define MICRO 1000000
 
-Signal::Signal(const std::string& id,
-			std::vector<std::string>& sources,
-			const std::string& unit,
-			double frequency,
-			CtlActionT* onReceived)
+Signal::Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs)
 :id_(id),
- signalSigList_(sources),
+ event_(event),
+ dependsSigV_(depends),
  timestamp_(0.0),
  value_({0,0,0,0,0,""}),
  frequency_(frequency),
  unit_(unit),
- onReceived_(onReceived)
+ onReceived_(onReceived),
+ getSignalsArgs_(getSignalsArgs)
+{}
+
+Signal::Signal(const std::string& id,
+	std::vector<std::string>& depends,
+	const std::string& unit,
+	double frequency,
+	CtlActionT* onReceived)
+:id_(id),
+ event_(),
+ dependsSigV_(depends),
+ timestamp_(0.0),
+ value_({0,0,0,0,0,""}),
+ frequency_(frequency),
+ unit_(unit),
+ onReceived_(onReceived),
+ getSignalsArgs_()
 {}
 
 Signal::operator bool() const
@@ -54,11 +68,8 @@ bool Signal::operator ==(const Signal& other) const
 bool Signal::operator ==(const std::string& aName) const
 {
 	if(! fnmatch(aName.c_str(), id_.c_str(), FNM_CASEFOLD)) {return true;}
-	for( const std::string& src : signalSigList_)
-	{
-		if(! fnmatch(aName.c_str(), src.c_str(), FNM_CASEFOLD)) {return true;}
-		if( src.find(aName) != std::string::npos) {return true;}
-	}
+	if(event_.find(aName) != std::string::npos) {return true;}
+
 	return false;
 }
 
@@ -70,24 +81,27 @@ const std::string Signal::id() const
 json_object* Signal::toJSON() const
 {
 	json_object* queryJ = nullptr;
-	std::vector<std::string> lowSignalName;
-	for (const std::string& src: signalSigList_ )
+	std::vector<std::string> dependsSignalName;
+	for (const std::string& src: dependsSigV_ )
 	{
 		ssize_t sep = src.find_first_of("/");
 		if(sep != std::string::npos)
 		{
-			lowSignalName.push_back(src.substr(sep+1));
+			dependsSignalName.push_back(src.substr(sep+1));
 		}
 	}
 	json_object* nameArray = json_object_new_array();
-	for (const std::string& lowSig: lowSignalName)
+	for (const std::string& lowSig: dependsSignalName)
 	{
 		json_object_array_add(nameArray, json_object_new_string(lowSig.c_str()));
 	}
-	wrap_json_pack(&queryJ, "{so,ss*,sf*}",
-			"signal", nameArray,
+	wrap_json_pack(&queryJ, "{ss,ss*,so*,ss*,sf*,so*}",
+			"id", id_.c_str(),
+			"event", event_.c_str(),
+			"depends", nameArray,
 			"unit", unit_.c_str(),
-			"frequency", frequency_);
+			"frequency", frequency_,
+			"getSignalsArgs", getSignalsArgs_);
 
 	return queryJ;
 }
@@ -104,6 +118,7 @@ void Signal::set(long long int timestamp, struct SignalValue& value)
 {
 	timestamp_ = timestamp;
 	value_ = value;
+	history_[timestamp_] = value_;
 }
 
 /// @brief Observer method called when a Observable Signal has changes.
@@ -112,7 +127,7 @@ void Signal::set(long long int timestamp, struct SignalValue& value)
 /// @param[in] value - value of change
 void Signal::update(long long int timestamp, struct SignalValue value)
 {
-	AFB_NOTICE("Got an update from observed signal. Timestamp: %lld, vb: %d, vn: %lf, vs: %s", timestamp, value.boolVal, value.numVal, value.strVal.c_str());
+	AFB_DEBUG("Got an update from observed signal. Timestamp: %lld, vb: %d, vn: %lf, vs: %s", timestamp, value.boolVal, value.numVal, value.strVal.c_str());
 }
 
 /// @brief Notify observers that there is a change and execute callback defined
@@ -128,11 +143,18 @@ int Signal::onReceivedCB(json_object *queryJ)
 	return err;
 }
 
-/// @brief Make a Signal observer observes a Signal observable
+/// @brief Make a Signal observer observes a Signal observable if not already
+/// present in the Observers vector.
 ///
 /// @param[in] obs - pointer to a Signal observable
 void Signal::attach(Signal* obs)
 {
+	for ( auto& sig : Observers_)
+	{
+		if (obs == sig)
+			{return;}
+	}
+
 	Observers_.push_back(obs);
 }
 
@@ -142,7 +164,7 @@ void Signal::attach(Signal* obs)
 /// @param[in] bApp - bindinApp instance
 void Signal::attachToSourceSignals(bindingApp& bApp)
 {
-	for (const std::string& srcSig: signalSigList_)
+	for (const std::string& srcSig: dependsSigV_)
 	{
 		if(srcSig.find("/") == std::string::npos)
 		{

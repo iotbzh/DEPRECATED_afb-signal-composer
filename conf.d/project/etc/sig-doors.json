@@ -2,10 +2,9 @@
 	"signals": [
 		{
 			"id": "rear_left_window",
-			"source": "low-can/messages.windows.rear_left.open",
+			"event": "low-can/messages.windows.rear_left.open",
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {
 					"ojoi": "pok"
 				}
@@ -13,10 +12,9 @@
 		},
 		{
 			"id": "rear_left_door",
-			"source": "low-can/messages.doors.rear_left.open",
+			"event": "low-can/messages.doors.rear_left.open",
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {
 					"ojoi": "pok"
 				}
@@ -24,10 +22,9 @@
 		},
 		{
 			"id": "rear_right_window",
-			"source": "low-can/messages.windows.rear_right.open",
+			"event": "low-can/messages.windows.rear_right.open",
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {
 					"ojoi": "pok"
 				}
@@ -35,10 +32,9 @@
 		},
 		{
 			"id": "rear_right_door",
-			"source": "low-can/messages.doors.rear_right.open",
+			"event": "low-can/messages.doors.rear_right.open",
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {
 					"ojoi": "pok"
 				}
@@ -46,10 +42,9 @@
 		},
 		{
 			"id": "front_left_window",
-			"source": "low-can/messages.windows.front_left.open",
+			"event": "low-can/messages.windows.front_left.open",
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {
 					"ojoi": "pok"
 				}
@@ -57,10 +52,9 @@
 		},
 		{
 			"id": "front_left_door",
-			"source": "low-can/messages.doors.front_left.open",
+			"event": "low-can/messages.doors.front_left.open",
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {
 					"ojoi": "pok"
 				}
@@ -68,10 +62,9 @@
 		},
 		{
 			"id": "front_right_window",
-			"source": "low-can/messages.windows.front_right.open",
+			"event": "low-can/messages.windows.front_right.open",
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {
 					"ojoi": "pok"
 				}
@@ -79,10 +72,9 @@
 		},
 		{
 			"id": "front_right_door",
-			"source": "low-can/messages.doors.front_right.open",
+			"event": "low-can/messages.doors.front_right.open",
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {
 					"ojoi": "pok"
 				}
@@ -90,13 +82,12 @@
 		},
 		{
 			"id": "rear_left",
-			"source": [
+			"depends": [
 				"rear_left_window",
 				"rear_left_door"
 			],
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {
 					"ojoi": "pok"
 				}
@@ -104,43 +95,40 @@
 		},
 		{
 			"id": "rear_right",
-			"source": [
+			"depends": [
 				"rear_right_door",
 				"rear_right_window"
 			],
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {}
 			}
 		},
 		{
 			"id": "front_left",
-			"source": [
+			"depends": [
 				"front_left_door",
 				"front_left_window"
 			],
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {}
 			}
 		},
 		{
 			"id": "front_right",
-			"source": [
+			"depends": [
 				"front_right_door",
 				"front_right_window"
 			],
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {}
 			}
 		},
 		{
 			"id": "all_doors",
-			"source": [
+			"depends": [
 				"front_left_door",
 				"front_left_window",
 				"front_right_door",
@@ -151,8 +139,7 @@
 				"rear_right_window"
 			],
 			"onReceived": {
-				"plugin": "low-can-callbacks",
-				"function": "isOpen",
+				"function": "plugin://low-can-callbacks/isOpen",
 				"args": {
 					"evtname": "doors.open"
 				}

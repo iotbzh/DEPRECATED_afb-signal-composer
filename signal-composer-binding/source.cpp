@@ -20,8 +20,8 @@
 SourceAPI::SourceAPI()
 {}
 
-SourceAPI::SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal):
-	api_(api), info_(info), init_(init), getSignal_(getSignal)
+SourceAPI::SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignals):
+	api_(api), info_(info), init_(init), getSignals_(getSignals)
 {}
 
 std::string SourceAPI::api() const
@@ -29,41 +29,51 @@ std::string SourceAPI::api() const
 	return api_;
 }
 
-void SourceAPI::addSignal(const std::string& id, std::vector<std::string>& sources, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived)
+void SourceAPI::addSignal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs)
 {
-	std::shared_ptr<Signal> sig = std::make_shared<Signal>(id, sources, unit, frequency, onReceived);
+	std::shared_ptr<Signal> sig = std::make_shared<Signal>(id, event, depends, unit, frequency, onReceived, getSignalsArgs);
 
-	signalsList_.push_back(sig);
+	signalsMap_[sig] = false;
 }
 
 std::vector<std::shared_ptr<Signal>> SourceAPI::getSignals() const
 {
-	return signalsList_;
+	std::vector<std::shared_ptr<Signal>> signals;
+	for (auto& sig: signalsMap_)
+	{
+		signals.push_back(sig.first);
+	}
+	return signals;
 }
 
 std::shared_ptr<Signal> SourceAPI::searchSignal(const std::string& name) const
 {
-	for (auto& sig: signalsList_)
+	for (auto& sig: signalsMap_)
 	{
-		if(*sig == name) {return sig;}
+		if(*sig.first == name) {return sig.first;}
 	}
 	return nullptr;
 }
 
-int SourceAPI::makeSubscription() const
+int SourceAPI::makeSubscription()
 {
 	int err = 0;
-	if(getSignal_)
+	if(getSignals_)
 	{
-		for(std::shared_ptr<Signal> sig: signalsList_)
+		for(auto& sig: signalsMap_)
 		{
-			json_object* lowSignalNameJ = sig->toJSON();
-			if(!lowSignalNameJ)
+			json_object* signalJ = sig.first->toJSON();
+			if(!signalJ)
 			{
-				AFB_ERROR("Error building JSON query object to subscribe to for signal %s", sig->id().c_str());
-				return -1;
+				AFB_ERROR("Error building JSON query object to subscribe to for signal %s", sig.first->id().c_str());
+				err = -1;
+				break;
 			}
-			err += ActionExecOne(getSignal_, lowSignalNameJ);
+			err += sig.second ? 0:ActionExecOne(getSignals_, signalJ);
+			if(err)
+				{AFB_WARNING("Fails to subscribe to signal %s", sig.first->id().c_str());}
+			else
+				{sig.second = true;}
 		}
 	}
 
