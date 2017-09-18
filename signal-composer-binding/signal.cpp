@@ -57,6 +57,7 @@ bool Signal::operator ==(const std::string& aName) const
 	for( const std::string& src : signalSigList_)
 	{
 		if(! fnmatch(aName.c_str(), src.c_str(), FNM_CASEFOLD)) {return true;}
+		if( src.find(aName) != std::string::npos) {return true;}
 	}
 	return false;
 }

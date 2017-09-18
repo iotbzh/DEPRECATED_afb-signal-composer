@@ -59,6 +59,7 @@ public:
 	const std::string id() const;
 	json_object* toJSON() const;
 
+	void set(long long int timestamp, struct SignalValue& value);
 	void update(long long int timestamp,  struct SignalValue value);
 	int onReceivedCB(json_object *queryJ);
 	void attachToSourceSignals(bindingApp& bApp);
