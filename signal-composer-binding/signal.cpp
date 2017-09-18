@@ -169,8 +169,10 @@ int Signal::recursionCheck()
 
 double Signal::average(int seconds) const
 {
-	long long int begin = history_.begin()->first,
-		end = begin+(seconds*MICRO);
+	long long int begin = history_.begin()->first;
+	long long int end = !seconds ?
+		begin+(seconds*MICRO) :
+		history_.rbegin()->first;
 	double total = 0.0;
 	int nbElt = 0;
 
@@ -181,7 +183,7 @@ double Signal::average(int seconds) const
 		if(val.second.hasNum)
 		{
 			total += val.second.numVal;
-		nbElt++;
+			nbElt++;
 		}
 		else
 		{
@@ -197,11 +199,19 @@ double Signal::average(int seconds) const
 	return total / nbElt;
 }
 double Signal::minimum() const
+double Signal::minimum(int seconds) const
 {
+	long long int begin = history_.begin()->first;
+	long long int end = !seconds ?
+	begin+(seconds*MICRO) :
+	history_.rbegin()->first;
+
 	double min = DBL_MAX;
 	for (auto& v : history_)
 	{
-		if(v.second.hasNum && v.second.numVal < min)
+		if(v.first >= end)
+			{break;}
+		else if(v.second.hasNum && v.second.numVal < min)
 			{min = v.second.numVal;}
 		else
 		{
@@ -217,11 +227,19 @@ double Signal::minimum() const
 }
 
 double Signal::maximum() const
+double Signal::maximum(int seconds) const
 {
+	long long int begin = history_.begin()->first;
+	long long int end = !seconds ?
+	begin+(seconds*MICRO) :
+	history_.rbegin()->first;
+
 	double max = 0.0;
 	for (auto& v : history_)
 	{
-		if(v.second.hasNum && v.second.hasNum > max)
+		if(v.first >= end)
+		{break;}
+		else if(v.second.hasNum && v.second.hasNum > max)
 			{max = v.second.numVal;}
 		else
 		{

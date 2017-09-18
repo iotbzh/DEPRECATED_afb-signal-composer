@@ -65,8 +65,8 @@ public:
 	void attachToSourceSignals(bindingApp& bApp);
 
 	double average(int seconds = 0) const;
-	double minimum() const;
-	double maximum() const;
+	double minimum(int seconds = 0) const;
+	double maximum(int seconds = 0) const;
 	struct SignalValue last() const;
 	int recursionCheck();
 };
