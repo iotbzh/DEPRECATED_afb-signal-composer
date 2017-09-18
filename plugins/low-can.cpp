@@ -47,9 +47,16 @@ typedef struct {
 } allDoorsCtxT;
 
 typedef struct {
-	bindingApp* bApp;
+	struct pluginCBT* pluginHandle;
 	allDoorsCtxT allDoorsCtx;
 } lowCANCtxT;
+
+void setDoor(doorT* aDoor, const char* eventName, int eventStatus)
+{
+	if(strcasestr(eventName, "door")) {aDoor->door = eventStatus;}
+	else if(strcasestr(eventName, "window")) {aDoor->window = eventStatus;}
+	else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", eventName);}
+}
 
 // Call at initialisation time
 CTLP_ONLOAD(plugin, bAppHandle)
@@ -59,7 +66,7 @@ CTLP_ONLOAD(plugin, bAppHandle)
 	::memset(&allDoorsCtx, 0, sizeof(allDoorsCtxT));
 	pluginCtx->allDoorsCtx = allDoorsCtx;
 
-	pluginCtx->bApp = (bindingApp*)bAppHandle;
+	pluginCtx->pluginHandle = (struct pluginCBT*)bAppHandle;
 
 	AFB_NOTICE ("Low-can plugin: label='%s' version='%s' info='%s'",
 		plugin->label,
@@ -115,26 +122,12 @@ CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
 }
 
 CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
-	const char* eventName;
-	bool eventStatus;
+	const char *eventName = nullptr;
+	int eventStatus;
 	double timestamp;
-	lowCANCtxT *pluginCtx=(lowCANCtxT*)context;
+	lowCANCtxT *pluginCtx=(lowCANCtxT*)source->context;
 
-	AFB_NOTICE("This is the situation: source:%s, args:%s, event:%s,\n fld: %s, flw: %s, frd: %s, frw: %s, rld: %s, rlw: %s, rrd: %s, rrw: %s",
-		source->label,
-		json_object_to_json_string(argsJ),
-		json_object_to_json_string(eventJ),
-		pluginCtx->allDoorsCtx.front_left.door ? "true":"false",
-		pluginCtx->allDoorsCtx.front_left.window ? "true":"false",
-		pluginCtx->allDoorsCtx.front_right.door ? "true":"false",
-		pluginCtx->allDoorsCtx.front_right.window ? "true":"false",
-		pluginCtx->allDoorsCtx.rear_left.door ? "true":"false",
-		pluginCtx->allDoorsCtx.rear_left.window ? "true":"false",
-		pluginCtx->allDoorsCtx.rear_right.door ? "true":"false",
-		pluginCtx->allDoorsCtx.rear_right.window ? "true":"false"
-	);
-
-	int err = wrap_json_unpack(eventJ, "{ss,s?b,s?F}",
+	int err = wrap_json_unpack(eventJ, "{ss,sb,s?F}",
 		"name", &eventName,
 		"value", &eventStatus,
 		"timestamp", &timestamp);
@@ -144,32 +137,52 @@ CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
 		return -1;
 	}
 
+	struct SignalValue value = {
+		.hasBool = true, .boolVal = eventStatus,
+		.hasNum = false, .numVal = 0,
+		.hasStr = false, .strVal = std::string()
+	};
 	if(strcasestr(eventName, "front_left"))
 	{
-		if(strcasestr(eventName, "door")) {pluginCtx->allDoorsCtx.front_left.door = eventStatus;}
-		else if(strcasestr(eventName, "window")) {pluginCtx->allDoorsCtx.front_left.window = eventStatus;}
-		else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", json_object_to_json_string(eventJ));}
+		pluginCtx->pluginHandle->setSignalValue(eventName,(long long int)timestamp, value);
+		setDoor(&pluginCtx->allDoorsCtx.front_left, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "front_right"))
 	{
-		if(strcasestr(eventName, "door")) {pluginCtx->allDoorsCtx.front_right.door = eventStatus;}
-		else if(strcasestr(eventName, "window")) {pluginCtx->allDoorsCtx.front_right.window = eventStatus;}
-		else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", json_object_to_json_string(eventJ));}
+		pluginCtx->pluginHandle->setSignalValue(eventName,(long long int)timestamp, value);
+		setDoor(&pluginCtx->allDoorsCtx.front_right, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "rear_left"))
 	{
-		if(strcasestr(eventName, "door")) {pluginCtx->allDoorsCtx.rear_left.door = eventStatus;}
-		else if(strcasestr(eventName, "window")) {pluginCtx->allDoorsCtx.rear_left.window = eventStatus;}
-		else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", json_object_to_json_string(eventJ));}
+		pluginCtx->pluginHandle->setSignalValue(eventName,(long long int)timestamp, value);
+		setDoor(&pluginCtx->allDoorsCtx.rear_left, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "rear_right"))
 	{
-		if(strcasestr(eventName, "door")) {pluginCtx->allDoorsCtx.rear_right.door = eventStatus;}
-		else if(strcasestr(eventName, "window")) {pluginCtx->allDoorsCtx.rear_right.window = eventStatus;}
-		else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", json_object_to_json_string(eventJ));}
+		pluginCtx->pluginHandle->setSignalValue(eventName,(long long int)timestamp, value);
+		setDoor(&pluginCtx->allDoorsCtx.rear_right, eventName, eventStatus);
 	}
-	else {AFB_WARNING("Unexpected behavior, this '%s' is not a door ! ", json_object_to_json_string(eventJ));}
+	else
+	{
+		AFB_WARNING("Unexpected behavior, this '%s' is it really a door ! ", json_object_to_json_string(eventJ));
+		return -1;
+	}
+
+	AFB_DEBUG("This is the situation: source:%s, args:%s, event:%s,\n fld: %s, flw: %s, frd: %s, frw: %s, rld: %s, rlw: %s, rrd: %s, rrw: %s",
+	source->label,
+	json_object_to_json_string(argsJ),
+	json_object_to_json_string(eventJ),
+	pluginCtx->allDoorsCtx.front_left.door ? "true":"false",
+	pluginCtx->allDoorsCtx.front_left.window ? "true":"false",
+	pluginCtx->allDoorsCtx.front_right.door ? "true":"false",
+	pluginCtx->allDoorsCtx.front_right.window ? "true":"false",
+	pluginCtx->allDoorsCtx.rear_left.door ? "true":"false",
+	pluginCtx->allDoorsCtx.rear_left.window ? "true":"false",
+	pluginCtx->allDoorsCtx.rear_right.door ? "true":"false",
+	pluginCtx->allDoorsCtx.rear_right.window ? "true":"false"
+);
 
 	return 0;
 }
+
 }

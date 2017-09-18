@@ -55,3 +55,10 @@ public:
 
 	int execSubscription() const;
 };
+
+struct pluginCBT
+{
+	void (*setSignalValue)(const char* aName, long long int timestamp, struct SignalValue value);
+};
+
+extern "C" void setSignalValueHandle(const char* aName, long long int timestamp, struct SignalValue value);

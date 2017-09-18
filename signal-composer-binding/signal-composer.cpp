@@ -19,10 +19,21 @@
 
 #include "signal-composer.hpp"
 
+extern "C" void setSignalValueHandle(const char* aName, long long int timestamp, struct SignalValue value)
+{
+	std::shared_ptr<Signal> sig = bindingApp::instance().searchSignal(aName);
+	if(sig)
+		{sig->set(timestamp, value);}
+}
+
+static struct pluginCBT pluginHandle = {
+	.setSignalValue = setSignalValueHandle,
+};
+
 CtlSectionT bindingApp::ctlSections_[] = {
 	[0]={.key="plugins" ,.label = "plugins", .info=nullptr,
 		.loadCB=PluginConfig,
-		.handle=&bindingApp::instance()},
+		.handle=&pluginHandle},
 	[1]={.key="sources" ,.label = "sources", .info=nullptr,
 		 .loadCB=loadSourcesAPI,
 		 .handle=nullptr},
