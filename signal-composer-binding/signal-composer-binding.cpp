@@ -73,13 +73,19 @@ void loadConf(afb_req request)
 /// @brief entry point to list available signals
 void list(afb_req request)
 {
-	if(true)
+	struct json_object *allSignalsJ = json_object_new_array();
+
+	std::vector<std::shared_ptr<Signal>> allSignals = bindingApp::instance().getAllSignals();
+	for(auto& sig: allSignals)
+		{json_object_array_add(allSignalsJ, sig->toJSON());}
+
+	if(json_object_array_length(allSignalsJ))
 	{
-		afb_req_success(request, NULL, NULL);
+		afb_req_success(request, allSignalsJ, NULL);
 	}
 	else
 	{
-		afb_req_fail(request, "error", NULL);
+		afb_req_fail(request, "error", "No Signals recorded so far");
 	}
 }
 
