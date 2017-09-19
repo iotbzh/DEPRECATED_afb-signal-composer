@@ -51,25 +51,31 @@ A source is defined with following fields:
 
 - **api**: Name of the source API.
 - **info** (optionnal): self-explanatory
-- **init** (optionnal): an **action** to take to initialize a source. May you have  to call a verb from that API, of create a files etc.
+- **init** (optionnal): an **action** to take to initialize a source. May you
+ have  to call a verb from that API, of create a files etc.
 - **getSignals** (optionnal); an **action** to take to get signals from that
  source. These callback will be used for each signals defined later in the **signals** section. Dedicated arguments for each signal could be defined in
  **signals**.
 
 ## Signals
 
-A signal definition could be either a **raw** one or a **virtual** one. A **virtual signal** is a set of existing **raw signals** associated to an **action**
-on reception which will compute the value of the signal.
+A signal definition could be either a **raw** one or a **virtual** one. A
+ **virtual signal** is a set of existing **raw signals** associated to an
+ **action** on reception which will compute the value of the signal.
 
-- **id**: Unique identifier used inside **signal composer**, used to compose virtual signals.
-- **event**: specify a **raw signal** coming from **low level** sources. Couldn't
- be used with **depends** field, only one of them is possible.
+- **id**: Unique identifier used inside **signal composer**, used to compose
+ virtual signals.
+- **event**: specify a **raw signal** coming from **low level** sources.
+ Couldn't be used with **depends** field, only one of them is possible.
 - **depends**: specify others signals **id** that compose it (eg: heading is
- composed with longitude+latitude signals.). Couldn't be used with **event** field
- at same time.
+ composed with longitude+latitude signals.). Couldn't be used with **event**
+ field at same time.
 - **unit** (optionnal): Unit used to exprime the signal
 - **frequency** (optionnal): Frequency maximum at which the signal could be
- requested or sent. This is a thinning made at **high level** so not best suited for performance. Used **low level** native filtering capabilities when possible.
+ requested or sent. This is a thinning made at **high level** so not best
+ suited for performance. Used **low level** native filtering capabilities when
+ possible.
 - **getSignalsArgs**: a JSON object used at subscription time. Meant to enabled
- filtering capabilities at subscription and to be able to customize in general a subcription request by signal if needed.
+ filtering capabilities at subscription and to be able to customize in general
+ a subcription request by signal if needed.
 - **onReceived**: an **action** to take when this signal is received!

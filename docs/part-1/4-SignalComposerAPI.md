@@ -11,8 +11,8 @@ signal-composer get {"signal": "vehicle_speed", "options": {"maximum": 10}}
 signal-composer get {"signal": "vehicle_speed"}
 ```
 
-You apply apply some simple mathematical function by default present in the binding
-, by default **last** is used:
+You apply apply some simple mathematical function by default present in the
+binding, by default **last** is used:
 
 - **average**: make an average on X latest seconds.
 - **minimum**: return the minimum value found in the X latest seconds.
