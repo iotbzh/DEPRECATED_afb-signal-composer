@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OUTFILENAME="Signal Composer"
+OUTFILENAME="Signal_Composer"
 
 SCRIPT=$(basename $BASH_SOURCE)
 
