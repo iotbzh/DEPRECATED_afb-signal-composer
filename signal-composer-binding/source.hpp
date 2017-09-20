@@ -34,6 +34,7 @@ public:
 	SourceAPI();
 	SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal);
 
+	int init();
 	std::string api() const;
 	void addSignal(const std::string& id, const std::string& event, std::vector<std::string>& sources, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 

@@ -3,10 +3,10 @@
 	"metadata": {
 		"label": "Signal Composer",
 		"version": "1.0",
-		"api": "signal-composer",
+		"api": "test",
 		"info": "Signal composer Configuration",
 		"require": ["low-can"],
-		"files": ["sources", "sig-doors"]
+		"files": ["sources", "sig-doors", "sig-demoboard"]
 	},
 	"plugins": [
 		{

@@ -16,6 +16,7 @@
 */
 
 #include "source.hpp"
+#include "signal-composer.hpp"
 
 SourceAPI::SourceAPI()
 {}
@@ -23,6 +24,18 @@ SourceAPI::SourceAPI()
 SourceAPI::SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignals):
 	api_(api), info_(info), init_(init), getSignals_(getSignals)
 {}
+
+int SourceAPI::init()
+{
+	if(init_)
+		{return ActionExecOne(init_, nullptr);}
+	else if(api_ == afbBindingV2.api)
+	{
+		api_ = bindingApp::instance().ctlConfig()->api;
+	}
+
+	return 0;
+}
 
 std::string SourceAPI::api() const
 {
@@ -71,7 +84,8 @@ int SourceAPI::makeSubscription()
 			}
 			err += sig.second ? 0:ActionExecOne(getSignals_, signalJ);
 			if(err)
-				{AFB_WARNING("Fails to subscribe to signal %s", sig.first->id().c_str());}
+				{AFB_WARNING("Fails to subscribe to signal '%s/%s'",
+				api_.c_str(), sig.first->id().c_str());}
 			else
 				{sig.second = true;}
 		}

@@ -20,14 +20,16 @@
 // afb-utilities
 #include <wrap-json.h>
 #include <filescan-utils.h>
-// controller
-#include <ctl-lua.h>
 
 #include "signal-composer-binding.hpp"
 #include "signal-composer-apidef.h"
 #include "signal-composer.hpp"
 
-/// @brief callback for receiving message from low binding. Treatment itself is made in SigComp class.
+/// @brief callback for receiving message from low bindings. This will callback
+/// an action defined in the configuration files depending on the event received
+///
+/// @param[in] event - event name
+/// @param[in] object - eventual data that comes with the event
 void onEvent(const char *event, json_object *object)
 {
 	AFB_DEBUG("Received event json: %s", json_object_to_json_string(object));
@@ -129,10 +131,6 @@ int loadConf()
 
 	bindingApp& bApp = bindingApp::instance();
 	err = bApp.loadConfig(rootdir);
-
-	#ifdef CONTROL_SUPPORT_LUA
-		err += LuaConfigLoad();
-	#endif
 
 	return err;
 }

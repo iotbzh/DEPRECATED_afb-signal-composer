@@ -84,6 +84,15 @@ SourceAPI* bindingApp::getSourceAPI(const std::string& api)
 	}
 	return nullptr;
 }
+int bindingApp::initSourcesAPI()
+{
+	int err = 0;
+	for(auto& src: sourcesListV_)
+	{
+		err += src.init();
+	}
+	return err;
+}
 
 std::vector<std::string> bindingApp::parseURI(const std::string& uri)
 {
@@ -123,7 +132,7 @@ CtlActionT* bindingApp::convert2Action(const std::string& name, json_object* act
 			std::string fName = std::string(function).substr(6);
 			wrap_json_pack(&action, "{ss,ss,so*}",
 			"label", name.c_str(),
-			"lua", fName,
+			"lua", fName.c_str(),
 			"args", functionArgsJ);
 		}
 		else if(startsWith(function, "api://"))
@@ -205,13 +214,13 @@ int bindingApp::loadSourcesAPI(CtlSectionT* section, json_object *sourcesJ)
 {
 	int err = 0;
 	bindingApp& bApp = instance();
-	json_object *sigCompJ = nullptr;
 
-	// add the signal composer itself as source
 	if(sourcesJ)
 	{
+		json_object *sigCompJ = nullptr;
+		// add the signal composer itself as source
 		wrap_json_pack(&sigCompJ, "{ss,ss}",
-		"api", "signal-composer",
+		"api", afbBindingV2.api,
 		"info", "Api on behalf the virtual signals are sent");
 
 		json_object_array_add(sourcesJ, sigCompJ);
@@ -232,7 +241,9 @@ int bindingApp::loadSourcesAPI(CtlSectionT* section, json_object *sourcesJ)
 			if ((err = bApp.loadOneSourceAPI(sourcesJ))) return err;
 			if (sigCompJ && (err = bApp.loadOneSourceAPI(sigCompJ))) return err;
 		}
-}
+	}
+	else
+		{err += bindingApp::instance().initSourcesAPI();}
 
 	return err;
 }

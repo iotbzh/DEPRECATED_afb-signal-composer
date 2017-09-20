@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 #ifndef CONTROL_CONFIG_PRE
-  #define CONTROL_CONFIG_PRE "onload"
+  #define CONTROL_CONFIG_PRE "init"
 #endif
 
 #ifndef CTL_PLUGIN_EXT
@@ -91,6 +91,8 @@ typedef struct {
 
 #ifdef CONTROL_SUPPORT_LUA
   #include "ctl-lua.h"
+#else
+    typedef void* Lua2cWrapperT;
 #endif
 
 // ctl-action.c

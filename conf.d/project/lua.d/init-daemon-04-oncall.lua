@@ -21,12 +21,59 @@
 --global counter to keep track of calls
 _count=0
 
--- Display receive arguments and echo them to caller
-function _LUA_Simple_Echo_Args (request, args)
-    _count=_count+1
-    AFB:notice("LUA OnCall Echo Args count=%d args=%s", count, args)
 
+_interval={
+  {"km/h",1}, --the "1" should never really get used but
+  {"mi/h",0.62137119223733},
+  {"m/s",0.27777777777778},
+}
+
+_positions={}
+for i=1,3 do
+  _positions[_interval[i][1]]=i
+end
+
+--function _Unit_Converter(value, sourceunits, targetunits)
+function _Unit_Converter(source, args, event)
+  local value = event["value"]
+  local sourceunits = args["from"]
+  local targetunits = args["to"]
+  local sourcei, targeti = _positions[sourceunits], _positions[targetunits]
+  assert(sourcei and targeti)
+
+  AFB:notice("LUA OnCall Echo Args source=%s args=%s event=%s", source, args, event)
+
+  if sourcei<targeti then
+
+    local base=1
+    for i=sourcei+1,targeti do
+      base=base*_interval[i][2]
+    end
+
+    print("Value in", targetunits, "is", value/base)
+
+  elseif sourcei>targeti then
+
+    local base=1
+    for i=targeti+1,sourcei do
+      base=base*interval[i][2]
+    end
+
+    print("Value in ", targetunits, "is", value*base)
+
+  else
+    print("No conversion")
+  end
+end
+
+-- Display receive arguments and echo them to caller
+function _Simple_Echo_Args (source, args, event)
+    _count=_count+1
+    AFB:notice("LUA OnCall Echo Args count=%d args=%s event=%s", count, args, event)
+
+    print ("--inlua-- source=", Dump_Table(source))
     print ("--inlua-- args=", Dump_Table(args))
+    print ("--inlua-- event=", Dump_Table(event))
 
     local response={
        ["count"]=_count,
@@ -34,7 +81,7 @@ function _LUA_Simple_Echo_Args (request, args)
     }
 
     -- fulup Embdeded table ToeDone AFB:success (request, response)
-    AFB:success (request,  {["func"]="Simple_Echo_Args", ["ret1"]=5678, ["ret2"]="abcd"})
+    -- AFB:success (request, response)
 end
 
 local function Test_Async_CB (request, result, context)

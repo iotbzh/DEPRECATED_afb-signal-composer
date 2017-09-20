@@ -182,7 +182,7 @@ void Signal::attachToSourceSignals(bindingApp& bApp)
 
 /// @brief Call update() method on observer Signal with
 /// current Signal timestamp and value
-void Signal::notify()
+void Signal::notify() const
 {
 	for (int i = 0; i < Observers_.size(); ++i)
 	  Observers_[i]->update(timestamp_, value_);
@@ -194,7 +194,7 @@ void Signal::notify()
 /// @param[in] origId - name of the origine of the recursion check
 ///
 /// @return 0 if no infinite loop detected, -1 if not.
-int Signal::recursionCheck(const std::string& origId)
+int Signal::recursionCheck(const std::string& origId) const
 {
 	for (const auto& obs: Observers_)
 	{
@@ -214,7 +214,7 @@ int Signal::recursionCheck(const std::string& origId)
 /// then trigger the check against the following eventuals observers
 ///
 /// @return 0 if no infinite loop detected, -1 if not.
-int Signal::recursionCheck()
+int Signal::recursionCheck() const
 {
 	for (const auto& obs: Observers_)
 	{

@@ -15,16 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###########################################################################
-
 # Include LUA only when requested
-if(CONTROL_SUPPORT_LUA)
+get_property(COMPDEF DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+if("CONTROL_SUPPORT_LUA=1" IN_LIST COMPDEF)
    message(STATUS "Notice: LUA Controler Support Selected")
    set(CTL_LUA_SOURCE ctl-lua.c ctl-timer.c)
    ADD_COMPILE_OPTIONS(-DCONTROL_SUPPORT_LUA)
-else(CONTROL_SUPPORT_LUA)
+else()
    message(STATUS "Warning: LUA Without Support ")
-endif(CONTROL_SUPPORT_LUA)
-
+endif()
 
 # Add target to project dependency list
 PROJECT_TARGET_ADD(afb-controller)
@@ -41,4 +40,3 @@ PROJECT_TARGET_ADD(afb-controller)
     TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME}
         PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
     )
-

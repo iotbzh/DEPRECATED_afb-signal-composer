@@ -49,13 +49,14 @@ private:
 
 	std::vector<Signal*> Observers_;
 
-	void notify();
+	void notify() const;
 	void attach(Signal *obs);
-	int recursionCheck(const std::string& origId);
+	int recursionCheck(const std::string& origId) const;
 
 public:
 	Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 	Signal(const std::string& id, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived);
+
 	explicit operator bool() const;
 	bool operator==(const Signal& other) const;
 	bool operator==(const std::string& aName) const;
@@ -72,5 +73,5 @@ public:
 	double minimum(int seconds = 0) const;
 	double maximum(int seconds = 0) const;
 	struct SignalValue last() const;
-	int recursionCheck();
+	int recursionCheck() const;
 };

@@ -27,8 +27,8 @@ _Global_Context={}
    is save into _Global_Context for further use.
 
    Note: init functions are not call from a client and thus do not receive query
-
 --]]
+
 function _Sample_Controller_Init(source, control)
 
     printf ("[-- Sample_Controller_Init --] source=%d control=%s", source, Dump_Table(control))
@@ -44,5 +44,4 @@ function _Sample_Controller_Init(source, control)
 
     -- just for fun create an event
     _Global_Context["event"]=AFB:evtmake(control["zzzz"])
-
 end

@@ -155,6 +155,9 @@ int CtlConfigExec(CtlConfigT *ctlConfig) {
         errcount += ctlConfig->sections[idx].loadCB(&ctlConfig->sections[idx], NULL);
     }
     return errcount;
+
+    OnErrorExit:
+        return 1;
 }
 
 CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
@@ -163,7 +166,7 @@ CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
     int err;
 
 #ifdef CONTROL_SUPPORT_LUA
-    err= LuaConfigLoad();
+    err = LuaConfigLoad();
     if (err) goto OnErrorExit;
 #endif
 

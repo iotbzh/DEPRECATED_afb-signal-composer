@@ -49,6 +49,7 @@ public:
 	int loadSignals(json_object* signalsJ);
 
 	CtlConfigT* ctlConfig();
+	int initSourcesAPI();
 	std::vector<std::shared_ptr<Signal>> getAllSignals();
 	SourceAPI* getSourceAPI(const std::string& api);
 	std::shared_ptr<Signal> searchSignal(const std::string& aName);

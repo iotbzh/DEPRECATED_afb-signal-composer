@@ -736,12 +736,13 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
                 goto OnErrorExit;
             }
 
-            // search for filename=script in CONTROL_LUA_PATH
-            if (!luaScriptPathJ)  {
+            // search for filename=script in binding data dir
+            if (!luaScriptPathJ) {
+                const char* dirList = strncat(GetBindingDirPath(), "/data", sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) - 1);
                 strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, sizeof(luaScriptPath));
                 strncat(luaScriptPath,"-", sizeof(luaScriptPath));
                 strncat(luaScriptPath,target, sizeof(luaScriptPath));
-                luaScriptPathJ= ScanForConfig(CONTROL_LUA_PATH , CTL_SCAN_RECURSIVE,luaScriptPath,".lua");
+                luaScriptPathJ= ScanForConfig(dirList, CTL_SCAN_RECURSIVE,luaScriptPath,".lua");
             }
             for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
                 json_object *entryJ=json_object_array_get_idx(luaScriptPathJ, index);
@@ -988,8 +989,6 @@ static const luaL_Reg afbFunction[] = {
 
 // Load Lua Interpreter
 int LuaConfigLoad () {
-
-
     // open a new LUA interpretor
     luaState = luaL_newstate();
     if (!luaState)  {
@@ -1029,8 +1028,8 @@ int LuaConfigExec () {
     strncat (fullprefix, GetBinderName(), sizeof(fullprefix));
     strncat (fullprefix, "-", sizeof(fullprefix));
 
-    const char *dirList= getenv("CONTROL_LUA_PATH");
-    if (!dirList) dirList=CONTROL_LUA_PATH;
+    const char *dirList = getenv("CONTROL_LUA_PATH");
+    if (!dirList) dirList = strncat(GetBindingDirPath(), "/data", sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) - 1);
 
     // special case for no lua even when avaliable
     if (!strcasecmp ("/dev/null", dirList)) {
@@ -1073,7 +1072,7 @@ int LuaConfigExec () {
         AFB_WARNING ("POLICY-INIT:WARNING (setenv CONTROL_LUA_PATH) No LUA '%s*.lua' in '%s'", fullprefix, dirList);
     }
 
-    AFB_DEBUG ("Audio control-LUA Init Done");
+    AFB_DEBUG("Control-LUA Init Done");
     return 0;
 
  OnErrorExit:

@@ -6,9 +6,12 @@
 			"class": "temporal",
 			"unit": "km/h",
 			"frequency": 1,
+			"getSignalsArgs": {
+				"frequency": 5,
+				"min": 10
+			},
 			"onReceived": {
-				"label": "Unit converter",
-				"lua": "_Unit_Converter",
+				"function": "lua://_Unit_Converter",
 				"args": {
 					"from": "km/h",
 					"to": "mi/h"
