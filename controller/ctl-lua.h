@@ -64,7 +64,7 @@ typedef int (*Lua2cWrapperT) (lua_State* luaState, char *funcname, Lua2cFunction
 
 #define CTLP_LUALOAD Lua2cWrapperT Lua2cWrap;
 #define CTLP_LUA2C(FuncName, label,argsJ, context) static int FuncName(char*label,json_object*argsJ);\
-        int lua2c_ ## FuncName(lua_State* luaState){return((*Lua2cWrap)(luaState, MACRO_STR_VALUE(FuncName), FuncName, PLUGIN_NAME));};\
+        int lua2c_ ## FuncName(lua_State* luaState){return((*Lua2cWrap)(luaState, MACRO_STR_VALUE(FuncName), FuncName));};\
         static int FuncName(char* label, json_object* argsJ, void* context)
 
 typedef enum {

@@ -26,7 +26,6 @@
 #include "ctl-plugin.h"
 #include "wrap-json.h"
 
-
 #include "signal-composer.hpp"
 
 extern "C"

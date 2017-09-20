@@ -25,14 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef CONTROL_SUPPORT_LUA
-#include "ctl-lua.h"
-#else
-typedef struct lua_State lua_State;
-typedef void *Lua2cFunctionT;
-typedef void *Lua2cWrapperT;
-#endif
-
 #include "ctl-config.h"
 
 static CtlPluginT *ctlPlugins=NULL;
