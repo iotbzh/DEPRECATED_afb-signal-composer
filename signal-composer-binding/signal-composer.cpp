@@ -22,9 +22,14 @@
 
 extern "C" void setSignalValueHandle(const char* aName, long long int timestamp, struct SignalValue value)
 {
-	std::shared_ptr<Signal> sig = bindingApp::instance().searchSignal(aName);
-	if(sig)
-		{sig->set(timestamp, value);}
+	std::vector<std::shared_ptr<Signal>> signals = bindingApp::instance().searchSignals(aName);
+	if(!signals.empty())
+	{
+		for(auto& sig: signals)
+		{
+			sig->set(timestamp, value);
+		}
+	}
 }
 
 bool startsWith(const std::string& str, const std::string& pattern)
@@ -376,15 +381,16 @@ int bindingApp::loadSignals(json_object* signalsJ)
 	return loadSignals(nullptr, signalsJ);
 }
 
-std::shared_ptr<Signal> bindingApp::searchSignal(const std::string& aName)
+std::vector<std::shared_ptr<Signal>> bindingApp::searchSignals(const std::string& aName)
 {
 	std::string api;
+	std::vector<std::shared_ptr<Signal>> signals;
 	size_t sep = aName.find_first_of("/");
 	if(sep != std::string::npos)
 	{
 		api = aName.substr(0, sep);
 		SourceAPI* source = getSourceAPI(api);
-		return source->searchSignal(aName);
+		return source->searchSignals(aName);
 	}
 	else
 	{
@@ -392,10 +398,10 @@ std::shared_ptr<Signal> bindingApp::searchSignal(const std::string& aName)
 		for (std::shared_ptr<Signal>& sig : allSignals)
 		{
 			if(*sig == aName)
-				{return sig;}
+				{signals.emplace_back(sig);}
 		}
 	}
-	return nullptr;
+	return signals;
 }
 
 std::vector<std::shared_ptr<Signal>> bindingApp::getAllSignals()
@@ -428,48 +434,36 @@ int bindingApp::execSubscription()
 	return err;
 }
 
-json_object* bindingApp::getSignalValue(const std::string& sig, json_object* options)
+void bindingApp::processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const
 {
-	const char **opts = nullptr;
-	json_object *response = nullptr;
-
-	wrap_json_unpack(options, "{s?s?s?s?!}",
-		&opts[0],
-		&opts[1],
-		&opts[2],
-		&opts[3]);
-
-	std::shared_ptr<Signal> sigP = searchSignal(sig);
-	wrap_json_pack(&response, "{ss}",
-		"signal", sigP->id().c_str());
 	for(int idx=0; idx < sizeof(opts); idx++)
 	{
 		bool avg = false, min = false, max = false, last = false;
 		if (strcasestr(opts[idx], "average") && !avg)
 		{
 			avg = true;
-			double value = sigP->average();
+			double value = sig->average();
 			json_object_object_add(response, "average",
 				json_object_new_double(value));
 		}
 		if (strcasestr(opts[idx], "min") && !min)
 		{
 			min = true;
-			double value = sigP->minimum();
+			double value = sig->minimum();
 			json_object_object_add(response, "min",
 				json_object_new_double(value));
 		}
 		if (strcasestr(opts[idx], "max") && !max)
 		{
 			max = true;
-			double value = sigP->maximum();
+			double value = sig->maximum();
 			json_object_object_add(response, "max",
 				json_object_new_double(value));
 		}
 		if (strcasestr(opts[idx], "last") && !last)
 		{
 			last = true;
-			struct SignalValue value = sigP->last();
+			struct SignalValue value = sig->last();
 			if(value.hasBool)
 			{
 				json_object_object_add(response, "last",
@@ -487,24 +481,48 @@ json_object* bindingApp::getSignalValue(const std::string& sig, json_object* opt
 			}
 		}
 	}
+}
+json_object* bindingApp::getSignalValue(const std::string& sig, json_object* options)
+{
+	const char **opts = nullptr;
+	json_object *response = nullptr, *finalResponse = json_object_new_array();
 
-	if (!opts)
+	wrap_json_unpack(options, "{s?s?s?s?!}",
+		&opts[0],
+		&opts[1],
+		&opts[2],
+		&opts[3]);
+
+
+	std::vector<std::shared_ptr<Signal>> sigP = searchSignals(sig);
+	if(!sigP.empty())
 	{
-		struct SignalValue value = sigP->last();
-		if(value.hasBool)
+		for(auto& sig: sigP)
 		{
-			json_object_object_add(response, "last",
-				json_object_new_boolean(value.boolVal));
-		}
-		if(value.hasNum)
-		{
-			json_object_object_add(response, "last",
-				json_object_new_double(value.numVal));
-		}
-		if(value.hasStr)
-		{
-			json_object_object_add(response, "last",
-				json_object_new_string(value.strVal.c_str()));
+			wrap_json_pack(&response, "{ss}",
+				"signal", sig->id().c_str());
+			if (!opts)
+			{
+				struct SignalValue value = sig->last();
+				if(value.hasBool)
+				{
+					json_object_object_add(response, "last",
+						json_object_new_boolean(value.boolVal));
+				}
+				if(value.hasNum)
+				{
+					json_object_object_add(response, "last",
+						json_object_new_double(value.numVal));
+				}
+				if(value.hasStr)
+				{
+					json_object_object_add(response, "last",
+						json_object_new_string(value.strVal.c_str()));
+				}
+			}
+			else
+				{processOptions(opts, sig, response);}
+			json_object_array_add(finalResponse, response);
 		}
 	}
 

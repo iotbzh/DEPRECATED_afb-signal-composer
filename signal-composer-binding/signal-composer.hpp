@@ -52,8 +52,9 @@ public:
 	int initSourcesAPI();
 	std::vector<std::shared_ptr<Signal>> getAllSignals();
 	SourceAPI* getSourceAPI(const std::string& api);
-	std::shared_ptr<Signal> searchSignal(const std::string& aName);
+	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& aName);
 	json_object* getSignalValue(const std::string& sig, json_object* options);
+	void processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const;
 
 	int execSubscription();
 };

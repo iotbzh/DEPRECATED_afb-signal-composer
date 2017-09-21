@@ -35,16 +35,53 @@ void onEvent(const char *event, json_object *object)
 	AFB_DEBUG("Received event json: %s", json_object_to_json_string(object));
 	bindingApp& bApp = bindingApp::instance();
 
-	std::shared_ptr<Signal> sig = bApp.searchSignal(event);
-	if(sig != nullptr)
+	std::vector<std::shared_ptr<Signal>> signals = bApp.searchSignals(event);
+	if(!signals.empty())
 	{
-		sig->onReceivedCB(object);
+		for(auto& sig: signals)
+		{
+			sig->onReceivedCB(object);
+		}
 	}
+}
+
+static int one_subscribe_unsubscribe(struct afb_req request,
+	bool subscribe,
+	const std::string& tag,
+	json_object* args)
+{
+	return 1;
 }
 
 /// @brief entry point for client subscription request.
 void subscribe(afb_req request)
 {
+	int rc,rc2,n;
+	json_object *event, *args = afb_req_json(request);
+	if (args == NULL ||
+		!json_object_object_get_ex(args, "event", &event) ||
+		!json_object_object_get_ex(args, "events", &event) ||
+		!json_object_object_get_ex(args, "signal", &event) ||
+		!json_object_object_get_ex(args, "signals", &event))
+	{
+		rc = one_subscribe_unsubscribe(request, subscribe, "*", args);
+	}
+	else if (json_object_get_type(event) != json_type_array)
+	{
+		rc = one_subscribe_unsubscribe(request, subscribe, json_object_get_string(event), args);
+	}
+	else
+	{
+		rc = 0;
+		n = json_object_array_length(event);
+		for (int i = 0 ; i < n ; i++)
+		{
+			json_object *x = json_object_array_get_idx(event, i);
+			rc2 = one_subscribe_unsubscribe(request, subscribe, json_object_get_string(x), args);
+			if (rc >= 0)
+				rc = rc2 >= 0 ? rc + rc2 : rc2;
+		}
+	}
 	if(true)
 		afb_req_success(request, NULL, NULL);
 	else

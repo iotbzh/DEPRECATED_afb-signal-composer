@@ -59,13 +59,15 @@ std::vector<std::shared_ptr<Signal>> SourceAPI::getSignals() const
 	return signals;
 }
 
-std::shared_ptr<Signal> SourceAPI::searchSignal(const std::string& name) const
+std::vector<std::shared_ptr<Signal>> SourceAPI::searchSignals(const std::string& name) const
 {
+	std::vector<std::shared_ptr<Signal>> signals;
 	for (auto& sig: signalsMap_)
 	{
-		if(*sig.first == name) {return sig.first;}
+		if(*sig.first == name)
+			{signals.emplace_back(sig.first);}
 	}
-	return nullptr;
+	return signals;
 }
 
 int SourceAPI::makeSubscription()

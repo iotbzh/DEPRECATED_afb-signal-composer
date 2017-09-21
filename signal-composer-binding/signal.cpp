@@ -16,8 +16,6 @@
 */
 
 #include <float.h>
-#include <fnmatch.h>
-#include <memory>
 
 #include "signal.hpp"
 #include "signal-composer.hpp"
@@ -67,7 +65,7 @@ bool Signal::operator ==(const Signal& other) const
 
 bool Signal::operator ==(const std::string& aName) const
 {
-	if(! fnmatch(aName.c_str(), id_.c_str(), FNM_CASEFOLD)) {return true;}
+	if(id_.find(aName)    != std::string::npos) {return true;}
 	if(event_.find(aName) != std::string::npos) {return true;}
 
 	return false;
@@ -168,11 +166,11 @@ void Signal::attachToSourceSignals(bindingApp& bApp)
 	{
 		if(srcSig.find("/") == std::string::npos)
 		{
-			std::shared_ptr<Signal> sig = bApp.searchSignal(srcSig);
-			if(sig)
+			std::vector<std::shared_ptr<Signal>> sig = bApp.searchSignals(srcSig);
+			if(sig[0])
 			{
 				AFB_NOTICE("Attaching %s to %s", id_.c_str(), srcSig.c_str());
-				sig->attach(this);
+				sig[0]->attach(this);
 				continue;
 			}
 			AFB_WARNING("Can't attach. Is %s exists ?", srcSig.c_str());
