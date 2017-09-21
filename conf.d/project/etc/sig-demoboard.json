@@ -2,7 +2,7 @@
 	"signals": [
 		{
 			"id": "vehicle_speed",
-			"event": "low-can/messages.vehicle.speed",
+			"event": "low-can/messages.vehicle.average.speed",
 			"class": "temporal",
 			"unit": "km/h",
 			"frequency": 1,

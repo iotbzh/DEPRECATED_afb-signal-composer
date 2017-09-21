@@ -28,6 +28,7 @@ _interval={
   {"m/s",0.27777777777778},
 }
 
+_result = {}
 _positions={}
 for i=1,3 do
   _positions[_interval[i][1]]=i
@@ -51,6 +52,9 @@ function _Unit_Converter(source, args, event)
     end
 
     print("Value in", targetunits, "is", value/base)
+    _result["result"] = value/base
+
+    ssetSignalValue(source, _result)
 
   elseif sourcei>targeti then
 
@@ -60,6 +64,9 @@ function _Unit_Converter(source, args, event)
     end
 
     print("Value in ", targetunits, "is", value*base)
+    _result["result"] = value/base
+
+    ssetSignalValue(source, _result)
 
   else
     print("No conversion")

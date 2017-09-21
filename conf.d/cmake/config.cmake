@@ -72,6 +72,7 @@ set (PKG_REQUIRED_LIST
 	libsystemd>=222
 	afb-daemon
 	libmicrohttpd>=0.9.55
+	uuid
 )
 
 # Prefix path where will be installed the files
