@@ -91,6 +91,7 @@ int SourceAPI::makeSubscription()
 			else
 				{sig.second = true;}
 		}
+		err += ActionExecOne(getSignals_, nullptr);
 	}
 
 	return err;

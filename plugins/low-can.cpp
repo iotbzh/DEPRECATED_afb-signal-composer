@@ -47,6 +47,7 @@ typedef struct {
 
 typedef struct {
 	struct pluginCBT* pluginHandle;
+	json_object *subscriptionBatch;
 	allDoorsCtxT allDoorsCtx;
 } lowCANCtxT;
 
@@ -58,14 +59,12 @@ void setDoor(doorT* aDoor, const char* eventName, int eventStatus)
 }
 
 // Call at initialisation time
-CTLP_ONLOAD(plugin, bAppHandle)
+CTLP_ONLOAD(plugin, composerHandle)
 {
 	lowCANCtxT *pluginCtx= (lowCANCtxT*)calloc (1, sizeof(lowCANCtxT));
-	allDoorsCtxT allDoorsCtx = allDoorsCtxT();
-	::memset(&allDoorsCtx, 0, sizeof(allDoorsCtxT));
-	pluginCtx->allDoorsCtx = allDoorsCtx;
 
-	pluginCtx->pluginHandle = (struct pluginCBT*)bAppHandle;
+	pluginCtx->pluginHandle = (struct pluginCBT*)composerHandle;
+	pluginCtx->subscriptionBatch = json_object_new_array();
 
 	AFB_NOTICE ("Low-can plugin: label='%s' version='%s' info='%s'",
 		plugin->label,
@@ -76,46 +75,52 @@ CTLP_ONLOAD(plugin, bAppHandle)
 }
 
 CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
+	lowCANCtxT *pluginCtx = (lowCANCtxT*)source->context;
 	json_object* dependsArrayJ = nullptr, *subscribeArgsJ = nullptr, *subscribeFilterJ = nullptr, *responseJ = nullptr, *filterJ = nullptr;
 	const char *id = nullptr, *event = nullptr, *unit = nullptr;
 	double frequency = 0;
 	int err = 0;
 
-	err = wrap_json_unpack(eventJ, "{ss,s?s,s?o,s?s,s?F,s?o !}",
-		"id", &id,
-		"event", &event,
-		"depends", &dependsArrayJ,
-		"unit", &unit,
-		"frequency", &frequency,
-		"getSignalsArgs", &filterJ);
-	if(err)
+	if(eventJ)
 	{
-		AFB_ERROR("Problem to unpack JSON object eventJ: %s",
-		json_object_to_json_string(eventJ));
-		return err;
-	}
+		err = wrap_json_unpack(eventJ, "{ss,s?s,s?o,s?s,s?F,s?o !}",
+			"id", &id,
+			"event", &event,
+			"depends", &dependsArrayJ,
+			"unit", &unit,
+			"frequency", &frequency,
+			"getSignalsArgs", &filterJ);
+		if(err)
+		{
+			AFB_ERROR("Problem to unpack JSON object eventJ: %s",
+			json_object_to_json_string(eventJ));
+			return err;
+		}
 
-	if(frequency > 0 && !filterJ)
-		{wrap_json_pack(&subscribeFilterJ, "{sf}", "frequency", frequency);}
+		if(frequency > 0 && !filterJ)
+			{wrap_json_pack(&subscribeFilterJ, "{sf}", "frequency", frequency);}
+		else
+			{subscribeFilterJ = filterJ;}
+
+		std::string eventStr = std::string(event);
+		std::string lowEvent = eventStr.substr(eventStr.find("/")+1);
+		err = wrap_json_pack(&subscribeArgsJ, "{ss, so*}",
+		"event", lowEvent.c_str(),
+		"filter", subscribeFilterJ);
+		if(err)
+		{
+			AFB_ERROR("Error building subscription query object");
+			return err;
+		}
+
+		json_object_array_add(pluginCtx->subscriptionBatch, subscribeArgsJ);
+	}
 	else
-		{subscribeFilterJ = filterJ;}
-
-	std::string eventStr = std::string(event);
-	std::string lowEvent = eventStr.substr(eventStr.find("/")+1);
-	err = wrap_json_pack(&subscribeArgsJ, "{ss, so*}",
-	"event", lowEvent.c_str(),
-	"filter", subscribeFilterJ);
-	if(err)
 	{
-		AFB_ERROR("Error building subscription query object");
-		return err;
-	}
-	AFB_DEBUG("Calling subscribe with %s", json_object_to_json_string_ext(subscribeArgsJ, JSON_C_TO_STRING_PRETTY));
-	err = afb_service_call_sync("low-can", "subscribe", subscribeArgsJ, &responseJ);
-	if(err)
-	{
-		AFB_ERROR("Subscribe to 'low-can/%s' %s", lowEvent.c_str(), json_object_to_json_string(responseJ));
-		return err;
+		AFB_DEBUG("Calling subscribe with %s", json_object_to_json_string_ext(pluginCtx->subscriptionBatch, JSON_C_TO_STRING_PRETTY));
+		err = afb_service_call_sync("low-can", "subscribe", pluginCtx->subscriptionBatch, &responseJ);
+		if(err)
+			{AFB_ERROR("Subscribe to '%s' responseJ:%s", json_object_to_json_string_ext(pluginCtx->subscriptionBatch, JSON_C_TO_STRING_PRETTY), json_object_to_json_string(responseJ));}
 	}
 
 	return err;
