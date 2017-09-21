@@ -23,6 +23,13 @@
 
 #include "source.hpp"
 
+typedef struct clientAppCtxS
+{
+	uuid_t uid;
+	std::vector<std::shared_ptr<Signal>> subscribedSignals;
+	struct afb_event event;
+} clientAppCtxT;
+
 class Composer
 {
 private:

@@ -47,54 +47,77 @@ void onEvent(const char *event, json_object *object)
 
 static int one_subscribe_unsubscribe(struct afb_req request,
 	bool subscribe,
-	const std::string& tag,
+	const std::string& event,
 	json_object* args)
 {
-	return 1;
+	return 0;
 }
 
-/// @brief entry point for client subscription request.
-void subscribe(afb_req request)
+static int subscribe_unsubscribe(struct afb_req request,
+	bool subscribe,
+	json_object* args)
 {
-	int rc,rc2,n;
-	json_object *event, *args = afb_req_json(request);
-	if (args == NULL ||
-		!json_object_object_get_ex(args, "event", &event) ||
-		!json_object_object_get_ex(args, "events", &event) ||
-		!json_object_object_get_ex(args, "signal", &event) ||
-		!json_object_object_get_ex(args, "signals", &event))
+	int rc = 0;
+	json_object *event = nullptr;
+	if (args == NULL || !json_object_object_get_ex(args, "event", &event))
 	{
 		rc = one_subscribe_unsubscribe(request, subscribe, "*", args);
 	}
-	else if (json_object_get_type(event) != json_type_array)
+	else if (json_object_get_type(event) == json_type_string)
 	{
 		rc = one_subscribe_unsubscribe(request, subscribe, json_object_get_string(event), args);
 	}
-	else
+	else if (json_object_get_type(event) == json_type_array)
 	{
-		rc = 0;
-		n = json_object_array_length(event);
-		for (int i = 0 ; i < n ; i++)
+		for (int i = 0 ; i < json_object_array_length(event) ; i++)
 		{
 			json_object *x = json_object_array_get_idx(event, i);
-			rc2 = one_subscribe_unsubscribe(request, subscribe, json_object_get_string(x), args);
-			if (rc >= 0)
-				rc = rc2 >= 0 ? rc + rc2 : rc2;
+			rc += one_subscribe_unsubscribe(request, subscribe, json_object_get_string(x), args);
 		}
 	}
-	if(true)
+	else {rc = -1;}
+
+	return rc;
+}
+
+/// @brief entry point for client subscription request.
+static void do_subscribe_unsubscribe(afb_req request, bool subscribe)
+{
+	int rc = 0;
+	json_object *oneArg = nullptr, *args = afb_req_json(request);
+	if (json_object_get_type(args) == json_type_array)
+	{
+		for (int i = 0 ; i < json_object_array_length(args); i++)
+		{
+			oneArg = json_object_array_get_idx(args, i);
+			rc += subscribe_unsubscribe(request, subscribe, oneArg);
+		}
+	}
+	else
+	{
+		rc = subscribe_unsubscribe(request, subscribe, args);
+	}
+
+	if(rc >= 0)
 		afb_req_success(request, NULL, NULL);
 	else
 		afb_req_fail(request, "error", NULL);
 }
 
 /// @brief entry point for client un-subscription request.
+void subscribe(afb_req request)
+{
+	clientAppCtxT *clientAppCtx = (clientAppCtxT*)afb_req_context_make(request, 0, Composer::createContext, Composer::destroyContext, nullptr);
+
+	//do_subscribe_unsubscribe(request, true);
+}
+
+/// @brief entry point for client un-subscription request.
 void unsubscribe(afb_req request)
 {
-	if(true)
-		afb_req_success(request, NULL, NULL);
-	else
-		afb_req_fail(request, "error when unsubscribe", NULL);
+	clientAppCtxT *clientAppCtx = (clientAppCtxT*)afb_req_context_make(request, 0, Composer::createContext, Composer::destroyContext, nullptr);
+
+	//do_subscribe_unsubscribe(request, false);
 }
 
 /// @brief verb that loads JSON configuration (old SigComp.json file now)
