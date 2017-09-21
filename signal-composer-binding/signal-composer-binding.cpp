@@ -33,9 +33,9 @@
 void onEvent(const char *event, json_object *object)
 {
 	AFB_DEBUG("Received event json: %s", json_object_to_json_string(object));
-	bindingApp& bApp = bindingApp::instance();
+	Composer& composer = Composer::instance();
 
-	std::vector<std::shared_ptr<Signal>> signals = bApp.searchSignals(event);
+	std::vector<std::shared_ptr<Signal>> signals = composer.searchSignals(event);
 	if(!signals.empty())
 	{
 		for(auto& sig: signals)
@@ -106,7 +106,7 @@ void loadConf(afb_req request)
 	wrap_json_unpack(args, "{s:s}", "filepath", &filepath);
 	fileJ = json_object_from_file(filepath);
 
-	if(bindingApp::instance().loadSignals(fileJ))
+	if(Composer::instance().loadSignals(fileJ))
 		{afb_req_fail_f(request, "Loading configuration or subscription error", "Error code: -1");}
 	else
 	{
@@ -120,7 +120,7 @@ void list(afb_req request)
 {
 	struct json_object *allSignalsJ = json_object_new_array();
 
-	std::vector<std::shared_ptr<Signal>> allSignals = bindingApp::instance().getAllSignals();
+	std::vector<std::shared_ptr<Signal>> allSignals = Composer::instance().getAllSignals();
 	for(auto& sig: allSignals)
 		{json_object_array_add(allSignalsJ, sig->toJSON());}
 
@@ -152,7 +152,7 @@ void get(struct afb_req request)
 		return;
 	}
 
-	ans = bindingApp::instance().getSignalValue(sig, options);
+	ans = Composer::instance().getSignalValue(sig, options);
 
 	if (ans)
 		afb_req_success(request, ans, NULL);
@@ -166,22 +166,22 @@ int loadConf()
 	const char* rootdir = strncat(GetBindingDirPath(), "/etc",
 		sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) -1);
 
-	bindingApp& bApp = bindingApp::instance();
-	err = bApp.loadConfig(rootdir);
+	Composer& composer = Composer::instance();
+	err = composer.loadConfig(rootdir);
 
 	return err;
 }
 
 int execConf()
 {
-	bindingApp& bApp = bindingApp::instance();
+	Composer& composer = Composer::instance();
 	int err = 0;
-	CtlConfigExec(bApp.ctlConfig());
-	std::vector<std::shared_ptr<Signal>> allSignals = bApp.getAllSignals();
+	CtlConfigExec(composer.ctlConfig());
+	std::vector<std::shared_ptr<Signal>> allSignals = composer.getAllSignals();
 	ssize_t sigCount = allSignals.size();
 	for( std::shared_ptr<Signal>& sig: allSignals)
 	{
-		sig->attachToSourceSignals(bApp);
+		sig->attachToSourceSignals(composer);
 	}
 
 	for(auto& sig: allSignals)
@@ -193,7 +193,7 @@ int execConf()
 		}
 	}
 
-	bApp.execSubscription();
+	composer.execSubscription();
 
 	AFB_DEBUG("Signal Composer Control configuration Done.\n signals=%d", (int)sigCount);
 

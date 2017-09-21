@@ -22,7 +22,7 @@
 
 extern "C" void setSignalValueHandle(const char* aName, long long int timestamp, struct SignalValue value)
 {
-	std::vector<std::shared_ptr<Signal>> signals = bindingApp::instance().searchSignals(aName);
+	std::vector<std::shared_ptr<Signal>> signals = Composer::instance().searchSignals(aName);
 	if(!signals.empty())
 	{
 		for(auto& sig: signals)
@@ -44,7 +44,7 @@ static struct pluginCBT pluginHandle = {
 	.setSignalValue = setSignalValueHandle,
 };
 
-CtlSectionT bindingApp::ctlSections_[] = {
+CtlSectionT Composer::ctlSections_[] = {
 	[0]={.key="plugins" , .label = "plugins", .info=nullptr,
 		.loadCB=PluginConfig,
 		.handle=&pluginHandle},
@@ -59,68 +59,19 @@ CtlSectionT bindingApp::ctlSections_[] = {
 		 .handle=nullptr}
 };
 
-bindingApp::bindingApp()
+///////////////////////////////////////////////////////////////////////////////
+//                             PRIVATE METHODS                               //
+///////////////////////////////////////////////////////////////////////////////
+
+Composer::Composer()
 {}
 
-bindingApp::~bindingApp()
+Composer::~Composer()
 {
 	free(ctlConfig_);
 }
 
-int bindingApp::loadConfig(const std::string& filepath)
-{
-	ctlConfig_ = CtlConfigLoad(filepath.c_str(), ctlSections_);
-	if(ctlConfig_ != nullptr) {return 0;}
-	return -1;
-}
-
-bindingApp& bindingApp::instance()
-{
-	static bindingApp bApp;
-	return bApp;
-}
-
-SourceAPI* bindingApp::getSourceAPI(const std::string& api)
-{
-	for(auto& source: sourcesListV_)
-	{
-		if (source.api() == api)
-			{return &source;}
-	}
-	return nullptr;
-}
-int bindingApp::initSourcesAPI()
-{
-	int err = 0;
-	for(auto& src: sourcesListV_)
-	{
-		err += src.init();
-	}
-	return err;
-}
-
-std::vector<std::string> bindingApp::parseURI(const std::string& uri)
-{
-	std::vector<std::string> uriV;
-	std::string delimiters = "/";
-
-	std::string::size_type start = 0;
-	auto pos = uri.find_first_of(delimiters, start);
-	while(pos != std::string::npos)
-	{
-		if(pos != start) // ignore empty tokens
-			uriV.emplace_back(uri, start, pos - start);
-		start = pos + 1;
-		pos = uri.find_first_of(delimiters, start);
-	}
-
-	if(start < uri.length()) // ignore trailing delimiter
-	uriV.emplace_back(uri, start, uri.length() - start); // add what's left of the string
-
-	return uriV;
-}
-
-CtlActionT* bindingApp::convert2Action(const std::string& name, json_object* actionJ)
+CtlActionT* Composer::convert2Action(const std::string& name, json_object* actionJ)
 {
 	json_object *functionArgsJ = nullptr, *action = nullptr;
 	char *function;
@@ -143,7 +94,7 @@ CtlActionT* bindingApp::convert2Action(const std::string& name, json_object* act
 		else if(startsWith(function, "api://"))
 		{
 			std::string uri = std::string(function).substr(6);
-			std::vector<std::string> uriV = bindingApp::parseURI(uri);
+			std::vector<std::string> uriV = Composer::parseURI(uri);
 			if(uriV.size() != 2)
 			{
 				AFB_ERROR("Miss something in uri either plugin name or function name. Uri has to be like: api://<plugin-name>/<function-name>");
@@ -158,7 +109,7 @@ CtlActionT* bindingApp::convert2Action(const std::string& name, json_object* act
 		else if(startsWith(function, "plugin://"))
 		{
 			std::string uri = std::string(function).substr(9);
-			std::vector<std::string> uriV = bindingApp::parseURI(uri);
+			std::vector<std::string> uriV = Composer::parseURI(uri);
 			if(uriV.size() != 2)
 			{
 				AFB_ERROR("Miss something in uri either plugin name or function name. Uri has to be like: plugin://<plugin-name>/<function-name>");
@@ -183,7 +134,7 @@ CtlActionT* bindingApp::convert2Action(const std::string& name, json_object* act
 	return nullptr;
 }
 
-int bindingApp::loadOneSourceAPI(json_object* sourceJ)
+int Composer::loadOneSourceAPI(json_object* sourceJ)
 {
 	json_object *initJ = nullptr, *getSignalsJ = nullptr;
 	CtlActionT *initCtl = nullptr, *getSignalsCtl = nullptr;
@@ -215,10 +166,10 @@ int bindingApp::loadOneSourceAPI(json_object* sourceJ)
 	return err;
 }
 
-int bindingApp::loadSourcesAPI(CtlSectionT* section, json_object *sourcesJ)
+int Composer::loadSourcesAPI(CtlSectionT* section, json_object *sourcesJ)
 {
 	int err = 0;
-	bindingApp& bApp = instance();
+	Composer& composer = instance();
 
 	if(sourcesJ)
 	{
@@ -237,23 +188,23 @@ int bindingApp::loadSourcesAPI(CtlSectionT* section, json_object *sourcesJ)
 			for (int idx = 0; idx < count; idx++)
 			{
 				json_object *sourceJ = json_object_array_get_idx(sourcesJ, idx);
-				err = bApp.loadOneSourceAPI(sourceJ);
+				err = composer.loadOneSourceAPI(sourceJ);
 				if (err) return err;
 			}
 		}
 		else
 		{
-			if ((err = bApp.loadOneSourceAPI(sourcesJ))) return err;
-			if (sigCompJ && (err = bApp.loadOneSourceAPI(sigCompJ))) return err;
+			if ((err = composer.loadOneSourceAPI(sourcesJ))) return err;
+			if (sigCompJ && (err = composer.loadOneSourceAPI(sigCompJ))) return err;
 		}
 	}
 	else
-		{err += bindingApp::instance().initSourcesAPI();}
+		{err += Composer::instance().initSourcesAPI();}
 
 	return err;
 }
 
-int bindingApp::loadOneSignal(json_object* signalJ)
+int Composer::loadOneSignal(json_object* signalJ)
 {
 	json_object *onReceivedJ = nullptr, *dependsJ = nullptr, *getSignalsArgs = nullptr;
 	CtlActionT* onReceivedCtl;
@@ -351,10 +302,10 @@ int bindingApp::loadOneSignal(json_object* signalJ)
 	return err;
 }
 
-int bindingApp::loadSignals(CtlSectionT* section, json_object *signalsJ)
+int Composer::loadSignals(CtlSectionT* section, json_object *signalsJ)
 {
 	int err = 0;
-	bindingApp& bApp = instance();
+	Composer& composer = instance();
 
 	if(signalsJ)
 	{
@@ -365,76 +316,18 @@ int bindingApp::loadSignals(CtlSectionT* section, json_object *signalsJ)
 			for (int idx = 0; idx < count; idx++)
 			{
 				json_object *signalJ = json_object_array_get_idx(signalsJ, idx);
-				err = bApp.loadOneSignal(signalJ);
+				err = composer.loadOneSignal(signalJ);
 				if (err) return err;
 			}
 		}
 		else
-			{err = bApp.loadOneSignal(signalsJ);}
+			{err = composer.loadOneSignal(signalsJ);}
 	}
 
 	return err;
 }
 
-int bindingApp::loadSignals(json_object* signalsJ)
-{
-	return loadSignals(nullptr, signalsJ);
-}
-
-std::vector<std::shared_ptr<Signal>> bindingApp::searchSignals(const std::string& aName)
-{
-	std::string api;
-	std::vector<std::shared_ptr<Signal>> signals;
-	size_t sep = aName.find_first_of("/");
-	if(sep != std::string::npos)
-	{
-		api = aName.substr(0, sep);
-		SourceAPI* source = getSourceAPI(api);
-		return source->searchSignals(aName);
-	}
-	else
-	{
-		std::vector<std::shared_ptr<Signal>> allSignals = getAllSignals();
-		for (std::shared_ptr<Signal>& sig : allSignals)
-		{
-			if(*sig == aName)
-				{signals.emplace_back(sig);}
-		}
-	}
-	return signals;
-}
-
-std::vector<std::shared_ptr<Signal>> bindingApp::getAllSignals()
-{
-	std::vector<std::shared_ptr<Signal>> allSignals;
-	for( auto& source : sourcesListV_)
-	{
-		std::vector<std::shared_ptr<Signal>> srcSignals = source.getSignals();
-		allSignals.insert(allSignals.end(), srcSignals.begin(), srcSignals.end());
-	}
-
-	return allSignals;
-}
-
-CtlConfigT* bindingApp::ctlConfig()
-{
-	return ctlConfig_;
-}
-
-int bindingApp::execSubscription()
-{
-	int err = 0;
-	for(SourceAPI& srcAPI: sourcesListV_)
-	{
-		if (srcAPI.api() != std::string(ctlConfig_->api))
-		{
-			err = srcAPI.makeSubscription();
-		}
-	}
-	return err;
-}
-
-void bindingApp::processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const
+void Composer::processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const
 {
 	for(int idx=0; idx < sizeof(opts); idx++)
 	{
@@ -482,7 +375,129 @@ void bindingApp::processOptions(const char** opts, std::shared_ptr<Signal> sig, 
 		}
 	}
 }
-json_object* bindingApp::getSignalValue(const std::string& sig, json_object* options)
+
+///////////////////////////////////////////////////////////////////////////////
+//                             PUBLIC METHODS                                //
+///////////////////////////////////////////////////////////////////////////////
+
+Composer& Composer::instance()
+{
+	static Composer composer;
+	return composer;
+}
+
+void* Composer::createContext(void* ctx)
+{
+	uuid_t x;
+	uuid_generate(x);
+	ctx = (clientAppCtxT*)calloc(1, sizeof(clientAppCtxT));
+	clientAppCtxT* ret = (clientAppCtxT*) ctx;
+	uuid_copy(ret->uid, x);
+	ret->subscribedSignals = std::vector<std::shared_ptr<Signal>>();
+	ret->event = afb_daemon_make_event("evt");
+
+	return (void*)ret;
+}
+
+void Composer::destroyContext(void* ctx)
+{
+	free(ctx);
+}
+
+std::vector<std::string> Composer::parseURI(const std::string& uri)
+{
+	std::vector<std::string> uriV;
+	std::string delimiters = "/";
+
+	std::string::size_type start = 0;
+	auto pos = uri.find_first_of(delimiters, start);
+	while(pos != std::string::npos)
+	{
+		if(pos != start) // ignore empty tokens
+			uriV.emplace_back(uri, start, pos - start);
+		start = pos + 1;
+		pos = uri.find_first_of(delimiters, start);
+	}
+
+	if(start < uri.length()) // ignore trailing delimiter
+	uriV.emplace_back(uri, start, uri.length() - start); // add what's left of the string
+
+	return uriV;
+}
+
+int Composer::loadConfig(const std::string& filepath)
+{
+	ctlConfig_ = CtlConfigLoad(filepath.c_str(), ctlSections_);
+	if(ctlConfig_ != nullptr) {return 0;}
+	return -1;
+}
+
+int Composer::loadSignals(json_object* signalsJ)
+{
+	return loadSignals(nullptr, signalsJ);
+}
+
+CtlConfigT* Composer::ctlConfig()
+{
+	return ctlConfig_;
+}
+
+int Composer::initSourcesAPI()
+{
+	int err = 0;
+	for(auto& src: sourcesListV_)
+	{
+		err += src.init();
+	}
+	return err;
+}
+
+std::vector<std::shared_ptr<Signal>> Composer::getAllSignals()
+{
+	std::vector<std::shared_ptr<Signal>> allSignals;
+	for( auto& source : sourcesListV_)
+	{
+		std::vector<std::shared_ptr<Signal>> srcSignals = source.getSignals();
+		allSignals.insert(allSignals.end(), srcSignals.begin(), srcSignals.end());
+	}
+
+	return allSignals;
+}
+
+SourceAPI* Composer::getSourceAPI(const std::string& api)
+{
+	for(auto& source: sourcesListV_)
+	{
+		if (source.api() == api)
+			{return &source;}
+	}
+	return nullptr;
+}
+
+std::vector<std::shared_ptr<Signal>> Composer::searchSignals(const std::string& aName)
+{
+	std::string api;
+	std::vector<std::shared_ptr<Signal>> signals;
+	size_t sep = aName.find_first_of("/");
+	if(sep != std::string::npos)
+	{
+		api = aName.substr(0, sep);
+		SourceAPI* source = getSourceAPI(api);
+		return source->searchSignals(aName);
+	}
+	else
+	{
+		std::vector<std::shared_ptr<Signal>> allSignals = getAllSignals();
+		for (std::shared_ptr<Signal>& sig : allSignals)
+		{
+			if(*sig == aName)
+				{signals.emplace_back(sig);}
+		}
+	}
+	return signals;
+}
+
+json_object* Composer::getSignalValue(const std::string& sig, json_object* options)
 {
 	const char **opts = nullptr;
 	json_object *response = nullptr, *finalResponse = json_object_new_array();
@@ -492,7 +507,6 @@ json_object* bindingApp::getSignalValue(const std::string& sig, json_object* opt
 		&opts[1],
 		&opts[2],
 		&opts[3]);
-
 
 	std::vector<std::shared_ptr<Signal>> sigP = searchSignals(sig);
 	if(!sigP.empty())
@@ -527,4 +541,17 @@ json_object* bindingApp::getSignalValue(const std::string& sig, json_object* opt
 	}
 
 	return response;
+}
+
+int Composer::execSubscription()
+{
+	int err = 0;
+	for(SourceAPI& srcAPI: sourcesListV_)
+	{
+		if (srcAPI.api() != std::string(ctlConfig_->api))
+		{
+			err = srcAPI.makeSubscription();
+		}
+	}
+	return err;
 }

@@ -159,14 +159,14 @@ void Signal::attach(Signal* obs)
 /// @brief Make a Signal observer observes Signals observables
 /// set in its observable vector.
 ///
-/// @param[in] bApp - bindinApp instance
-void Signal::attachToSourceSignals(bindingApp& bApp)
+/// @param[in] composer - bindinApp instance
+void Signal::attachToSourceSignals(Composer& composer)
 {
 	for (const std::string& srcSig: dependsSigV_)
 	{
 		if(srcSig.find("/") == std::string::npos)
 		{
-			std::vector<std::shared_ptr<Signal>> sig = bApp.searchSignals(srcSig);
+			std::vector<std::shared_ptr<Signal>> sig = composer.searchSignals(srcSig);
 			if(sig[0])
 			{
 				AFB_NOTICE("Attaching %s to %s", id_.c_str(), srcSig.c_str());

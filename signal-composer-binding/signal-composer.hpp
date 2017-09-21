@@ -16,13 +16,14 @@
 */
 #pragma once
 
+#include <uuid.h>
 #include <memory>
 #include <vector>
 #include <string>
 
 #include "source.hpp"
 
-class bindingApp
+class Composer
 {
 private:
 	CtlConfigT* ctlConfig_;
@@ -30,9 +31,9 @@ private:
 	static CtlSectionT ctlSections_[]; ///< Config Section definition (note: controls section index should match handle retrieval in)
 	std::vector<SourceAPI> sourcesListV_;
 
-	explicit bindingApp(const std::string& filepath);
-	bindingApp();
-	~bindingApp();
+	explicit Composer(const std::string& filepath);
+	Composer();
+	~Composer();
 
 	CtlActionT* convert2Action(const std::string& name, json_object* action);
 
@@ -42,8 +43,11 @@ private:
 	int loadOneSignal(json_object* signalsJ);
 	static int loadSignals(CtlSectionT* section, json_object *signalsJ);
 
+	void processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const;
 public:
-	static bindingApp& instance();
+	static Composer& instance();
+	static void* createContext(void* ctx);
+	static void destroyContext(void* ctx);
 	static std::vector<std::string> parseURI(const std::string& uri);
 	int loadConfig(const std::string& filepath);
 	int loadSignals(json_object* signalsJ);
@@ -54,7 +58,6 @@ public:
 	SourceAPI* getSourceAPI(const std::string& api);
 	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& aName);
 	json_object* getSignalValue(const std::string& sig, json_object* options);
-	void processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const;
 
 	int execSubscription();
 };

@@ -22,7 +22,7 @@
 #include <vector>
 #include <ctl-config.h>
 
-class bindingApp;
+class Composer;
 
 struct SignalValue {
 	bool hasBool = false;
@@ -67,7 +67,7 @@ public:
 	void set(long long int timestamp, struct SignalValue& value);
 	void update(long long int timestamp,  struct SignalValue value);
 	int onReceivedCB(json_object *queryJ);
-	void attachToSourceSignals(bindingApp& bApp);
+	void attachToSourceSignals(Composer& composer);
 
 	double average(int seconds = 0) const;
 	double minimum(int seconds = 0) const;

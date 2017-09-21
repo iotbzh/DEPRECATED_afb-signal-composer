@@ -31,7 +31,7 @@ int SourceAPI::init()
 		{return ActionExecOne(init_, nullptr);}
 	else if(api_ == afbBindingV2.api)
 	{
-		api_ = bindingApp::instance().ctlConfig()->api;
+		api_ = Composer::instance().ctlConfig()->api;
 	}
 
 	return 0;
