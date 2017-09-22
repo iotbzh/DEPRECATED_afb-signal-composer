@@ -88,22 +88,29 @@ json_object* Signal::toJSON() const
 			dependsSignalName.push_back(src.substr(sep+1));
 		}
 	}
-	json_object* nameArray = json_object_new_array();
+	json_object *nameArrayJ = json_object_new_array();
 	for (const std::string& lowSig: dependsSignalName)
 	{
-		json_object_array_add(nameArray, json_object_new_string(lowSig.c_str()));
+		json_object_array_add(nameArrayJ, json_object_new_string(lowSig.c_str()));
 	}
-	wrap_json_pack(&queryJ, "{ss,ss*,so*,ss*,sf*,so*}",
+
+	wrap_json_pack(&queryJ, "{ss,so*}",
 			"id", id_.c_str(),
-			"event", event_.c_str(),
-			"depends", nameArray,
-			"unit", unit_.c_str(),
-			"frequency", frequency_,
 			"getSignalsArgs", getSignalsArgs_);
+
+	if (!event_.empty()) {json_object_object_add(queryJ, "event", json_object_new_string(event_.c_str()));}
+	if (json_object_array_length(nameArrayJ)) {json_object_object_add(queryJ, "depends", nameArrayJ);}
+	if (!unit_.empty()) {json_object_object_add(queryJ, "unit", json_object_new_string(unit_.c_str()));}
+	if (frequency_) {json_object_object_add(queryJ, "frequency", json_object_new_double(frequency_));}
+
+	if(timestamp_) {json_object_object_add(queryJ, "timestamp", json_object_new_int64(timestamp_));}
+
+	if (value_.hasBool) {json_object_object_add(queryJ, "value", json_object_new_boolean(value_.boolVal));}
+	else if (value_.hasNum) {json_object_object_add(queryJ, "value", json_object_new_double(value_.numVal));}
+	else if (value_.hasStr) {json_object_object_add(queryJ, "value", json_object_new_string(value_.strVal.c_str()));}
 
 	return queryJ;
 }
-
 
 /// @brief Set Signal timestamp and value property when an incoming
 /// signal arrived. Called by a plugin because treatment can't be
@@ -121,11 +128,10 @@ void Signal::set(long long int timestamp, struct SignalValue& value)
 
 /// @brief Observer method called when a Observable Signal has changes.
 ///
-/// @param[in] timestamp - timestamp of occured signal
-/// @param[in] value - value of change
-void Signal::update(long long int timestamp, struct SignalValue value)
+/// @param[in] Observable - object from which update come from
+void Signal::update(Signal* sig)
 {
-	AFB_DEBUG("Got an update from observed signal. Timestamp: %lld, vb: %d, vn: %lf, vs: %s", timestamp, value.boolVal, value.numVal, value.strVal.c_str());
+	AFB_NOTICE("Got an update from observed signal %s", sig->id().c_str());
 }
 
 /// @brief Notify observers that there is a change and execute callback defined
@@ -145,7 +151,7 @@ int Signal::onReceivedCB(json_object *queryJ)
 /// present in the Observers vector.
 ///
 /// @param[in] obs - pointer to a Signal observable
-void Signal::attach(Signal* obs)
+/*void Signal::attach(Signal* obs)
 {
 	for ( auto& sig : Observers_)
 	{
@@ -154,7 +160,7 @@ void Signal::attach(Signal* obs)
 	}
 
 	Observers_.push_back(obs);
-}
+}*/
 
 /// @brief Make a Signal observer observes Signals observables
 /// set in its observable vector.
@@ -166,11 +172,11 @@ void Signal::attachToSourceSignals(Composer& composer)
 	{
 		if(srcSig.find("/") == std::string::npos)
 		{
-			std::vector<std::shared_ptr<Signal>> sig = composer.searchSignals(srcSig);
-			if(sig[0])
+			std::vector<Signal*> observables = composer.searchSignals(srcSig);
+			if(observables[0])
 			{
 				AFB_NOTICE("Attaching %s to %s", id_.c_str(), srcSig.c_str());
-				sig[0]->attach(this);
+				observables[0]->addObserver(this);
 				continue;
 			}
 			AFB_WARNING("Can't attach. Is %s exists ?", srcSig.c_str());
@@ -180,7 +186,7 @@ void Signal::attachToSourceSignals(Composer& composer)
 
 /// @brief Call update() method on observer Signal with
 /// current Signal timestamp and value
-void Signal::notify() const
+/*void Signal::notify() const
 {
 	for (int i = 0; i < Observers_.size(); ++i)
 	  Observers_[i]->update(timestamp_, value_);
@@ -194,7 +200,7 @@ void Signal::notify() const
 /// @return 0 if no infinite loop detected, -1 if not.
 int Signal::recursionCheck(const std::string& origId) const
 {
-	for (const auto& obs: Observers_)
+	for (const auto& obs: observersList_)
 	{
 		if( id_ == obs->id())
 			{return -1;}
@@ -214,7 +220,7 @@ int Signal::recursionCheck(const std::string& origId) const
 /// @return 0 if no infinite loop detected, -1 if not.
 int Signal::recursionCheck() const
 {
-	for (const auto& obs: Observers_)
+	for (const auto& obs: observersList_)
 	{
 		if( id_ == obs->id())
 			{return -1;}
@@ -222,7 +228,7 @@ int Signal::recursionCheck() const
 			{return -1;}
 	}
 	return 0;
-}
+}*/
 
 /// @brief Make an average over the last X 'seconds'
 ///
@@ -332,3 +338,40 @@ struct SignalValue Signal::last() const
 {
 	return history_.rbegin()->second;
 }
+
+/*
+template<class Signal>
+Observable<Signal>::~Observable()
+{
+	iterator_ itb = observerList_.begin();
+	const_iterator_ ite = observerList_.end();
+
+	for(;itb!=ite;++itb)
+	{
+		(*itb)->delObservable(this);
+	}
+}
+
+template <class Signal>
+Observer<Signal>::~Observer()
+{
+	const_iterator_ ite = observableList_.end();
+
+	for(iterator_ itb=observableList_.begin();itb!=ite;++itb)
+	{
+			(*itb)->delObserver(this);
+	}
+}
+
+template <class Signal>
+void Observable<Signal>::notify()
+{
+	iterator_ itb=observerList_.begin();
+	const_iterator_ ite=observerList_.end();
+
+	for(;itb!=ite;++itb)
+	{
+		(*itb)->update(static_cast<Signal*>(this));
+	}
+}
+*/

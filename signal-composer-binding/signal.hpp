@@ -22,8 +22,15 @@
 #include <vector>
 #include <ctl-config.h>
 
+#include "observer-pattern.hpp"
+
 class Composer;
 
+/// @brief Structure holding a possible value of a Signal
+///  as it could be different type of value, we declare all
+///  possibility.
+///  Not very efficient or optimized, maybe use of Variant in
+///  C++17 but this is a bit too new to uses it for now
 struct SignalValue {
 	bool hasBool = false;
 	bool boolVal;
@@ -33,7 +40,7 @@ struct SignalValue {
 	std::string strVal;
 };
 
-class Signal
+class Signal: public Observable<Signal>, public Observer<Signal>
 {
 private:
 	std::string id_;
@@ -47,12 +54,7 @@ private:
 	CtlActionT* onReceived_;
 	json_object* getSignalsArgs_;
 
-	std::vector<Signal*> Observers_;
-
-	void notify() const;
-	void attach(Signal *obs);
-	int recursionCheck(const std::string& origId) const;
-
+	//int recursionCheck(const std::string& origId) const;
 public:
 	Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 	Signal(const std::string& id, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived);
@@ -65,7 +67,7 @@ public:
 	json_object* toJSON() const;
 
 	void set(long long int timestamp, struct SignalValue& value);
-	void update(long long int timestamp,  struct SignalValue value);
+	void update(Signal* sig);
 	int onReceivedCB(json_object *queryJ);
 	void attachToSourceSignals(Composer& composer);
 
@@ -73,5 +75,5 @@ public:
 	double minimum(int seconds = 0) const;
 	double maximum(int seconds = 0) const;
 	struct SignalValue last() const;
-	int recursionCheck() const;
+	//int recursionCheck() const;
 };
