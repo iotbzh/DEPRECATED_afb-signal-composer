@@ -16,17 +16,11 @@
 */
 #pragma once
 
-#include <memory>
+
 #include <vector>
 #include <string>
 
 #include "source.hpp"
-
-typedef struct clientAppCtxS
-{
-	std::vector<std::shared_ptr<Signal>> subscribedSignals;
-	struct afb_event event;
-} clientAppCtxT;
 
 class Composer
 {
@@ -35,7 +29,6 @@ private:
 
 	static CtlSectionT ctlSections_[]; ///< Config Section definition (note: controls section index should match handle retrieval in)
 	std::vector<SourceAPI> sourcesListV_;
-	std::vector<clientAppCtxT*> subscriptions_;
 
 	explicit Composer(const std::string& filepath);
 	Composer();
@@ -49,7 +42,7 @@ private:
 	int loadOneSignal(json_object* signalsJ);
 	static int loadSignals(CtlSectionT* section, json_object *signalsJ);
 
-	void processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const;
+	void processOptions(const char** opts, Signal* sig, json_object* response) const;
 public:
 	static Composer& instance();
 	static void* createContext(void* ctx);
@@ -60,15 +53,12 @@ public:
 
 	CtlConfigT* ctlConfig();
 	int initSourcesAPI();
-	std::vector<std::shared_ptr<Signal>> getAllSignals();
+	std::vector<Signal*> getAllSignals();
 	SourceAPI* getSourceAPI(const std::string& api);
-	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& aName);
+	std::vector<Signal*> searchSignals(const std::string& aName);
 	json_object* getSignalValue(const std::string& sig, json_object* options);
 
 	int execSignalsSubscription();
-
-	void addSubscription(clientAppCtxT* ctx);
-	void removeSubscription(clientAppCtxT* ctx);
 };
 
 struct pluginCBT

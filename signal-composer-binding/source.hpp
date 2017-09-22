@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <memory>
+
 
 #include "signal.hpp"
 
@@ -28,7 +28,7 @@ private:
 	CtlActionT* init_;
 	CtlActionT* getSignals_;
 
-	std::map<std::shared_ptr<Signal>, bool> signalsMap_;
+	std::map<Signal*, bool> signalsMap_;
 
 public:
 	SourceAPI();
@@ -38,8 +38,8 @@ public:
 	std::string api() const;
 	void addSignal(const std::string& id, const std::string& event, std::vector<std::string>& sources, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 
-	std::vector<std::shared_ptr<Signal>> getSignals() const;
-	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& name) const;
+	std::vector<Signal*> getSignals() const;
+	std::vector<Signal*> searchSignals(const std::string& name) const;
 
 	int makeSubscription();
 };

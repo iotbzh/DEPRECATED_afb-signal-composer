@@ -23,7 +23,7 @@
 
 #include "signal-composer-binding.hpp"
 #include "signal-composer-apidef.h"
-#include "signal-composer.hpp"
+#include "clientApp.hpp"
 
 /// @brief callback for receiving message from low bindings. This will callback
 /// an action defined in the configuration files depending on the event received
@@ -35,7 +35,7 @@ void onEvent(const char *event, json_object *object)
 	AFB_DEBUG("Received event json: %s", json_object_to_json_string(object));
 	Composer& composer = Composer::instance();
 
-	std::vector<std::shared_ptr<Signal>> signals = composer.searchSignals(event);
+	std::vector<Signal*> signals = composer.searchSignals(event);
 	if(!signals.empty())
 	{
 		for(auto& sig: signals)
@@ -49,34 +49,16 @@ static int one_subscribe_unsubscribe(struct afb_req request,
 	bool subscribe,
 	const std::string& event,
 	json_object* args,
-	clientAppCtxT* cContext)
+	clientAppCtx* cContext)
 {
 	int err = 0;
-	bool set = false;
-	std::vector<std::shared_ptr<Signal>> signals = Composer::instance().searchSignals(event);
+	std::vector<Signal*> signals = Composer::instance().searchSignals(event);
 
-	// Clean up already subscribed signals to avoid duplicata
-	for (std::vector<std::shared_ptr<Signal>>::const_iterator sig = signals.begin();
-		sig != signals.end(); ++sig)
-	{
-		for (auto& ctxSig: cContext->subscribedSignals)
-			{if(*sig == ctxSig) {set = true;}}
-		if (set) {signals.erase(sig);}
-	}
-
-	cContext->subscribedSignals.insert(cContext->subscribedSignals.end(), signals.begin(), signals.end());
-	cContext->event = afb_event_is_valid(cContext->event) ?
-		cContext->event : afb_daemon_make_event("Signal-Composer");
+	cContext->appendSignals(signals);
 	if(subscribe)
-	{
-		if(!afb_req_subscribe(request, cContext->event))
-			{Composer::instance().addSubscription(cContext);}
-	}
+		{err = cContext->makeSubscription(request);}
 	else
-	{
-		if(!afb_req_unsubscribe(request, cContext->event))
-			{Composer::instance().removeSubscription(cContext);}
-	}
+		{err = cContext->makeUnsubscription(request);}
 
 	return err;
 }
@@ -84,7 +66,7 @@ static int one_subscribe_unsubscribe(struct afb_req request,
 static int subscribe_unsubscribe(struct afb_req request,
 	bool subscribe,
 	json_object* args,
-	clientAppCtxT* cContext)
+	clientAppCtx* cContext)
 {
 	int rc = 0;
 	json_object *event = nullptr;
@@ -110,7 +92,7 @@ static int subscribe_unsubscribe(struct afb_req request,
 }
 
 /// @brief entry point for client subscription request.
-static void do_subscribe_unsubscribe(afb_req request, bool subscribe, clientAppCtxT* cContext)
+static void do_subscribe_unsubscribe(afb_req request, bool subscribe, clientAppCtx* cContext)
 {
 	int rc = 0;
 	json_object *oneArg = nullptr, *args = afb_req_json(request);
@@ -136,17 +118,17 @@ static void do_subscribe_unsubscribe(afb_req request, bool subscribe, clientAppC
 /// @brief entry point for client un-subscription request.
 void subscribe(afb_req request)
 {
-	clientAppCtxT *clientAppCtx = (clientAppCtxT*)afb_req_context_make(request, 0, Composer::createContext, Composer::destroyContext, nullptr);
+	clientAppCtx *cContext = reinterpret_cast<clientAppCtx*>(afb_req_context_make(request, 0, Composer::createContext, Composer::destroyContext, nullptr));
 
-	do_subscribe_unsubscribe(request, true, clientAppCtx);
+	do_subscribe_unsubscribe(request, true, cContext);
 }
 
 /// @brief entry point for client un-subscription request.
 void unsubscribe(afb_req request)
 {
-	clientAppCtxT *clientAppCtx = (clientAppCtxT*)afb_req_context_make(request, 0, Composer::createContext, Composer::destroyContext, nullptr);
+	clientAppCtx *cContext = reinterpret_cast<clientAppCtx*>(afb_req_context_make(request, 0, Composer::createContext, Composer::destroyContext, nullptr));
 
-	do_subscribe_unsubscribe(request, false, clientAppCtx);
+	do_subscribe_unsubscribe(request, false, cContext);
 }
 
 /// @brief verb that loads JSON configuration (old SigComp.json file now)
@@ -172,7 +154,7 @@ void list(afb_req request)
 {
 	struct json_object *allSignalsJ = json_object_new_array();
 
-	std::vector<std::shared_ptr<Signal>> allSignals = Composer::instance().getAllSignals();
+	std::vector<Signal*> allSignals = Composer::instance().getAllSignals();
 	for(auto& sig: allSignals)
 		{json_object_array_add(allSignalsJ, sig->toJSON());}
 
@@ -229,13 +211,13 @@ int execConf()
 	Composer& composer = Composer::instance();
 	int err = 0;
 	CtlConfigExec(composer.ctlConfig());
-	std::vector<std::shared_ptr<Signal>> allSignals = composer.getAllSignals();
+	std::vector<Signal*> allSignals = composer.getAllSignals();
 	ssize_t sigCount = allSignals.size();
-	for( std::shared_ptr<Signal>& sig: allSignals)
+	for( Signal*& sig: allSignals)
 	{
 		sig->attachToSourceSignals(composer);
 	}
-
+/*
 	for(auto& sig: allSignals)
 	{
 		if( (err += sig->recursionCheck()) )
@@ -244,7 +226,7 @@ int execConf()
 			return err;
 		}
 	}
-
+*/
 	composer.execSignalsSubscription();
 
 	AFB_DEBUG("Signal Composer Control configuration Done.\n signals=%d", (int)sigCount);

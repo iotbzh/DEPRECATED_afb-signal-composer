@@ -129,7 +129,7 @@ CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
 CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
 	const char *eventName = nullptr;
 	int eventStatus;
-	double timestamp;
+	uint64_t timestamp;
 	lowCANCtxT *pluginCtx=(lowCANCtxT*)source->context;
 
 	int err = wrap_json_unpack(eventJ, "{ss,sb,s?F}",

@@ -44,14 +44,14 @@ std::string SourceAPI::api() const
 
 void SourceAPI::addSignal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs)
 {
-	std::shared_ptr<Signal> sig = std::make_shared<Signal>(id, event, depends, unit, frequency, onReceived, getSignalsArgs);
+	Signal* sig = new Signal(id, event, depends, unit, frequency, onReceived, getSignalsArgs);
 
 	signalsMap_[sig] = false;
 }
 
-std::vector<std::shared_ptr<Signal>> SourceAPI::getSignals() const
+std::vector<Signal*> SourceAPI::getSignals() const
 {
-	std::vector<std::shared_ptr<Signal>> signals;
+	std::vector<Signal*> signals;
 	for (auto& sig: signalsMap_)
 	{
 		signals.push_back(sig.first);
@@ -59,9 +59,9 @@ std::vector<std::shared_ptr<Signal>> SourceAPI::getSignals() const
 	return signals;
 }
 
-std::vector<std::shared_ptr<Signal>> SourceAPI::searchSignals(const std::string& name) const
+std::vector<Signal*> SourceAPI::searchSignals(const std::string& name) const
 {
-	std::vector<std::shared_ptr<Signal>> signals;
+	std::vector<Signal*> signals;
 	for (auto& sig: signalsMap_)
 	{
 		if(*sig.first == name)

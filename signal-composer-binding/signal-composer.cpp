@@ -19,11 +19,11 @@
 #include <string.h>
 #include <fnmatch.h>
 
-#include "signal-composer.hpp"
+#include "clientApp.hpp"
 
 extern "C" void setSignalValueHandle(const char* aName, long long int timestamp, struct SignalValue value)
 {
-	std::vector<std::shared_ptr<Signal>> signals = Composer::instance().searchSignals(aName);
+	std::vector<Signal*> signals = Composer::instance().searchSignals(aName);
 	if(!signals.empty())
 	{
 		for(auto& sig: signals)
@@ -328,7 +328,7 @@ int Composer::loadSignals(CtlSectionT* section, json_object *signalsJ)
 	return err;
 }
 
-void Composer::processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const
+void Composer::processOptions(const char** opts, Signal* sig, json_object* response) const
 {
 	for(int idx=0; idx < sizeof(opts); idx++)
 	{
@@ -392,10 +392,8 @@ void* Composer::createContext(void* ctx)
 	uuid_t x;
 	char cuid[38];
 	uuid_generate(x);
-	ctx = (clientAppCtxT*)calloc(1, sizeof(clientAppCtxT));
-	clientAppCtxT* ret = (clientAppCtxT*) ctx;
 	uuid_unparse(x, cuid);
-	ret->event = afb_daemon_make_event(cuid);
+	clientAppCtx* ret = new clientAppCtx(cuid);
 
 	return (void*)ret;
 }
@@ -453,12 +451,12 @@ int Composer::initSourcesAPI()
 	return err;
 }
 
-std::vector<std::shared_ptr<Signal>> Composer::getAllSignals()
+std::vector<Signal*> Composer::getAllSignals()
 {
-	std::vector<std::shared_ptr<Signal>> allSignals;
+	std::vector<Signal*> allSignals;
 	for( auto& source : sourcesListV_)
 	{
-		std::vector<std::shared_ptr<Signal>> srcSignals = source.getSignals();
+		std::vector<Signal*> srcSignals = source.getSignals();
 		allSignals.insert(allSignals.end(), srcSignals.begin(), srcSignals.end());
 	}
 
@@ -475,10 +473,10 @@ SourceAPI* Composer::getSourceAPI(const std::string& api)
 	return nullptr;
 }
 
-std::vector<std::shared_ptr<Signal>> Composer::searchSignals(const std::string& aName)
+std::vector<Signal*> Composer::searchSignals(const std::string& aName)
 {
 	std::string api;
-	std::vector<std::shared_ptr<Signal>> signals;
+	std::vector<Signal*> signals;
 	size_t sep = aName.find_first_of("/");
 	if(sep != std::string::npos)
 	{
@@ -488,8 +486,8 @@ std::vector<std::shared_ptr<Signal>> Composer::searchSignals(const std::string& 
 	}
 	else
 	{
-		std::vector<std::shared_ptr<Signal>> allSignals = getAllSignals();
-		for (std::shared_ptr<Signal>& sig : allSignals)
+		std::vector<Signal*> allSignals = getAllSignals();
+		for (Signal*& sig : allSignals)
 		{
 			if(*sig == aName)
 				{signals.emplace_back(sig);}
@@ -509,7 +507,7 @@ json_object* Composer::getSignalValue(const std::string& sig, json_object* optio
 		&opts[2],
 		&opts[3]);
 
-	std::vector<std::shared_ptr<Signal>> sigP = searchSignals(sig);
+	std::vector<Signal*> sigP = searchSignals(sig);
 	if(!sigP.empty())
 	{
 		for(auto& sig: sigP)
@@ -555,19 +553,4 @@ int Composer::execSignalsSubscription()
 		}
 	}
 	return err;
-}
-
-void Composer::addSubscription(clientAppCtxT* ctx)
-{
-	subscriptions_.push_back(ctx);
-}
-
-void Composer::removeSubscription(clientAppCtxT* ctx)
-{
-	for(std::vector<clientAppCtxT*>::const_iterator i = subscriptions_.begin();
-		i != subscriptions_.end(); ++i)
-	{
-		if(ctx == *i)
-			{subscriptions_.erase(i);}
-	}
 }
