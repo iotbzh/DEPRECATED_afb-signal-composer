@@ -16,7 +16,6 @@
 */
 #pragma once
 
-#include <uuid.h>
 #include <memory>
 #include <vector>
 #include <string>
@@ -25,7 +24,6 @@
 
 typedef struct clientAppCtxS
 {
-	uuid_t uid;
 	std::vector<std::shared_ptr<Signal>> subscribedSignals;
 	struct afb_event event;
 } clientAppCtxT;
@@ -37,6 +35,7 @@ private:
 
 	static CtlSectionT ctlSections_[]; ///< Config Section definition (note: controls section index should match handle retrieval in)
 	std::vector<SourceAPI> sourcesListV_;
+	std::vector<clientAppCtxT*> subscriptions_;
 
 	explicit Composer(const std::string& filepath);
 	Composer();
@@ -66,7 +65,10 @@ public:
 	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& aName);
 	json_object* getSignalValue(const std::string& sig, json_object* options);
 
-	int execSubscription();
+	int execSignalsSubscription();
+
+	void addSubscription(clientAppCtxT* ctx);
+	void removeSubscription(clientAppCtxT* ctx);
 };
 
 struct pluginCBT

@@ -15,6 +15,7 @@
  * limitations under the License.
 */
 
+#include <uuid.h>
 #include <string.h>
 #include <fnmatch.h>
 
@@ -389,12 +390,12 @@ Composer& Composer::instance()
 void* Composer::createContext(void* ctx)
 {
 	uuid_t x;
+	char cuid[38];
 	uuid_generate(x);
 	ctx = (clientAppCtxT*)calloc(1, sizeof(clientAppCtxT));
 	clientAppCtxT* ret = (clientAppCtxT*) ctx;
-	uuid_copy(ret->uid, x);
-	ret->subscribedSignals = std::vector<std::shared_ptr<Signal>>();
-	ret->event = afb_daemon_make_event("evt");
+	uuid_unparse(x, cuid);
+	ret->event = afb_daemon_make_event(cuid);
 
 	return (void*)ret;
 }
@@ -543,7 +544,7 @@ json_object* Composer::getSignalValue(const std::string& sig, json_object* optio
 	return response;
 }
 
-int Composer::execSubscription()
+int Composer::execSignalsSubscription()
 {
 	int err = 0;
 	for(SourceAPI& srcAPI: sourcesListV_)
@@ -554,4 +555,19 @@ int Composer::execSubscription()
 		}
 	}
 	return err;
+}
+
+void Composer::addSubscription(clientAppCtxT* ctx)
+{
+	subscriptions_.push_back(ctx);
+}
+
+void Composer::removeSubscription(clientAppCtxT* ctx)
+{
+	for(std::vector<clientAppCtxT*>::const_iterator i = subscriptions_.begin();
+		i != subscriptions_.end(); ++i)
+	{
+		if(ctx == *i)
+			{subscriptions_.erase(i);}
+	}
 }

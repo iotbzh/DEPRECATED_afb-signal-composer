@@ -48,31 +48,60 @@ void onEvent(const char *event, json_object *object)
 static int one_subscribe_unsubscribe(struct afb_req request,
 	bool subscribe,
 	const std::string& event,
-	json_object* args)
+	json_object* args,
+	clientAppCtxT* cContext)
 {
-	return 0;
+	int err = 0;
+	bool set = false;
+	std::vector<std::shared_ptr<Signal>> signals = Composer::instance().searchSignals(event);
+
+	// Clean up already subscribed signals to avoid duplicata
+	for (std::vector<std::shared_ptr<Signal>>::const_iterator sig = signals.begin();
+		sig != signals.end(); ++sig)
+	{
+		for (auto& ctxSig: cContext->subscribedSignals)
+			{if(*sig == ctxSig) {set = true;}}
+		if (set) {signals.erase(sig);}
+	}
+
+	cContext->subscribedSignals.insert(cContext->subscribedSignals.end(), signals.begin(), signals.end());
+	cContext->event = afb_event_is_valid(cContext->event) ?
+		cContext->event : afb_daemon_make_event("Signal-Composer");
+	if(subscribe)
+	{
+		if(!afb_req_subscribe(request, cContext->event))
+			{Composer::instance().addSubscription(cContext);}
+	}
+	else
+	{
+		if(!afb_req_unsubscribe(request, cContext->event))
+			{Composer::instance().removeSubscription(cContext);}
+	}
+
+	return err;
 }
 
 static int subscribe_unsubscribe(struct afb_req request,
 	bool subscribe,
-	json_object* args)
+	json_object* args,
+	clientAppCtxT* cContext)
 {
 	int rc = 0;
 	json_object *event = nullptr;
 	if (args == NULL || !json_object_object_get_ex(args, "event", &event))
 	{
-		rc = one_subscribe_unsubscribe(request, subscribe, "*", args);
+		rc = one_subscribe_unsubscribe(request, subscribe, "*", args, cContext);
 	}
 	else if (json_object_get_type(event) == json_type_string)
 	{
-		rc = one_subscribe_unsubscribe(request, subscribe, json_object_get_string(event), args);
+		rc = one_subscribe_unsubscribe(request, subscribe, json_object_get_string(event), args, cContext);
 	}
 	else if (json_object_get_type(event) == json_type_array)
 	{
 		for (int i = 0 ; i < json_object_array_length(event) ; i++)
 		{
 			json_object *x = json_object_array_get_idx(event, i);
-			rc += one_subscribe_unsubscribe(request, subscribe, json_object_get_string(x), args);
+			rc += one_subscribe_unsubscribe(request, subscribe, json_object_get_string(x), args, cContext);
 		}
 	}
 	else {rc = -1;}
@@ -81,7 +110,7 @@ static int subscribe_unsubscribe(struct afb_req request,
 }
 
 /// @brief entry point for client subscription request.
-static void do_subscribe_unsubscribe(afb_req request, bool subscribe)
+static void do_subscribe_unsubscribe(afb_req request, bool subscribe, clientAppCtxT* cContext)
 {
 	int rc = 0;
 	json_object *oneArg = nullptr, *args = afb_req_json(request);
@@ -90,12 +119,12 @@ static void do_subscribe_unsubscribe(afb_req request, bool subscribe)
 		for (int i = 0 ; i < json_object_array_length(args); i++)
 		{
 			oneArg = json_object_array_get_idx(args, i);
-			rc += subscribe_unsubscribe(request, subscribe, oneArg);
+			rc += subscribe_unsubscribe(request, subscribe, oneArg, cContext);
 		}
 	}
 	else
 	{
-		rc = subscribe_unsubscribe(request, subscribe, args);
+		rc = subscribe_unsubscribe(request, subscribe, args, cContext);
 	}
 
 	if(rc >= 0)
@@ -109,7 +138,7 @@ void subscribe(afb_req request)
 {
 	clientAppCtxT *clientAppCtx = (clientAppCtxT*)afb_req_context_make(request, 0, Composer::createContext, Composer::destroyContext, nullptr);
 
-	//do_subscribe_unsubscribe(request, true);
+	do_subscribe_unsubscribe(request, true, clientAppCtx);
 }
 
 /// @brief entry point for client un-subscription request.
@@ -117,7 +146,7 @@ void unsubscribe(afb_req request)
 {
 	clientAppCtxT *clientAppCtx = (clientAppCtxT*)afb_req_context_make(request, 0, Composer::createContext, Composer::destroyContext, nullptr);
 
-	//do_subscribe_unsubscribe(request, false);
+	do_subscribe_unsubscribe(request, false, clientAppCtx);
 }
 
 /// @brief verb that loads JSON configuration (old SigComp.json file now)
@@ -216,7 +245,7 @@ int execConf()
 		}
 	}
 
-	composer.execSubscription();
+	composer.execSignalsSubscription();
 
 	AFB_DEBUG("Signal Composer Control configuration Done.\n signals=%d", (int)sigCount);
 
