@@ -40,6 +40,12 @@ struct SignalValue {
 	std::string strVal;
 };
 
+/// @brief Holds a signal (raw or virtual) definition. Value could be of
+///  different types, so an intermediate structure is use to store them.
+///  A signal could also be a subject or an observer at the same time, this
+///  is the behavior retained to compose virtual signals based on raw signals.
+///  And this is the way that is used to update and reacts to an underlaying
+///  signal change.
 class Signal: public Observable<Signal>, public Observer<Signal>
 {
 private:
@@ -76,4 +82,7 @@ public:
 	double maximum(int seconds = 0) const;
 	struct SignalValue last() const;
 	//int recursionCheck() const;
+
+	int initialRecursionCheck();
+	int recursionCheck(Signal* obs);
 };

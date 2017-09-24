@@ -217,16 +217,16 @@ int execConf()
 	{
 		sig->attachToSourceSignals(composer);
 	}
-/*
+
 	for(auto& sig: allSignals)
 	{
-		if( (err += sig->recursionCheck()) )
+		if( (err += sig->initialRecursionCheck()) )
 		{
 			AFB_ERROR("There is an infinite recursion loop in your signals definition. Root coming from signal: %s", sig->id().c_str());
 			return err;
 		}
 	}
-*/
+
 	composer.execSignalsSubscription();
 
 	AFB_DEBUG("Signal Composer Control configuration Done.\n signals=%d", (int)sigCount);

@@ -184,52 +184,6 @@ void Signal::attachToSourceSignals(Composer& composer)
 	}
 }
 
-/// @brief Call update() method on observer Signal with
-/// current Signal timestamp and value
-/*void Signal::notify() const
-{
-	for (int i = 0; i < Observers_.size(); ++i)
-	  Observers_[i]->update(timestamp_, value_);
-}
-
-/// @brief Inner recursion check. Argument is the Signal id coming
-/// from the original Signal that made a recursion check.
-///
-/// @param[in] origId - name of the origine of the recursion check
-///
-/// @return 0 if no infinite loop detected, -1 if not.
-int Signal::recursionCheck(const std::string& origId) const
-{
-	for (const auto& obs: observersList_)
-	{
-		if( id_ == obs->id())
-			{return -1;}
-		if( origId == obs->id())
-			{return -1;}
-		if(! obs->recursionCheck(origId))
-			{return -1;}
-	}
-	return 0;
-}
-
-/// @brief Recursion check to ensure that there is no infinite loop
-/// in the Observers/Observables structure.
-/// This will check that observer signal is not the same than itself
-/// then trigger the check against the following eventuals observers
-///
-/// @return 0 if no infinite loop detected, -1 if not.
-int Signal::recursionCheck() const
-{
-	for (const auto& obs: observersList_)
-	{
-		if( id_ == obs->id())
-			{return -1;}
-		if( obs->recursionCheck(id_))
-			{return -1;}
-	}
-	return 0;
-}*/
-
 /// @brief Make an average over the last X 'seconds'
 ///
 /// @param[in] seconds - period to calculate the average
@@ -339,39 +293,40 @@ struct SignalValue Signal::last() const
 	return history_.rbegin()->second;
 }
 
-/*
-template<class Signal>
-Observable<Signal>::~Observable()
-{
-	iterator_ itb = observerList_.begin();
-	const_iterator_ ite = observerList_.end();
 
-	for(;itb!=ite;++itb)
+/// @brief Recursion check to ensure that there is no infinite loop
+/// in the Observers/Observables structure.
+/// This will check that observer signal is not the same than itself
+/// then trigger the check against the following eventuals observers
+///
+/// @return 0 if no infinite loop detected, -1 if not.
+int Signal::initialRecursionCheck()
+{
+	for (auto& obs: observerList_)
 	{
-		(*itb)->delObservable(this);
+		if(obs == this)
+			{return -1;}
+		if(static_cast<Signal*>(obs)->recursionCheck(static_cast<Signal*>(obs)))
+			{return -1;}
 	}
+	return 0;
 }
 
-template <class Signal>
-Observer<Signal>::~Observer()
+/// @brief Inner recursion check. Argument is the Signal id coming
+/// from the original Signal that made a recursion check.
+///
+/// @param[in] origId - name of the origine of the recursion check
+///
+/// @return 0 if no infinite loop detected, -1 if not.
+int Signal::recursionCheck(Signal* parentSig)
 {
-	const_iterator_ ite = observableList_.end();
-
-	for(iterator_ itb=observableList_.begin();itb!=ite;++itb)
+	for (const auto& obs: observerList_)
 	{
-			(*itb)->delObserver(this);
+		Signal* obsSig = static_cast<Signal*>(obs);
+		if(parentSig->id() == static_cast<Signal*>(obsSig)->id())
+			{return -1;}
+		if(! obsSig->recursionCheck(obsSig))
+			{return -1;}
 	}
+	return 0;
 }
-
-template <class Signal>
-void Observable<Signal>::notify()
-{
-	iterator_ itb=observerList_.begin();
-	const_iterator_ ite=observerList_.end();
-
-	for(;itb!=ite;++itb)
-	{
-		(*itb)->update(static_cast<Signal*>(this));
-	}
-}
-*/

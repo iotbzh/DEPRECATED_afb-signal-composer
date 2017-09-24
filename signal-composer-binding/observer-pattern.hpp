@@ -63,31 +63,11 @@ public:
 		if(it != observableList_.end())
 			{observableList_.erase(it);}
 	}
-/*
-	void recursionCheck(T* obs)
-	{
-		for (const auto& obs: observersList_)
-		{
-			if( id_ == obs->id())
-				{return -1;}
-			if( origId == obs->id())
-				{return -1;}
-			if(! obs->recursionCheck(origId))
-				{return -1;}
-		}
-		return 0;
-	}
-*/
 };
 
 template <class T>
 class Observable
 {
-private:
-	std::list<Observer<T>*> observerList_;
-	typedef typename std::list<Observer<T>*>::iterator iterator_;
-	typedef typename std::list<Observer<T>*>::const_iterator const_iterator_;
-
 public:
 	void addObserver(Observer<T>* observer)
 	{
@@ -101,19 +81,10 @@ public:
 		if(it != observerList_.end())
 			{observerList_.erase(it);}
 	}
-/*
-	int recursionCheck()
-	{
-		for (auto& obs: observerList_)
-		{
-			if( static_cast<T*>(obs) == static_cast<T*>(this))
-				{return -1;}
-			if( obs->recursionCheck(id_))
-				{return -1;}
-		}
-		return 0;
-	}
-*/
+
+	virtual int initialRecursionCheck() = 0;
+	virtual int recursionCheck(T* obs) = 0;
+
 	virtual ~Observable()
 	{
 		iterator_ itb = observerList_.begin();
@@ -126,6 +97,10 @@ public:
 	}
 
 protected:
+	std::list<Observer<T>*> observerList_;
+	typedef typename std::list<Observer<T>*>::iterator iterator_;
+	typedef typename std::list<Observer<T>*>::const_iterator const_iterator_;
+
 	void notify()
 	{
 		iterator_ itb=observerList_.begin();
