@@ -26,19 +26,7 @@
 			}
 		}, {
 			"api": "mraa",
-			"info": "Low level binding which retrieve different values from several sensors like gyroscope, accelerometer, etc",
-			"init": {
-				"function": "lua://_Simple_Echo_Args",
-				"args": {
-					"arg1": "first argument"
-				}
-			},
-			"getSignals": {
-				"function": "lua://_Simple_Echo_Args",
-				"args": {
-					"arg": "first argument"
-				}
-			}
+			"info": "Low level binding which retrieve different values from several sensors like gyroscope, accelerometer, etc"
 		}
 	]
 }

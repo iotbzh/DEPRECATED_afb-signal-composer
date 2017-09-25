@@ -26,7 +26,7 @@
 			"version": "1.0",
 			"info": "Lua2C Interface",
 			"basename": "lua2c-interface",
-			"lua2c": ["ssetSignalValue"]
+			"lua2c": ["_setSignalValue"]
 		}
 	]
 }

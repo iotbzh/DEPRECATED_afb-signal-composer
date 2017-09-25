@@ -2,7 +2,7 @@
 	"signals": [
 		{
 			"id": "vehicle_speed",
-			"event": "low-can/messages.vehicle.average.speed",
+			"event": "low-can/diagnostic_messages.vehicle.speed",
 			"class": "temporal",
 			"unit": "km/h",
 			"frequency": 1,
@@ -29,7 +29,7 @@
 			"id": "fuel_level",
 			"event": "low-can/diagnostic_messages.fuel.level",
 			"class":"temporal",
-			"unit": "litre",
+			"unit": "liter",
 			"frequency": 1
 		},
 		{
