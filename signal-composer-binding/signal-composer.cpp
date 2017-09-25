@@ -160,7 +160,12 @@ int Composer::loadOneSourceAPI(json_object* sourceJ)
 	}
 
 	if(initJ) {initCtl = convert2Action("init", initJ);}
-	if(getSignalsJ) {getSignalsCtl = convert2Action("getSignals", getSignalsJ);}
+	if(!getSignalsJ)
+	{
+		std::string function = "api://" + std::string(api) + "/subscribe";
+		wrap_json_pack(&getSignalsJ, "{ss}", "function", function.c_str());
+	}
+	getSignalsCtl = convert2Action("getSignals", getSignalsJ);
 
 	sourcesListV_.push_back(SourceAPI(api, info, initCtl, getSignalsCtl));
 
