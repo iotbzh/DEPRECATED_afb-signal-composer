@@ -18,9 +18,9 @@
 /* This is a classic observer design pattern a bit enhanced to be
  able to pull and push info in 2 ways */
 
-
- #include <list>
- #include <algorithm>
+#include <list>
+#include <mutex>
+#include <algorithm>
 
 template<class T>
 class Observable;
@@ -28,14 +28,16 @@ class Observable;
 template<class T>
 class Observer
 {
+private:
+	std::mutex observableListMutex_;
+
 protected:
 	virtual ~Observer()
 	{
-		const_iterator_ ite = observableList_.end();
-
-		for(iterator_ itb=observableList_.begin();itb!=ite;++itb)
+		std::lock_guard<std::mutex> lock(observableListMutex_);
+		for(const auto& sig: observableList_)
 		{
-				(*itb)->delObserver(this);
+				sig->delObserver(this);
 		}
 	}
 
@@ -48,6 +50,7 @@ public:
 
 	void addObservable(Observable<T>* observable)
 	{
+		std::lock_guard<std::mutex> lock(observableListMutex_);
 		for (auto& obs : observableList_)
 		{
 			if (obs == observable)
@@ -59,8 +62,9 @@ public:
 
 	void delObservable(Observable<T>* observable)
 	{
-		const_iterator_ it = std::find(observableList_.begin(), observableList_.end(), observable);
-		if(it != observableList_.end())
+		std::lock_guard<std::mutex> lock(observableListMutex_);
+		const_iterator_ it = std::find(observableList_.cbegin(), observableList_.cend(), observable);
+		if(it != observableList_.cend())
 			{observableList_.erase(it);}
 	}
 };
@@ -71,14 +75,16 @@ class Observable
 public:
 	void addObserver(Observer<T>* observer)
 	{
+		std::lock_guard<std::mutex> lock(observerListMutex_);
 		observerList_.push_back(observer);
 		observer->addObservable(this);
 	}
 
 	void delObserver(Observer<T>* observer)
 	{
-		const_iterator_ it = find(observerList_.begin(), observerList_.end(), observer);
-		if(it != observerList_.end())
+		std::lock_guard<std::mutex> lock(observerListMutex_);
+		const_iterator_ it = find(observerList_.cbegin(), observerList_.cend(), observer);
+		if(it != observerList_.cend())
 			{observerList_.erase(it);}
 	}
 
@@ -87,12 +93,10 @@ public:
 
 	virtual ~Observable()
 	{
-		iterator_ itb = observerList_.begin();
-		const_iterator_ ite = observerList_.end();
-
-		for(;itb!=ite;++itb)
+		std::lock_guard<std::mutex> lock(observerListMutex_);
+		for(const auto& obs: observerList_)
 		{
-			(*itb)->delObservable(this);
+			obs->delObservable(this);
 		}
 	}
 
@@ -103,12 +107,13 @@ protected:
 
 	void notify()
 	{
-		iterator_ itb=observerList_.begin();
-		const_iterator_ ite=observerList_.end();
-
-		for(;itb!=ite;++itb)
+		std::lock_guard<std::mutex> lock(observerListMutex_);
+		for(const auto& obs: observerList_)
 		{
-			(*itb)->update(static_cast<T*>(this));
+			obs->update(static_cast<T*>(this));
 		}
 	}
+
+private:
+	std::mutex observerListMutex_;
 };
