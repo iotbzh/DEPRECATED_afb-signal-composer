@@ -186,12 +186,13 @@ void get(struct afb_req request)
 		return;
 	}
 
-	ans = Composer::instance().getSignalValue(sig, options);
+	ans = Composer::instance().getsignalValue(sig, options);
 
-	if (ans)
+	if (json_object_array_length(ans))
 		afb_req_success(request, ans, NULL);
 	else
-		afb_req_fail(request, "error", NULL);
+		afb_req_fail(request, "error", "No signals found.");
+
 }
 
 int loadConf()

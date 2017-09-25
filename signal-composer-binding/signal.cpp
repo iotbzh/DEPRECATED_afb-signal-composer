@@ -288,8 +288,9 @@ double Signal::maximum(int seconds) const
 /// @brief Return last value recorded
 ///
 /// @return Last value
-struct SignalValue Signal::last() const
+struct signalValue Signal::last() const
 {
+	if(history_.empty()) {return signalValue({0,0,0,0,0,""});}
 	return history_.rbegin()->second;
 }
 

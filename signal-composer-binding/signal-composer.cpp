@@ -337,42 +337,52 @@ void Composer::processOptions(const char** opts, Signal* sig, json_object* respo
 		{
 			avg = true;
 			double value = sig->average();
-			json_object_object_add(response, "average",
+			json_object_object_add(response, "value",
 				json_object_new_double(value));
 		}
-		if (strcasestr(opts[idx], "min") && !min)
+		else if (strcasestr(opts[idx], "min") && !min)
 		{
 			min = true;
 			double value = sig->minimum();
-			json_object_object_add(response, "min",
+			json_object_object_add(response, "value",
 				json_object_new_double(value));
 		}
-		if (strcasestr(opts[idx], "max") && !max)
+		else if (strcasestr(opts[idx], "max") && !max)
 		{
 			max = true;
 			double value = sig->maximum();
-			json_object_object_add(response, "max",
+			json_object_object_add(response, "value",
 				json_object_new_double(value));
 		}
-		if (strcasestr(opts[idx], "last") && !last)
+		else if (strcasestr(opts[idx], "last") && !last)
 		{
 			last = true;
-			struct SignalValue value = sig->last();
+			struct signalValue value = sig->last();
 			if(value.hasBool)
 			{
-				json_object_object_add(response, "last",
+				json_object_object_add(response, "value",
 					json_object_new_boolean(value.boolVal));
 			}
-			if(value.hasNum)
+			else if(value.hasNum)
 			{
-				json_object_object_add(response, "last",
+				json_object_object_add(response, "value",
 					json_object_new_double(value.numVal));
 			}
-			if(value.hasStr)
+			else if(value.hasStr)
 			{
-				json_object_object_add(response, "last",
+				json_object_object_add(response, "value",
 					json_object_new_string(value.strVal.c_str()));
 			}
+			else
+			{
+				json_object_object_add(response, "value",
+					json_object_new_string("No recorded value so far."));
+			}
+		}
+		else
+		{
+			json_object_object_add(response, "value",
+				json_object_new_string("No recorded value so far."));
 		}
 	}
 }
@@ -496,7 +506,7 @@ std::vector<Signal*> Composer::searchSignals(const std::string& aName)
 	return signals;
 }
 
-json_object* Composer::getSignalValue(const std::string& sig, json_object* options)
+json_object* Composer::getsignalValue(const std::string& sig, json_object* options)
 {
 	const char **opts = nullptr;
 	json_object *response = nullptr, *finalResponse = json_object_new_array();
@@ -516,21 +526,26 @@ json_object* Composer::getSignalValue(const std::string& sig, json_object* optio
 				"signal", sig->id().c_str());
 			if (!opts)
 			{
-				struct SignalValue value = sig->last();
+				struct signalValue value = sig->last();
 				if(value.hasBool)
 				{
-					json_object_object_add(response, "last",
+					json_object_object_add(response, "value",
 						json_object_new_boolean(value.boolVal));
 				}
-				if(value.hasNum)
+				else if(value.hasNum)
 				{
-					json_object_object_add(response, "last",
+					json_object_object_add(response, "value",
 						json_object_new_double(value.numVal));
 				}
-				if(value.hasStr)
+				else if(value.hasStr)
 				{
-					json_object_object_add(response, "last",
+					json_object_object_add(response, "value",
 						json_object_new_string(value.strVal.c_str()));
+				}
+				else
+				{
+					json_object_object_add(response, "value",
+						json_object_new_string("No recorded value so far."));
 				}
 			}
 			else
@@ -539,7 +554,7 @@ json_object* Composer::getSignalValue(const std::string& sig, json_object* optio
 		}
 	}
 
-	return response;
+	return finalResponse;
 }
 
 int Composer::execSignalsSubscription()
