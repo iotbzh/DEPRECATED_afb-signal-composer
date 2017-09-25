@@ -33,10 +33,16 @@ int ActionExecOne(CtlActionT* action, json_object *queryJ) {
         {
             json_object *returnJ;
 
-            // if query is empty increment usage count and pass args
+            // if query is empty increment usage count and pass args else
+            // create new JSON object
             if (!queryJ || json_object_get_type(queryJ) != json_type_object) {
-                json_object_get(action->argsJ);
-                queryJ = action->argsJ;
+                if(action->argsJ) {
+                    json_object_get(action->argsJ);
+                    queryJ = action->argsJ;
+                }
+                else {
+                    queryJ = json_object_new_object();
+                }
             } else if (action->argsJ) {
 
                 // Merge queryJ and argsJ before sending request
@@ -49,7 +55,6 @@ int ActionExecOne(CtlActionT* action, json_object *queryJ) {
                     json_object_object_add(queryJ, "args", action->argsJ);
                 }
             }
-
             json_object_object_add(queryJ, "label", json_object_new_string(action->source.label));
 
             int err = afb_service_call_sync(action->api, action->call, queryJ, &returnJ);
