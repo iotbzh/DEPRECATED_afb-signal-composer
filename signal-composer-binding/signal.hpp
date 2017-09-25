@@ -31,12 +31,12 @@ class Composer;
 ///  possibility.
 ///  Not very efficient or optimized, maybe use of Variant in
 ///  C++17 but this is a bit too new to uses it for now
-struct SignalValue {
-	bool hasBool = false;
+struct signalValue {
+	bool hasBool;
 	bool boolVal;
-	bool hasNum = false;
+	bool hasNum;
 	double numVal;
-	bool hasStr = false;
+	bool hasStr;
 	std::string strVal;
 };
 
@@ -53,15 +53,16 @@ private:
 	std::string event_;
 	std::vector<std::string> dependsSigV_;
 	long long int timestamp_;
-	struct SignalValue value_;
-	std::map<long long int, struct SignalValue> history_; ///< history_ - Hold signal value history in map with <timestamp, value>
+	struct signalValue value_;
+	std::map<long long int, struct signalValue> history_; ///< history_ - Hold signal value history in map with <timestamp, value>
 	double frequency_;
 	std::string unit_;
 	CtlActionT* onReceived_;
 	json_object* getSignalsArgs_;
 
-	//int recursionCheck(const std::string& origId) const;
 public:
+	bool subscribed_; ///< subscribed_ - boolean value telling if yes or no the signal has been subcribed to the low level binding.
+	Signal();
 	Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 	Signal(const std::string& id, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived);
 
@@ -72,7 +73,7 @@ public:
 	const std::string id() const;
 	json_object* toJSON() const;
 
-	void set(long long int timestamp, struct SignalValue& value);
+	void set(long long int timestamp, struct signalValue& value);
 	void update(Signal* sig);
 	int onReceivedCB(json_object *queryJ);
 	void attachToSourceSignals(Composer& composer);
@@ -80,8 +81,7 @@ public:
 	double average(int seconds = 0) const;
 	double minimum(int seconds = 0) const;
 	double maximum(int seconds = 0) const;
-	struct SignalValue last() const;
-	//int recursionCheck() const;
+	struct signalValue last() const;
 
 	int initialRecursionCheck();
 	int recursionCheck(Signal* obs);

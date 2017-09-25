@@ -42,7 +42,9 @@ private:
 	int loadOneSignal(json_object* signalsJ);
 	static int loadSignals(CtlSectionT* section, json_object *signalsJ);
 
-	void processOptions(const char** opts, Signal* sig, json_object* response) const;
+	int initSourcesAPI();
+	SourceAPI* getSourceAPI(const std::string& api);
+	void processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const;
 public:
 	static Composer& instance();
 	static void* createContext(void* ctx);
@@ -52,18 +54,16 @@ public:
 	int loadSignals(json_object* signalsJ);
 
 	CtlConfigT* ctlConfig();
-	int initSourcesAPI();
-	std::vector<Signal*> getAllSignals();
-	SourceAPI* getSourceAPI(const std::string& api);
-	std::vector<Signal*> searchSignals(const std::string& aName);
-	json_object* getSignalValue(const std::string& sig, json_object* options);
+	std::vector<std::shared_ptr<Signal>> getAllSignals();
+	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& aName);
+	json_object* getsignalValue(const std::string& sig, json_object* options);
 
 	int execSignalsSubscription();
 };
 
 struct pluginCBT
 {
-	void (*setSignalValue)(const char* aName, long long int timestamp, struct SignalValue value);
+	void (*setsignalValue)(const char* aName, long long int timestamp, struct signalValue value);
 };
 
-extern "C" void setSignalValueHandle(const char* aName, long long int timestamp, struct SignalValue value);
+extern "C" void setsignalValueHandle(const char* aName, long long int timestamp, struct signalValue value);

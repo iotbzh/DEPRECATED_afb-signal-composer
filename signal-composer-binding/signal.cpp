@@ -22,6 +22,19 @@
 
 #define MICRO 1000000
 
+Signal::Signal()
+:id_(""),
+ event_(""),
+ dependsSigV_(),
+ timestamp_(0.0),
+ value_({0,0,0,0,0,""}),
+ frequency_(0),
+ unit_(""),
+ onReceived_(nullptr),
+ getSignalsArgs_(nullptr),
+ subscribed_(false)
+{}
+
 Signal::Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs)
 :id_(id),
  event_(event),
@@ -31,7 +44,8 @@ Signal::Signal(const std::string& id, const std::string& event, std::vector<std:
  frequency_(frequency),
  unit_(unit),
  onReceived_(onReceived),
- getSignalsArgs_(getSignalsArgs)
+ getSignalsArgs_(getSignalsArgs),
+ subscribed_(false)
 {}
 
 Signal::Signal(const std::string& id,
@@ -47,7 +61,8 @@ Signal::Signal(const std::string& id,
  frequency_(frequency),
  unit_(unit),
  onReceived_(onReceived),
- getSignalsArgs_()
+ getSignalsArgs_(),
+ subscribed_(false)
 {}
 
 Signal::operator bool() const
@@ -119,7 +134,7 @@ json_object* Signal::toJSON() const
 ///
 /// @param[in] timestamp - timestamp of occured signal
 /// @param[in] value - value of change
-void Signal::set(long long int timestamp, struct SignalValue& value)
+void Signal::set(long long int timestamp, struct signalValue& value)
 {
 	timestamp_ = timestamp;
 	value_ = value;
@@ -147,21 +162,6 @@ int Signal::onReceivedCB(json_object *queryJ)
 	return err;
 }
 
-/// @brief Make a Signal observer observes a Signal observable if not already
-/// present in the Observers vector.
-///
-/// @param[in] obs - pointer to a Signal observable
-/*void Signal::attach(Signal* obs)
-{
-	for ( auto& sig : Observers_)
-	{
-		if (obs == sig)
-			{return;}
-	}
-
-	Observers_.push_back(obs);
-}*/
-
 /// @brief Make a Signal observer observes Signals observables
 /// set in its observable vector.
 ///
@@ -172,7 +172,7 @@ void Signal::attachToSourceSignals(Composer& composer)
 	{
 		if(srcSig.find("/") == std::string::npos)
 		{
-			std::vector<Signal*> observables = composer.searchSignals(srcSig);
+			std::vector<std::shared_ptr<Signal>> observables = composer.searchSignals(srcSig);
 			if(observables[0])
 			{
 				AFB_NOTICE("Attaching %s to %s", id_.c_str(), srcSig.c_str());

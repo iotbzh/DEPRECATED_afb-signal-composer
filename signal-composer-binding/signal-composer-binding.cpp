@@ -32,10 +32,10 @@
 /// @param[in] object - eventual data that comes with the event
 void onEvent(const char *event, json_object *object)
 {
-	AFB_DEBUG("Received event json: %s", json_object_to_json_string(object));
+	AFB_NOTICE("Received event json: %s", json_object_to_json_string(object));
 	Composer& composer = Composer::instance();
 
-	std::vector<Signal*> signals = composer.searchSignals(event);
+	std::vector<std::shared_ptr<Signal>> signals = composer.searchSignals(event);
 	if(!signals.empty())
 	{
 		for(auto& sig: signals)
@@ -52,7 +52,7 @@ static int one_subscribe_unsubscribe(struct afb_req request,
 	clientAppCtx* cContext)
 {
 	int err = 0;
-	std::vector<Signal*> signals = Composer::instance().searchSignals(event);
+	std::vector<std::shared_ptr<Signal>> signals = Composer::instance().searchSignals(event);
 
 	cContext->appendSignals(signals);
 	if(subscribe)
@@ -154,7 +154,7 @@ void list(afb_req request)
 {
 	struct json_object *allSignalsJ = json_object_new_array();
 
-	std::vector<Signal*> allSignals = Composer::instance().getAllSignals();
+	std::vector<std::shared_ptr<Signal>> allSignals = Composer::instance().getAllSignals();
 	for(auto& sig: allSignals)
 		{json_object_array_add(allSignalsJ, sig->toJSON());}
 
@@ -212,9 +212,9 @@ int execConf()
 	Composer& composer = Composer::instance();
 	int err = 0;
 	CtlConfigExec(composer.ctlConfig());
-	std::vector<Signal*> allSignals = composer.getAllSignals();
+	std::vector<std::shared_ptr<Signal>> allSignals = composer.getAllSignals();
 	ssize_t sigCount = allSignals.size();
-	for( Signal*& sig: allSignals)
+	for( std::shared_ptr<Signal>& sig: allSignals)
 	{
 		sig->attachToSourceSignals(composer);
 	}

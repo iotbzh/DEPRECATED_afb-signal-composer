@@ -112,7 +112,6 @@ CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
 			AFB_ERROR("Error building subscription query object");
 			return err;
 		}
-
 		json_object_array_add(pluginCtx->subscriptionBatch, subscribeArgsJ);
 	}
 	else
@@ -142,29 +141,29 @@ CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
 		return -1;
 	}
 
-	struct SignalValue value = {
+	struct signalValue value = {
 		.hasBool = true, .boolVal = eventStatus,
 		.hasNum = false, .numVal = 0,
 		.hasStr = false, .strVal = std::string()
 	};
 	if(strcasestr(eventName, "front_left"))
 	{
-		pluginCtx->pluginHandle->setSignalValue(eventName,(long long int)timestamp, value);
+		pluginCtx->pluginHandle->setsignalValue(eventName,(long long int)timestamp, value);
 		setDoor(&pluginCtx->allDoorsCtx.front_left, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "front_right"))
 	{
-		pluginCtx->pluginHandle->setSignalValue(eventName,(long long int)timestamp, value);
+		pluginCtx->pluginHandle->setsignalValue(eventName,(long long int)timestamp, value);
 		setDoor(&pluginCtx->allDoorsCtx.front_right, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "rear_left"))
 	{
-		pluginCtx->pluginHandle->setSignalValue(eventName,(long long int)timestamp, value);
+		pluginCtx->pluginHandle->setsignalValue(eventName,(long long int)timestamp, value);
 		setDoor(&pluginCtx->allDoorsCtx.rear_left, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "rear_right"))
 	{
-		pluginCtx->pluginHandle->setSignalValue(eventName,(long long int)timestamp, value);
+		pluginCtx->pluginHandle->setsignalValue(eventName,(long long int)timestamp, value);
 		setDoor(&pluginCtx->allDoorsCtx.rear_right, eventName, eventStatus);
 	}
 	else

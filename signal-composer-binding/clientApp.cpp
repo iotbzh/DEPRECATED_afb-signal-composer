@@ -29,11 +29,11 @@ void clientAppCtx::update(Signal* sig)
 	return;
 }
 
-void clientAppCtx::appendSignals(std::vector<Signal*>& sigV)
+void clientAppCtx::appendSignals(std::vector<std::shared_ptr<Signal>>& sigV)
 {
 	bool set = false;
 	// Clean up already subscribed signals to avoid duplicata
-	for (std::vector<Signal*>::const_iterator it = sigV.begin();
+	for (std::vector<std::shared_ptr<Signal>>::const_iterator it = sigV.begin();
 	it != sigV.end(); ++it)
 	{
 		for (auto& ctxSig: subscribedSignals_)
@@ -44,7 +44,7 @@ void clientAppCtx::appendSignals(std::vector<Signal*>& sigV)
 			sigV.erase(it);
 			continue;
 		}
-		Signal* sig = *it;
+		std::shared_ptr<Signal> sig = *it;
 		sig->addObserver(this);
 	}
 

@@ -14,11 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-
 #pragma once
 
-
-
+#include <memory>
 #include "signal.hpp"
 
 class SourceAPI {
@@ -28,7 +26,7 @@ private:
 	CtlActionT* init_;
 	CtlActionT* getSignals_;
 
-	std::map<Signal*, bool> signalsMap_;
+	std::map<std::string, std::shared_ptr<Signal>> signalsMap_;
 
 public:
 	SourceAPI();
@@ -38,8 +36,8 @@ public:
 	std::string api() const;
 	void addSignal(const std::string& id, const std::string& event, std::vector<std::string>& sources, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 
-	std::vector<Signal*> getSignals() const;
-	std::vector<Signal*> searchSignals(const std::string& name) const;
+	std::vector<std::shared_ptr<Signal>> getSignals() const;
+	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& name);
 
 	int makeSubscription();
 };

@@ -30,9 +30,7 @@ int SourceAPI::init()
 	if(init_)
 		{return ActionExecOne(init_, nullptr);}
 	else if(api_ == afbBindingV2.api)
-	{
-		api_ = Composer::instance().ctlConfig()->api;
-	}
+		{api_ = Composer::instance().ctlConfig()->api;}
 
 	return 0;
 }
@@ -44,29 +42,43 @@ std::string SourceAPI::api() const
 
 void SourceAPI::addSignal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs)
 {
-	Signal* sig = new Signal(id, event, depends, unit, frequency, onReceived, getSignalsArgs);
+	std::shared_ptr<Signal> sig = std::make_shared<Signal>(id, event, depends, unit, frequency, onReceived, getSignalsArgs);
 
-	signalsMap_[sig] = false;
+	signalsMap_[id] = sig;
 }
 
-std::vector<Signal*> SourceAPI::getSignals() const
+std::vector<std::shared_ptr<Signal>> SourceAPI::getSignals() const
 {
-	std::vector<Signal*> signals;
+	std::vector<std::shared_ptr<Signal>> signals;
 	for (auto& sig: signalsMap_)
 	{
-		signals.push_back(sig.first);
+		signals.push_back(sig.second);
 	}
 	return signals;
 }
 
-std::vector<Signal*> SourceAPI::searchSignals(const std::string& name) const
+/// @brief Search a signal in a source instance. If an exact signal name is find
+///  then it will be returned else it will be search against each signals
+///  contained in the map and signal will be deeper evaluated.
+///
+/// @param[in] name - A signal name to be searched
+///
+/// @return Returns a vector of found signals.
+std::vector<std::shared_ptr<Signal>> SourceAPI::searchSignals(const std::string& name)
 {
-	std::vector<Signal*> signals;
-	for (auto& sig: signalsMap_)
+	std::vector<std::shared_ptr<Signal>> signals;
+
+	if(signalsMap_.count(name))
+		{signals.emplace_back(signalsMap_[name]);}
+	else
 	{
-		if(*sig.first == name)
-			{signals.emplace_back(sig.first);}
+		for (auto& sig: signalsMap_)
+		{
+			if(*sig.second == name)
+				{signals.emplace_back(sig.second);}
+		}
 	}
+
 	return signals;
 }
 
@@ -77,19 +89,19 @@ int SourceAPI::makeSubscription()
 	{
 		for(auto& sig: signalsMap_)
 		{
-			json_object* signalJ = sig.first->toJSON();
+			json_object* signalJ = sig.second->toJSON();
 			if(!signalJ)
 			{
-				AFB_ERROR("Error building JSON query object to subscribe to for signal %s", sig.first->id().c_str());
+				AFB_ERROR("Error building JSON query object to subscribe to for signal %s", sig.second->id().c_str());
 				err = -1;
 				break;
 			}
-			err += sig.second ? 0:ActionExecOne(getSignals_, signalJ);
+			err += ActionExecOne(getSignals_, signalJ);
 			if(err)
 				{AFB_WARNING("Fails to subscribe to signal '%s/%s'",
-				api_.c_str(), sig.first->id().c_str());}
+				api_.c_str(), sig.second->id().c_str());}
 			else
-				{sig.second = true;}
+				{sig.second->subscribed_ = true;}
 		}
 		err += ActionExecOne(getSignals_, nullptr);
 	}

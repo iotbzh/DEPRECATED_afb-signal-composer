@@ -48,7 +48,7 @@ CTLP_ONLOAD(plugin, handle) {
 	return (void*)pluginCtx;
 }
 
-CTLP_LUA2C (ssetSignalValue, label, argsJ)
+CTLP_LUA2C (_setsignalValue, label, argsJ)
 {
 	AFB_NOTICE("label: %s, argsJ: %s", label, json_object_to_json_string(argsJ));
 	return 0;
