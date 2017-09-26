@@ -54,7 +54,7 @@ function _Unit_Converter(source, args, event)
     print("Value in", targetunits, "is", value/base)
     _result["result"] = value/base
 
-    _setsignalValue(source, _result)
+    lua2c["setSignalValueWrap"](source, _result)
 
   elseif sourcei>targeti then
 
@@ -66,7 +66,7 @@ function _Unit_Converter(source, args, event)
     print("Value in ", targetunits, "is", value*base)
     _result["result"] = value/base
 
-    _setsignalValue(source, _result)
+    lua2c["setSignalValueWrap"](source, _result)
 
   else
     print("No conversion")

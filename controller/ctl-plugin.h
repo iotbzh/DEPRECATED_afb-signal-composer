@@ -43,6 +43,8 @@ extern "C" {
   #define UNUSED_FUNCTION(x) __attribute__((__unused__)) UNUSED_ ## x
 #endif
 
+typedef struct luaL_Reg luaL_Reg;
+
 typedef struct {
     char *label;
     char *info;
@@ -50,13 +52,11 @@ typedef struct {
     void *context;
 } CtlSourceT;
 
-
 typedef struct {
   long  magic;
   const char *label;
   void *handle;
 } CtlPluginMagicT;
-
 
 typedef struct {
     const char *label;
@@ -64,10 +64,13 @@ typedef struct {
     const char *version;
     void *context;
     void *dlHandle;
+#ifdef CONTROL_SUPPORT_LUA
+    luaL_Reg *l2cFunc;
+    int l2cCount;
+#endif
 } CtlPluginT;
 
 typedef void*(*DispatchPluginInstallCbT)(CtlPluginT *plugin, void* handle);
-
 
 #define MACRO_STR_VALUE(arg) #arg
 #define CTLP_REGISTER(pluglabel) CtlPluginMagicT CtlPluginMagic={.magic=CTL_PLUGIN_MAGIC,.label=pluglabel,.handle=NULL}; struct afb_binding_data_v2;

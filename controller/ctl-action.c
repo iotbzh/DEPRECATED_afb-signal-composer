@@ -23,7 +23,9 @@
 #include <string.h>
 
 #include "ctl-config.h"
-
+#ifdef CONTROL_SUPPORT_LUA
+#include "ctl-lua.h"
+#endif
 
 int ActionExecOne(CtlActionT* action, json_object *queryJ) {
     int err;

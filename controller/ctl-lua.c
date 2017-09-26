@@ -282,7 +282,6 @@ static json_object *LuaPopArgs (lua_State* luaState, int start) {
     return NULL;
 }
 
-
 STATIC int LuaFormatMessage(lua_State* luaState, LuaAfbMessageT action) {
     char *message;
 
@@ -618,6 +617,7 @@ int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT callback) {
 
     // push response to LUA
     lua_pushinteger(luaState, response);
+
     return 1;
 }
 
@@ -963,7 +963,7 @@ void LuaL2cNewLib(const char *label, luaL_Reg *l2cFunc, int count) {
     // luaL_newlib(luaState, l2cFunc); macro does not work with pointer :(
     luaL_checkversion(luaState);
     lua_createtable(luaState, 0, count+1);
-    luaL_setfuncs(luaState,l2cFunc,0);
+    luaL_setfuncs(luaState, l2cFunc, 0);
     lua_setglobal(luaState, label);
 }
 

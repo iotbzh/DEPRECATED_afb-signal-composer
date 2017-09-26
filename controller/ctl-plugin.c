@@ -173,14 +173,14 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
             return 0;
         }
 
-        int errCount = 0;
+        int errCount = 0, count = 0;
         luaL_Reg *l2cFunc = NULL;
 
         // look on l2c command and push them to LUA
         if (json_object_get_type(lua2csJ) == json_type_array) {
             int length = json_object_array_length(lua2csJ);
             l2cFunc = calloc(length + 1, sizeof (luaL_Reg));
-            for (int count = 0; count < length; count++) {
+            for (count = 0; count < length; count++) {
                 int err;
                 const char *l2cName = json_object_get_string(json_object_array_get_idx(lua2csJ, count));
                 err = Lua2cAddOne(l2cFunc, l2cName, count);
@@ -190,10 +190,18 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
             l2cFunc = calloc(2, sizeof (luaL_Reg));
             const char *l2cName = json_object_get_string(lua2csJ);
             errCount = Lua2cAddOne(l2cFunc, l2cName, 0);
+            count = 1;
         }
         if (errCount) {
             AFB_ERROR("CTL-PLUGIN-LOADONE %d symbols not found in plugin='%s'", errCount, pluginpath);
             goto OnErrorExit;
+        }
+        else {
+            ctlPlugin->l2cFunc = l2cFunc;
+            ctlPlugin->l2cCount = count;
+            LuaL2cNewLib (ctlPlugin->label,
+                ctlPlugin->l2cFunc,
+                ctlPlugin->l2cCount);
         }
     }
 #endif

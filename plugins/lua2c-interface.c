@@ -33,11 +33,11 @@ CTLP_REGISTER("lua2c-interface");
 
 typedef struct {
 	struct pluginCBT* pluginHandle;
-} lowCANCtxT;
+} CtxT;
 
 // Call at initialisation time
 CTLP_ONLOAD(plugin, handle) {
-	lowCANCtxT *pluginCtx= (lowCANCtxT*)calloc (1, sizeof(lowCANCtxT));
+	CtxT *pluginCtx= (CtxT*)calloc (1, sizeof(CtxT));
 	pluginCtx->pluginHandle = (struct pluginCBT*)handle;
 
 	AFB_NOTICE ("Low-can plugin: label='%s' version='%s' info='%s'",
@@ -48,8 +48,9 @@ CTLP_ONLOAD(plugin, handle) {
 	return (void*)pluginCtx;
 }
 
-CTLP_LUA2C (_setsignalValue, label, argsJ)
+CTLP_LUA2C (setSignalValueWrap, label, argsJ)
 {
 	AFB_NOTICE("label: %s, argsJ: %s", label, json_object_to_json_string(argsJ));
+
 	return 0;
 }
