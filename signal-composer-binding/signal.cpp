@@ -20,7 +20,7 @@
 #include "signal.hpp"
 #include "signal-composer.hpp"
 
-#define MICRO 1000000
+#define MICRO 1000000000
 
 Signal::Signal()
 :id_(""),
@@ -28,6 +28,7 @@ Signal::Signal()
  dependsSigV_(),
  timestamp_(0.0),
  value_({0,0,0,0,0,""}),
+ retention_(0),
  frequency_(0),
  unit_(""),
  onReceived_(nullptr),
@@ -35,12 +36,13 @@ Signal::Signal()
  subscribed_(false)
 {}
 
-Signal::Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs)
+Signal::Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, int retention, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs)
 :id_(id),
  event_(event),
  dependsSigV_(depends),
  timestamp_(0.0),
  value_({0,0,0,0,0,""}),
+ retention_(retention),
  frequency_(frequency),
  unit_(unit),
  onReceived_(onReceived),
@@ -51,6 +53,7 @@ Signal::Signal(const std::string& id, const std::string& event, std::vector<std:
 Signal::Signal(const std::string& id,
 	std::vector<std::string>& depends,
 	const std::string& unit,
+	int retention,
 	double frequency,
 	CtlActionT* onReceived)
 :id_(id),
@@ -58,6 +61,7 @@ Signal::Signal(const std::string& id,
  dependsSigV_(depends),
  timestamp_(0.0),
  value_({0,0,0,0,0,""}),
+ retention_(retention),
  frequency_(frequency),
  unit_(unit),
  onReceived_(onReceived),
@@ -134,11 +138,21 @@ json_object* Signal::toJSON() const
 ///
 /// @param[in] timestamp - timestamp of occured signal
 /// @param[in] value - value of change
-void Signal::set(long long int timestamp, struct signalValue& value)
+/// @param[in] unit - optionnal string to change the signal unit
+void Signal::set(uint64_t timestamp, struct signalValue& value)
 {
-	timestamp_ = timestamp;
+	uint64_t diff = retention_+1;
 	value_ = value;
+	timestamp_ = timestamp;
 	history_[timestamp_] = value_;
+
+	while(diff > retention_)
+	{
+		uint64_t first = history_.begin()->first;
+		diff = (timestamp_ - first)/MICRO;
+		if(diff > retention_)
+			{history_.erase(history_.cbegin());}
+	}
 }
 
 /// @brief Observer method called when a Observable Signal has changes.
@@ -191,8 +205,8 @@ void Signal::attachToSourceSignals(Composer& composer)
 /// @return Average value
 double Signal::average(int seconds) const
 {
-	long long int begin = history_.begin()->first;
-	long long int end = !seconds ?
+	uint64_t begin = history_.begin()->first;
+	uint64_t end = !seconds ?
 		begin+(seconds*MICRO) :
 		history_.rbegin()->first;
 	double total = 0.0;
@@ -228,8 +242,8 @@ double Signal::average(int seconds) const
 /// @return Minimum value contained in the history
 double Signal::minimum(int seconds) const
 {
-	long long int begin = history_.begin()->first;
-	long long int end = !seconds ?
+	uint64_t begin = history_.begin()->first;
+	uint64_t end = !seconds ?
 	begin+(seconds*MICRO) :
 	history_.rbegin()->first;
 
@@ -260,8 +274,8 @@ double Signal::minimum(int seconds) const
 /// @return Maximum value contained in the history
 double Signal::maximum(int seconds) const
 {
-	long long int begin = history_.begin()->first;
-	long long int end = !seconds ?
+	uint64_t begin = history_.begin()->first;
+	uint64_t end = !seconds ?
 	begin+(seconds*MICRO) :
 	history_.rbegin()->first;
 

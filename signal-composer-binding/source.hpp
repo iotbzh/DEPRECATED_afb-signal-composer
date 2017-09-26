@@ -34,7 +34,7 @@ public:
 
 	int init();
 	std::string api() const;
-	void addSignal(const std::string& id, const std::string& event, std::vector<std::string>& sources, const std::string& sClass, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
+	void addSignal(const std::string& id, const std::string& event, std::vector<std::string>& sources, int retention, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 
 	std::vector<std::shared_ptr<Signal>> getSignals() const;
 	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& name);

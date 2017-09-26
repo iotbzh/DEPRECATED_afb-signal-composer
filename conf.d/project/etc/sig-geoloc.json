@@ -33,7 +33,7 @@
 				"latitude",
 				"longitude"
 			],
-			"class": "state",
+			"retention": 30,
 			"unit": "degree",
 			"frequency": 1,
 			"actions": {
@@ -45,7 +45,7 @@
 		{
 			"id": "speed",
 			"event": "gps/location",
-			"class": "temporal",
+			"retention": 30,
 			"unit": "m/s",
 			"frequency": 1
 		},
@@ -124,7 +124,7 @@
 		{
 			"id": "sigma_speed",
 			"event": "gps/location",
-			"class": "temporal",
+			"retention": 30,
 			"unit": "m/s",
 			"frequency": 1
 		},
@@ -142,13 +142,13 @@
 		{
 			"id": "dr_status",
 			"event": "gps/location",
-			"class": "state",
+			"retention": 30,
 			"frequency": 1
 		},
 		{
 			"id": "reliabilty_index",
 			"event": "gps/location",
-			"class": "temporal",
+			"retention": 30,
 			"frequency": 1
 		}
 	]

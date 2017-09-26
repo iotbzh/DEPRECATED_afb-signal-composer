@@ -52,9 +52,10 @@ private:
 	std::string id_;
 	std::string event_;
 	std::vector<std::string> dependsSigV_;
-	long long int timestamp_;
+	uint64_t timestamp_;
 	struct signalValue value_;
-	std::map<long long int, struct signalValue> history_; ///< history_ - Hold signal value history in map with <timestamp, value>
+	std::map<uint64_t, struct signalValue> history_; ///< history_ - Hold signal value history in map with <timestamp, value>
+	int retention_;
 	double frequency_;
 	std::string unit_;
 	CtlActionT* onReceived_;
@@ -63,8 +64,8 @@ private:
 public:
 	bool subscribed_; ///< subscribed_ - boolean value telling if yes or no the signal has been subcribed to the low level binding.
 	Signal();
-	Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
-	Signal(const std::string& id, std::vector<std::string>& depends, const std::string& unit, double frequency, CtlActionT* onReceived);
+	Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, int retention, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
+	Signal(const std::string& id, std::vector<std::string>& depends, const std::string& unit, int retention, double frequency, CtlActionT* onReceived);
 
 	explicit operator bool() const;
 	bool operator==(const Signal& other) const;
@@ -73,7 +74,7 @@ public:
 	const std::string id() const;
 	json_object* toJSON() const;
 
-	void set(long long int timestamp, struct signalValue& value);
+	void set(uint64_t timestamp, struct signalValue& value);
 	void update(Signal* sig);
 	int onReceivedCB(json_object *queryJ);
 	void attachToSourceSignals(Composer& composer);

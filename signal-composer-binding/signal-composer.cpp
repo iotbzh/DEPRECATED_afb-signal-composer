@@ -214,30 +214,30 @@ int Composer::loadOneSignal(json_object* signalJ)
 	CtlActionT* onReceivedCtl;
 	const char *id = nullptr,
 			   *event = nullptr,
-			   *sClass = nullptr,
 			   *unit = nullptr;
+	int retention;
 	double frequency=0.0;
 	std::string api;
 	std::vector<std::string> dependsV;
 	ssize_t sep;
 
-	int err = wrap_json_unpack(signalJ, "{ss,s?s,s?o,s?o,s?s,s?s,s?F,s?o !}",
+	int err = wrap_json_unpack(signalJ, "{ss,s?s,s?o,s?o,s?F,s?s,s?F,s?o !}",
 			"id", &id,
 			"event", &event,
 			"depends", &dependsJ,
 			"getSignalsArgs", &getSignalsArgs,
-			"class", &sClass,
+			"retention", &retention,
 			"unit", &unit,
 			"frequency", &frequency,
 			"onReceived", &onReceivedJ);
 	if (err)
 	{
-		AFB_ERROR("Missing something id|[event|depends]|[getSignalsArgs]|[class]|[unit]|[frequency]|[onReceived] in %s", json_object_get_string(signalJ));
+		AFB_ERROR("Missing something id|[event|depends]|[getSignalsArgs]|[retention]|[unit]|[frequency]|[onReceived] in %s", json_object_get_string(signalJ));
 		return err;
 	}
 
-	// Set default sClass is not specified
-	sClass = !sClass ? "state" : sClass;
+	// Set default retention is not specified
+	retention = !retention ? 30 : retention;
 	unit = !unit ? "" : unit;
 
 	// Get an action handler
@@ -246,7 +246,7 @@ int Composer::loadOneSignal(json_object* signalJ)
 	// event or depends field manadatory
 	if( (!event && !dependsJ) || (event && dependsJ) )
 	{
-		AFB_ERROR("Missing something id|[event|depends]|[getSignalsArgs]|[class]|[unit]|[frequency]|[onReceived] in %s. Or you declare event AND depends, only one of them is needed.", json_object_get_string(signalJ));
+		AFB_ERROR("Missing something id|[event|depends]|[getSignalsArgs]|[retention]|[unit]|[frequency]|[onReceived] in %s. Or you declare event AND depends, only one of them is needed.", json_object_get_string(signalJ));
 		return -1;
 	}
 
@@ -299,7 +299,7 @@ int Composer::loadOneSignal(json_object* signalJ)
 
 	SourceAPI* src = getSourceAPI(api) ? getSourceAPI(api):getSourceAPI("signal-composer");
 	if(src != nullptr)
-	{src->addSignal(id, event, dependsV, sClass, unit, frequency, onReceivedCtl, getSignalsArgs);}
+		{src->addSignal(id, event, dependsV, retention, unit, frequency, onReceivedCtl, getSignalsArgs);}
 	else
 		{err = -1;}
 

@@ -3,7 +3,7 @@
 		{
 			"id": "vehicle_speed",
 			"event": "low-can/diagnostic_messages.vehicle.speed",
-			"class": "temporal",
+			"retention": 30,
 			"unit": "km/h",
 			"frequency": 1,
 			"getSignalsArgs": {
@@ -21,21 +21,21 @@
 		{
 			"id": "engine_speed",
 			"event": "low-can/diagnostic_messages.engine.speed",
-			"class": "temporal",
+			"retention": 30,
 			"unit": "rpm",
 			"frequency": 1
 		},
 		{
 			"id": "fuel_level",
 			"event": "low-can/diagnostic_messages.fuel.level",
-			"class":"temporal",
+			"retention":30,
 			"unit": "liter",
 			"frequency": 1
 		},
 		{
 			"id": "engine_load",
 			"event": "low-can/diagnostic_messages.engine.load",
-			"class":"temporal",
+			"retention":30,
 			"unit": "Nm",
 			"frequency": 1
 		}
