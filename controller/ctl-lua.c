@@ -740,8 +740,8 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
             if (!luaScriptPathJ) {
                 const char* dirList = strncat(GetBindingDirPath(), "/data", sizeof(GetBindingDirPath()) - strlen(GetBindingDirPath()) - 1);
                 strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, sizeof(luaScriptPath));
-                strncat(luaScriptPath,"-", sizeof(luaScriptPath));
-                strncat(luaScriptPath,target, sizeof(luaScriptPath));
+                strncat(luaScriptPath,"-", strlen("-"));
+                strncat(luaScriptPath,target, strlen(target));
                 luaScriptPathJ= ScanForConfig(dirList, CTL_SCAN_RECURSIVE,luaScriptPath,".lua");
             }
             for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
@@ -757,7 +757,7 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
                 else {
                     strncpy (luaScriptPath, fullpath, sizeof(luaScriptPath));
                     strncat (luaScriptPath, "/", sizeof(luaScriptPath));
-                    strncat (luaScriptPath, filename, sizeof(luaScriptPath));
+                    strncat (luaScriptPath, filename, strlen(filename));
                 }
             }
 
@@ -777,7 +777,7 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
             // if no func name given try to deduct from filename
             if (!func && (func=(char*)GetMidleName(filename))!=NULL) {
                 strncpy(luaScriptPath,"_", sizeof(luaScriptPath));
-                strncat(luaScriptPath,func, sizeof(luaScriptPath));
+                strncat(luaScriptPath,func, strlen(func));
                 func=luaScriptPath;
             }
             if (!func) {
@@ -1052,7 +1052,7 @@ int LuaConfigExec () {
         char filepath[CONTROL_MAXPATH_LEN];
         strncpy(filepath, fullpath, sizeof(filepath));
         strncat(filepath, "/", sizeof(filepath));
-        strncat(filepath, filename, sizeof(filepath));
+        strncat(filepath, filename, strlen(filename));
         err= luaL_loadfile(luaState, filepath);
         if (err) {
             AFB_ERROR ("LUA-LOAD HOOPs Error in LUA loading scripts=%s err=%s", filepath, lua_tostring(luaState,-1));

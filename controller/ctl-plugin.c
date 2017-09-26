@@ -159,10 +159,10 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
         int Lua2cAddOne(luaL_Reg *l2cFunc, const char* l2cName, int index) {
             char funcName[CONTROL_MAXPATH_LEN];
             strncpy(funcName, "lua2c_", sizeof (funcName));
-            strncat(funcName, l2cName, sizeof (funcName));
+            strncat(funcName, l2cName, strlen(l2cName));
 
             Lua2cFunctionT l2cFunction = (Lua2cFunctionT) dlsym(dlHandle, funcName);
-            if (!l2cFunction) {
+                if (!l2cFunction) {
                 AFB_ERROR("CTL-PLUGIN-LOADONE symbol'%s' missing err=%s", funcName, dlerror());
                 return 1;
             }

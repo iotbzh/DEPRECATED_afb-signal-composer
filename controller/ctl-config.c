@@ -57,8 +57,8 @@ char* CtlConfigSearch(const char *dirList, const char* fileName) {
             if (strcasestr(filename, controlFile)) {
                 char filepath[CONTROL_MAXPATH_LEN];
                 strncpy(filepath, fullpath, sizeof (filepath));
-                strncat(filepath, "/", sizeof (filepath));
-                strncat(filepath, filename, sizeof (filepath));
+                strncat(filepath, "/", strlen("/"));
+                strncat(filepath, filename, strlen(filename));
                 return (strdup(filepath));
             }
         }
