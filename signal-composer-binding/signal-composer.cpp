@@ -21,15 +21,13 @@
 
 #include "clientApp.hpp"
 
-extern "C" void setsignalValueHandle(const char* aName, long long int timestamp, struct signalValue value)
+extern "C" void setSignalValueHandle(const char* aName, uint64_t timestamp, struct signalValue value)
 {
 	std::vector<std::shared_ptr<Signal>> signals = Composer::instance().searchSignals(aName);
 	if(!signals.empty())
 	{
 		for(auto& sig: signals)
-		{
-			sig->set(timestamp, value);
-		}
+			{sig->set(timestamp, value);}
 	}
 }
 
@@ -41,8 +39,8 @@ bool startsWith(const std::string& str, const std::string& pattern)
 	return false;
 }
 
-static struct pluginCBT pluginHandle = {
-	.setsignalValue = setsignalValueHandle,
+static struct signalCBT pluginHandle = {
+	.setSignalValue = setSignalValueHandle,
 };
 
 CtlSectionT Composer::ctlSections_[] = {

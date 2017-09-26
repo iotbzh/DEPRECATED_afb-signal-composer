@@ -46,7 +46,7 @@ typedef struct {
 } allDoorsCtxT;
 
 typedef struct {
-	struct pluginCBT* pluginHandle;
+	struct signalCBT* pluginHandle;
 	json_object *subscriptionBatch;
 	allDoorsCtxT allDoorsCtx;
 } lowCANCtxT;
@@ -63,7 +63,7 @@ CTLP_ONLOAD(plugin, composerHandle)
 {
 	lowCANCtxT *pluginCtx= (lowCANCtxT*)calloc (1, sizeof(lowCANCtxT));
 
-	pluginCtx->pluginHandle = (struct pluginCBT*)composerHandle;
+	pluginCtx->pluginHandle = (struct signalCBT*)composerHandle;
 	pluginCtx->subscriptionBatch = json_object_new_array();
 
 	AFB_NOTICE ("Low-can plugin: label='%s' version='%s' info='%s'",
@@ -148,22 +148,22 @@ CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
 	};
 	if(strcasestr(eventName, "front_left"))
 	{
-		pluginCtx->pluginHandle->setsignalValue(eventName,(long long int)timestamp, value);
+		pluginCtx->pluginHandle->setSignalValue(eventName,(uint64_t)timestamp, value);
 		setDoor(&pluginCtx->allDoorsCtx.front_left, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "front_right"))
 	{
-		pluginCtx->pluginHandle->setsignalValue(eventName,(long long int)timestamp, value);
+		pluginCtx->pluginHandle->setSignalValue(eventName,(uint64_t)timestamp, value);
 		setDoor(&pluginCtx->allDoorsCtx.front_right, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "rear_left"))
 	{
-		pluginCtx->pluginHandle->setsignalValue(eventName,(long long int)timestamp, value);
+		pluginCtx->pluginHandle->setSignalValue(eventName,(uint64_t)timestamp, value);
 		setDoor(&pluginCtx->allDoorsCtx.rear_left, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "rear_right"))
 	{
-		pluginCtx->pluginHandle->setsignalValue(eventName,(long long int)timestamp, value);
+		pluginCtx->pluginHandle->setSignalValue(eventName,(uint64_t)timestamp, value);
 		setDoor(&pluginCtx->allDoorsCtx.rear_right, eventName, eventStatus);
 	}
 	else

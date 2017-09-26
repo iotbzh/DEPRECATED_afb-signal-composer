@@ -32,7 +32,6 @@
 /// @param[in] object - eventual data that comes with the event
 void onEvent(const char *event, json_object *object)
 {
-	AFB_NOTICE("Received event json: %s", json_object_to_json_string(object));
 	Composer& composer = Composer::instance();
 
 	std::vector<std::shared_ptr<Signal>> signals = composer.searchSignals(event);

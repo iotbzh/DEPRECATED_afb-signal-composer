@@ -86,3 +86,8 @@ public:
 	int initialRecursionCheck();
 	int recursionCheck(Signal* obs);
 };
+
+struct signalCBT
+{
+	void (*setSignalValue)(const char* aName, uint64_t timestamp, struct signalValue value);
+};

@@ -610,9 +610,9 @@ STATIC int LuaAfbEventMake(lua_State* luaState) {
 }
 
 // Function call from LUA when lua2c plugin L2C is used
-int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT callback) {
+int Lua2cWrapper(lua_State* luaState, const char *funcname, Lua2cFunctionT callback) {
 
-    json_object *argsJ= LuaPopArgs(luaState, LUA_FIST_ARG+1);
+    json_object *argsJ = LuaPopArgs(luaState, LUA_FIST_ARG);
     int response = (*callback) (funcname, argsJ);
 
     // push response to LUA

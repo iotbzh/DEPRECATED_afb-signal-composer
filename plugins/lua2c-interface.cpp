@@ -16,8 +16,6 @@
  *
 */
 
-#define _GNU_SOURCE  // needed for vasprintf
-
 #define AFB_BINDING_VERSION 2
 #include <afb/afb-binding.h>
 #include <systemd/sd-event.h>
@@ -25,20 +23,26 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "signal-composer.hpp"
 #include "ctl-config.h"
 #include "wrap-json.h"
+
+extern "C"
+{
 
 CTLP_LUALOAD
 CTLP_REGISTER("lua2c-interface");
 
-typedef struct {
-	struct pluginCBT* pluginHandle;
+typedef struct CtxS {
+	struct signalCBT* pluginHandle;
 } CtxT;
+
+static CtxT *pluginCtx = NULL;
 
 // Call at initialisation time
 CTLP_ONLOAD(plugin, handle) {
-	CtxT *pluginCtx= (CtxT*)calloc (1, sizeof(CtxT));
-	pluginCtx->pluginHandle = (struct pluginCBT*)handle;
+	pluginCtx = (CtxT*)calloc (1, sizeof(CtxT));
+	pluginCtx->pluginHandle = (struct signalCBT*)handle;
 
 	AFB_NOTICE ("Low-can plugin: label='%s' version='%s' info='%s'",
 		plugin->label,
@@ -50,7 +54,22 @@ CTLP_ONLOAD(plugin, handle) {
 
 CTLP_LUA2C (setSignalValueWrap, label, argsJ)
 {
-	AFB_NOTICE("label: %s, argsJ: %s", label, json_object_to_json_string(argsJ));
+	const char* name = nullptr;
+	double resultNum;
+	uint64_t timestamp;
+	if(! wrap_json_unpack(argsJ, "{ss, sF, sF? !}",
+		"name", &name,
+		"value", &resultNum,
+		"timestamp", &timestamp))
+	{
+		AFB_ERROR("Fail to set value for label: %s, argsJ: %s", label, json_object_to_json_string(argsJ));
+		return -1;
+	}
 
+	struct signalValue result = {0,0,1, resultNum, 0, ""};
+	pluginCtx->pluginHandle->setSignalValue(name, timestamp, result);
 	return 0;
+}
+
+// extern "C" closure
 }

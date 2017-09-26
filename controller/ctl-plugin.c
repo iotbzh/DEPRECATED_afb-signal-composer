@@ -65,11 +65,10 @@ int PluginGetCB (CtlActionT *action , json_object *callbackJ) {
 
 OnErrorExit:
     return 1;
-
 }
 
 // Wrapper to Lua2c plugin command add context and delegate to LuaWrapper
-STATIC int DispatchOneL2c(lua_State* luaState, char *funcname, Lua2cFunctionT callback) {
+STATIC int DispatchOneL2c(lua_State* luaState, const char *funcname, Lua2cFunctionT callback) {
 #ifndef CONTROL_SUPPORT_LUA
     AFB_ERROR("CTL-ONE-L2C: LUA support not selected (cf:CONTROL_SUPPORT_LUA) in config.cmake");
     return 1;

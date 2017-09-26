@@ -59,13 +59,13 @@ extern "C" {
 
 int LuaLibInit ();
 
-typedef int (*Lua2cFunctionT)(char *funcname, json_object *argsJ);
-typedef int (*Lua2cWrapperT) (lua_State* luaState, char *funcname, Lua2cFunctionT callback);
+typedef int (*Lua2cFunctionT)(const char *funcname, json_object *argsJ);
+typedef int (*Lua2cWrapperT) (lua_State* luaState, const char *funcname, Lua2cFunctionT callback);
 
 #define CTLP_LUALOAD Lua2cWrapperT Lua2cWrap;
-#define CTLP_LUA2C(FuncName, label,argsJ) static int FuncName(char*label,json_object*argsJ);\
+#define CTLP_LUA2C(FuncName, label, argsJ) static int FuncName(const char*label,json_object*argsJ);\
         int lua2c_ ## FuncName(lua_State* luaState){return((*Lua2cWrap)(luaState, MACRO_STR_VALUE(FuncName), FuncName));};\
-        static int FuncName(char* label, json_object* argsJ)
+        static int FuncName(const char* label, json_object* argsJ)
 
 typedef enum {
     LUA_DOCALL,
@@ -76,7 +76,7 @@ typedef enum {
 int LuaConfigLoad();
 int LuaConfigExec();
 void LuaL2cNewLib(const char *label, luaL_Reg *l2cFunc, int count);
-int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT callback);
+int Lua2cWrapper(lua_State* luaState, const char *funcname, Lua2cFunctionT callback);
 int LuaCallFunc (CtlActionT *action, json_object *queryJ) ;
 void ctlapi_lua_docall (afb_req request);
 void ctlapi_lua_dostring (afb_req request);
