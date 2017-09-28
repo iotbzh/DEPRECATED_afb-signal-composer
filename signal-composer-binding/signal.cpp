@@ -16,11 +16,12 @@
 */
 
 #include <float.h>
+#include <string.h>
 
 #include "signal.hpp"
 #include "signal-composer.hpp"
 
-#define MICRO 1000000000
+#define USEC_TIMESTAMP_FLAG 1506514324881224
 
 Signal::Signal()
 :id_(""),
@@ -138,7 +139,6 @@ json_object* Signal::toJSON() const
 ///
 /// @param[in] timestamp - timestamp of occured signal
 /// @param[in] value - value of change
-/// @param[in] unit - optionnal string to change the signal unit
 void Signal::set(uint64_t timestamp, struct signalValue& value)
 {
 	uint64_t diff = retention_+1;

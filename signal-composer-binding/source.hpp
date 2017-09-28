@@ -19,21 +19,29 @@
 #include <memory>
 #include "signal.hpp"
 
+struct signalsDefault {
+	CtlActionT* onReceived;
+	int retention;
+};
+
 class SourceAPI {
 private:
 	std::string api_;
 	std::string info_;
 	CtlActionT* init_;
 	CtlActionT* getSignals_;
+	// Parameters inherited by source's signals if none defined for it
+	struct signalsDefault signalsDefault_;
 
 	std::map<std::string, std::shared_ptr<Signal>> signalsMap_;
 
 public:
 	SourceAPI();
-	SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal);
+	SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal, CtlActionT* onReceived, int retention);
 
 	int init();
 	std::string api() const;
+	const struct signalsDefault& signalsDefault() const;
 	void addSignal(const std::string& id, const std::string& event, std::vector<std::string>& sources, int retention, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 
 	std::vector<std::shared_ptr<Signal>> getSignals() const;

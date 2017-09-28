@@ -21,8 +21,11 @@
 SourceAPI::SourceAPI()
 {}
 
-SourceAPI::SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignals):
-	api_(api), info_(info), init_(init), getSignals_(getSignals)
+SourceAPI::SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignals, CtlActionT* onReceived, int retention):api_(api),
+ info_(info),
+ init_(init),
+ getSignals_(getSignals),
+ signalsDefault_({onReceived, retention})
 {}
 
 int SourceAPI::init()
@@ -38,6 +41,11 @@ int SourceAPI::init()
 std::string SourceAPI::api() const
 {
 	return api_;
+}
+
+const struct signalsDefault& SourceAPI::signalsDefault() const
+{
+	return signalsDefault_;
 }
 
 void SourceAPI::addSignal(const std::string& id, const std::string& event, std::vector<std::string>& depends, int retention, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs)

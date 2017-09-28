@@ -28,7 +28,7 @@ private:
 	CtlConfigT* ctlConfig_;
 
 	static CtlSectionT ctlSections_[]; ///< Config Section definition (note: controls section index should match handle retrieval in)
-	std::vector<SourceAPI> sourcesListV_;
+	std::vector<std::shared_ptr<SourceAPI>> sourcesListV_;
 
 	explicit Composer(const std::string& filepath);
 	Composer();
@@ -43,8 +43,8 @@ private:
 	static int loadSignals(CtlSectionT* section, json_object *signalsJ);
 
 	int initSourcesAPI();
-	SourceAPI* getSourceAPI(const std::string& api);
-	void processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const;
+	std::shared_ptr<SourceAPI> getSourceAPI(const std::string& api);
+	void processOptions(const std::map<std::string, int>& opts, std::shared_ptr<Signal> sig, json_object* response) const;
 public:
 	static Composer& instance();
 	static void* createContext(void* ctx);

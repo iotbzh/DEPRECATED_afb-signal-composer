@@ -24,6 +24,8 @@
 
 #include "observer-pattern.hpp"
 
+#define MICRO 1000000
+
 class Composer;
 
 /// @brief Structure holding a possible value of a Signal

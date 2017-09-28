@@ -135,15 +135,23 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 
 int Composer::loadOneSourceAPI(json_object* sourceJ)
 {
-	json_object *initJ = nullptr, *getSignalsJ = nullptr;
-	CtlActionT *initCtl = nullptr, *getSignalsCtl = nullptr;
+	json_object *initJ = nullptr,
+				*getSignalsJ = nullptr,
+				*onReceivedJ = nullptr;
+	CtlActionT  *initCtl = nullptr,
+				*getSignalsCtl = nullptr,
+				*onReceivedCtl = nullptr;
 	const char *api, *info;
+	int retention = 0;
 
-	int err = wrap_json_unpack(sourceJ, "{ss,s?s,s?o,s?o !}",
+	int err = wrap_json_unpack(sourceJ, "{ss,s?s,s?o,s?o,s?o, s?i !}",
 			"api", &api,
 			"info", &info,
 			"init", &initJ,
-			"getSignals", &getSignalsJ);
+			"getSignals", &getSignalsJ,
+			// Signals field to make signals conf by sources
+			"onReceived", &onReceivedJ,
+			"retention", &retention);
 	if (err)
 	{
 		AFB_ERROR("Missing something api|[info]|[init]|[getSignals] in %s", json_object_get_string(sourceJ));
@@ -157,7 +165,10 @@ int Composer::loadOneSourceAPI(json_object* sourceJ)
 			{AFB_WARNING("Caution! You don't specify the API source as required in the metadata section. This API '%s' may not be initialized", api);}
 	}
 
-	if(initJ) {initCtl = convert2Action("init", initJ);}
+	initCtl = initJ ? convert2Action("init", initJ) : nullptr;
+
+	// Define default action to take to subscibe souce's signals if none
+	// defined.
 	if(!getSignalsJ)
 	{
 		std::string function = "api://" + std::string(api) + "/subscribe";
@@ -165,7 +176,9 @@ int Composer::loadOneSourceAPI(json_object* sourceJ)
 	}
 	getSignalsCtl = convert2Action("getSignals", getSignalsJ);
 
-	sourcesListV_.push_back(SourceAPI(api, info, initCtl, getSignalsCtl));
+	onReceivedCtl = onReceivedJ ? convert2Action("onReceived", onReceivedJ) : nullptr;
+
+	sourcesListV_.push_back(std::make_shared<SourceAPI>(api, info, initCtl, getSignalsCtl, onReceivedCtl, retention));
 
 	return err;
 }
@@ -210,16 +223,18 @@ int Composer::loadSourcesAPI(CtlSectionT* section, json_object *sourcesJ)
 
 int Composer::loadOneSignal(json_object* signalJ)
 {
-	json_object *onReceivedJ = nullptr, *dependsJ = nullptr, *getSignalsArgs = nullptr;
+	json_object *onReceivedJ = nullptr,
+				*dependsJ = nullptr,
+				*getSignalsArgs = nullptr;
 	CtlActionT* onReceivedCtl;
 	const char *id = nullptr,
 			   *event = nullptr,
 			   *unit = nullptr;
 	int retention;
 	double frequency=0.0;
-	std::string api;
 	std::vector<std::string> dependsV;
 	ssize_t sep;
+	std::shared_ptr<SourceAPI> src = nullptr;
 
 	int err = wrap_json_unpack(signalJ, "{ss,s?s,s?o,s?o,s?F,s?s,s?F,s?o !}",
 			"id", &id,
@@ -236,13 +251,6 @@ int Composer::loadOneSignal(json_object* signalJ)
 		return err;
 	}
 
-	// Set default retention is not specified
-	retention = !retention ? 30 : retention;
-	unit = !unit ? "" : unit;
-
-	// Get an action handler
-	onReceivedCtl = onReceivedJ ? convert2Action("onReceived", onReceivedJ) : nullptr;
-
 	// event or depends field manadatory
 	if( (!event && !dependsJ) || (event && dependsJ) )
 	{
@@ -250,6 +258,22 @@ int Composer::loadOneSignal(json_object* signalJ)
 		return -1;
 	}
 
+	// Declare a raw signal
+	if(event)
+	{
+		std::string eventStr = std::string(event);
+		if( (sep = eventStr.find("/")) == std::string::npos)
+		{
+			AFB_ERROR("Missing something in event declaration. Has to be like: <api>/<event>");
+			return -1;
+		}
+		std::string api = eventStr.substr(0, sep);
+		src = getSourceAPI(api);
+	}
+	else
+	{
+		event = "";
+	}
 	// Process depends JSON object to declare virtual signal dependencies
 	if (dependsJ)
 	{
@@ -266,7 +290,6 @@ int Composer::loadOneSignal(json_object* signalJ)
 				}
 				dependsV.push_back(sourceStr);
 			}
-			api = sourcesListV_.rbegin()->api();
 		}
 		else
 		{
@@ -277,27 +300,28 @@ int Composer::loadOneSignal(json_object* signalJ)
 				return -1;
 			}
 			dependsV.push_back(sourceStr);
-			api = sourcesListV_.rbegin()->api();
 		}
+		if(!src) {src=*sourcesListV_.rbegin();}
 	}
 
-	// Declare a raw signal
-	if(event)
+	// Set default retention if not specified
+	if(!retention)
 	{
-		std::string eventStr = std::string(event);
-		if( (sep = eventStr.find("/")) == std::string::npos)
-		{
-			AFB_ERROR("Missing something in event declaration. Has to be like: <api>/<event>");
-			return -1;
-		}
-		api = eventStr.substr(0, sep);
+		retention = src->signalsDefault().retention ?
+			src->signalsDefault().retention :
+			30;
 	}
-	else
-	{
-		event = "";
-	}
+	unit = !unit ? "" : unit;
 
-	SourceAPI* src = getSourceAPI(api) ? getSourceAPI(api):getSourceAPI("signal-composer");
+	// Set default onReceived action if not specified
+	if(!onReceivedJ)
+	{
+		onReceivedCtl = src->signalsDefault().onReceived ?
+			src->signalsDefault().onReceived :
+			nullptr;
+	}
+	else {onReceivedCtl = convert2Action("onReceived", onReceivedJ);}
+
 	if(src != nullptr)
 		{src->addSignal(id, event, dependsV, retention, unit, frequency, onReceivedCtl, getSignalsArgs);}
 	else
@@ -459,17 +483,17 @@ int Composer::initSourcesAPI()
 	int err = 0;
 	for(auto& src: sourcesListV_)
 	{
-		err += src.init();
+		err += src->init();
 	}
 	return err;
 }
 
-SourceAPI* Composer::getSourceAPI(const std::string& api)
+std::shared_ptr<SourceAPI> Composer::getSourceAPI(const std::string& api)
 {
 	for(auto& source: sourcesListV_)
 	{
-		if (source.api() == api)
-			{return &source;}
+		if (source->api() == api)
+			{return source;}
 	}
 	return nullptr;
 }
@@ -479,7 +503,7 @@ std::vector<std::shared_ptr<Signal>> Composer::getAllSignals()
 	std::vector<std::shared_ptr<Signal>> allSignals;
 	for( auto& source : sourcesListV_)
 	{
-		std::vector<std::shared_ptr<Signal>> srcSignals = source.getSignals();
+		std::vector<std::shared_ptr<Signal>> srcSignals = source->getSignals();
 		allSignals.insert(allSignals.end(), srcSignals.begin(), srcSignals.end());
 	}
 
@@ -494,7 +518,7 @@ std::vector<std::shared_ptr<Signal>> Composer::searchSignals(const std::string& 
 	if(sep != std::string::npos)
 	{
 		api = aName.substr(0, sep);
-		SourceAPI* source = getSourceAPI(api);
+		std::shared_ptr<SourceAPI> source = getSourceAPI(api);
 		return source->searchSignals(aName);
 	}
 	else
@@ -563,11 +587,11 @@ json_object* Composer::getsignalValue(const std::string& sig, json_object* optio
 int Composer::execSignalsSubscription()
 {
 	int err = 0;
-	for(SourceAPI& srcAPI: sourcesListV_)
+	for(std::shared_ptr<SourceAPI> srcAPI: sourcesListV_)
 	{
-		if (srcAPI.api() != std::string(ctlConfig_->api))
+		if (srcAPI->api() != std::string(ctlConfig_->api))
 		{
-			err = srcAPI.makeSubscription();
+			err = srcAPI->makeSubscription();
 		}
 	}
 	return err;
