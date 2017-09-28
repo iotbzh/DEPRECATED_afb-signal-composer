@@ -123,6 +123,27 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 				"label", name.c_str(),
 				"callback", callbackJ);
 		}
+		else if(startsWith(function, "builtin://"))
+		{
+			std::string uri = std::string(function).substr(10);
+			char b[8] = "builtin";
+			char* label = strncat(b , name.c_str(), name.size());
+			std::vector<std::string> uriV = Composer::parseURI(uri);
+			if(uriV.size() > 1) {AFB_WARNING("Too many thing specified. Uri has to be like: builtin://<builtin-function-name>");}
+			return new CtlActionT {
+				CTL_TYPE_CB,
+				nullptr,
+				uriV[0].c_str(),
+				functionArgsJ,
+				Signal::defaultOnReceivedCB,
+				CtlSourceT{
+					label,
+					nullptr,
+					{nullptr, nullptr},
+					nullptr,
+				}
+			};
+		}
 		else
 		{
 			AFB_ERROR("Wrong function uri specified. You have to specified 'lua://', 'plugin://' or 'api://'. (%s)", function);
