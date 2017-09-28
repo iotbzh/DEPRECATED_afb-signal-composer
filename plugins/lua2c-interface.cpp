@@ -57,7 +57,7 @@ CTLP_LUA2C (setSignalValueWrap, label, argsJ)
 	const char* name = nullptr;
 	double resultNum;
 	uint64_t timestamp;
-	if(! wrap_json_unpack(argsJ, "{ss, sF, sF? !}",
+	if(! wrap_json_unpack(argsJ, "{ss, sF, sI? !}",
 		"name", &name,
 		"value", &resultNum,
 		"timestamp", &timestamp))
@@ -65,9 +65,8 @@ CTLP_LUA2C (setSignalValueWrap, label, argsJ)
 		AFB_ERROR("Fail to set value for label: %s, argsJ: %s", label, json_object_to_json_string(argsJ));
 		return -1;
 	}
-
 	struct signalValue result = {0,0,1, resultNum, 0, ""};
-	pluginCtx->pluginHandle->setSignalValue(name, timestamp, result);
+	pluginCtx->pluginHandle->setSignalValue(name, timestamp*MICRO, result);
 	return 0;
 }
 
