@@ -96,6 +96,9 @@ const std::string Signal::id() const
 	return id_;
 }
 
+/// @brief Build a JSON object with data members of Signal object
+///
+/// @return the built JSON object representing the Signal
 json_object* Signal::toJSON() const
 {
 	json_object* queryJ = nullptr;
