@@ -78,6 +78,8 @@ public:
 
 	void set(uint64_t timestamp, struct signalValue& value);
 	void update(Signal* sig);
+	static int defaultOnReceivedCB(CtlSourceT* source, json_object* argsJ, json_object *queryJ);
+	int defaultReceivedCB(json_object *queryJ);
 	int onReceivedCB(json_object *queryJ);
 	void attachToSourceSignals(Composer& composer);
 

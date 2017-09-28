@@ -166,6 +166,54 @@ void Signal::update(Signal* sig)
 	AFB_NOTICE("Got an update from observed signal %s", sig->id().c_str());
 }
 
+/// @brief
+///
+/// @param[in] queryJ - json_object containing event data to process
+///
+/// @return 0 if ok, -1 or others if not
+int Signal::defaultReceivedCB(json_object *queryJ)
+{
+	uint64_t ts = 0;
+	struct signalValue sv = {0,0,0,0,0,""};
+	json_object_iterator iter = json_object_iter_begin(queryJ);
+	json_object_iterator iterEnd = json_object_iter_end(queryJ);
+	while(!json_object_iter_equal(&iter, &iterEnd))
+	{
+		std::string name = json_object_iter_peek_name(&iter);
+		std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+		json_object *value = json_object_iter_peek_value(&iter);
+		if (name.find("value") || name.find(id_))
+		{
+			if(json_object_is_type(value, json_type_double))
+				{sv = {0,0,true,json_object_get_double(value),0,""};}
+			else if(json_object_is_type(value, json_type_boolean))
+				{sv = {true,json_object_get_int(value),0,0,0,""};}
+			else if(json_object_is_type(value, json_type_string))
+				{sv = {0,0,0,0,true,json_object_get_string(value)};}
+		}
+		else if (name.find("timestamp"))
+		{
+			ts = json_object_is_type(value, json_type_int) ? json_object_get_int64(value):ts;
+		}
+		json_object_iter_next(&iter);
+	}
+
+	if(!sv.hasBool && !sv.hasNum && !sv.hasStr)
+	{
+		AFB_ERROR("No data found to set signal %s in %s", id_.c_str(), json_object_to_json_string(queryJ));
+		return -1;
+	}
+	else if(ts == 0)
+	{
+		struct timespec t_usec;
+		if(!::clock_gettime(CLOCK_MONOTONIC, &t_usec))
+			ts = (t_usec.tv_nsec / 1000ll) + (t_usec.tv_sec* 1000000ll);
+	}
+
+	set(ts, sv);
+	return 0;
+}
+
 /// @brief Notify observers that there is a change and execute callback defined
 /// when signal is received
 ///
@@ -174,7 +222,27 @@ void Signal::update(Signal* sig)
 /// @return 0 if OK, -1 or other if not.
 int Signal::onReceivedCB(json_object *queryJ)
 {
-	int err = onReceived_ ? ActionExecOne(onReceived_, queryJ) : 0;
+	if(onReceived_ && onReceived_->type == CTL_TYPE_LUA)
+	{
+		json_object_iterator iter = json_object_iter_begin(queryJ);
+		json_object_iterator iterEnd = json_object_iter_end(queryJ);
+		while(!json_object_iter_equal(&iter, &iterEnd))
+		{
+			const char *name = ::strdup(json_object_iter_peek_name(&iter));
+			json_object *value = json_object_iter_peek_value(&iter);
+			if(json_object_is_type(value, json_type_int))
+			{
+				int64_t newVal = json_object_get_int64(value);
+				newVal = newVal > USEC_TIMESTAMP_FLAG ? newVal/MICRO:newVal;
+				json_object_object_del(queryJ, name);
+				json_object* luaVal = json_object_new_int64(newVal);
+				json_object_object_add(queryJ, name, luaVal);
+			}
+			json_object_iter_next(&iter);
+		}
+	}
+	AFB_NOTICE("JSON %s", json_object_to_json_string(queryJ));
+	int err = onReceived_ ? ActionExecOne(onReceived_, queryJ) : defaultReceivedCB(queryJ);
 	notify();
 	return err;
 }
