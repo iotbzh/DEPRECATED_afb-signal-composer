@@ -158,13 +158,9 @@ void list(afb_req request)
 		{json_object_array_add(allSignalsJ, sig->toJSON());}
 
 	if(json_object_array_length(allSignalsJ) && !execConf())
-	{
-		afb_req_success(request, allSignalsJ, NULL);
-	}
+		{afb_req_success(request, allSignalsJ, NULL);}
 	else
-	{
-		afb_req_fail(request, "error", "No Signals recorded so far");
-	}
+		{afb_req_fail(request, "error", "No Signals recorded so far");}
 }
 
 /// @brief entry point for get requests.
@@ -176,7 +172,7 @@ void get(struct afb_req request)
 	const char* sig;
 
 	// Process about Raw CAN message on CAN bus directly
-	err = wrap_json_unpack(args, "{ss,s?o!}", "signals", &sig,
+	err = wrap_json_unpack(args, "{ss,s?o!}", "signal", &sig,
 			"options", &options);
 	if(err)
 	{

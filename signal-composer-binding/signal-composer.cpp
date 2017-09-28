@@ -355,33 +355,33 @@ int Composer::loadSignals(CtlSectionT* section, json_object *signalsJ)
 	return err;
 }
 
-void Composer::processOptions(const char** opts, std::shared_ptr<Signal> sig, json_object* response) const
+void Composer::processOptions(const std::map<std::string, int>& opts, std::shared_ptr<Signal> sig, json_object* response) const
 {
-	for(int idx=0; idx < sizeof(opts); idx++)
+	for(const auto& o: opts)
 	{
 		bool avg = false, min = false, max = false, last = false;
-		if (strcasestr(opts[idx], "average") && !avg)
+		if (o.first.compare("average") && !avg)
 		{
 			avg = true;
-			double value = sig->average();
+			double value = sig->average(o.second);
 			json_object_object_add(response, "value",
 				json_object_new_double(value));
 		}
-		else if (strcasestr(opts[idx], "min") && !min)
+		else if (o.first.compare("minimum") && !min)
 		{
 			min = true;
 			double value = sig->minimum();
 			json_object_object_add(response, "value",
 				json_object_new_double(value));
 		}
-		else if (strcasestr(opts[idx], "max") && !max)
+		else if (o.first.compare("maximum") && !max)
 		{
 			max = true;
 			double value = sig->maximum();
 			json_object_object_add(response, "value",
 				json_object_new_double(value));
 		}
-		else if (strcasestr(opts[idx], "last") && !last)
+		else if (o.first.compare("last") && !last)
 		{
 			last = true;
 			struct signalValue value = sig->last();
@@ -535,14 +535,14 @@ std::vector<std::shared_ptr<Signal>> Composer::searchSignals(const std::string& 
 
 json_object* Composer::getsignalValue(const std::string& sig, json_object* options)
 {
-	const char **opts = nullptr;
+	std::map<std::string, int> opts;
 	json_object *response = nullptr, *finalResponse = json_object_new_array();
 
-	wrap_json_unpack(options, "{s?s?s?s?!}",
-		&opts[0],
-		&opts[1],
-		&opts[2],
-		&opts[3]);
+	wrap_json_unpack(options, "{s?i, s?i, s?i, s?i !}",
+		"average", &opts["average"],
+		"minimum", &opts["minimum"],
+		"maximum", &opts["maximum"],
+		"last", &opts["last"]);
 
 	std::vector<std::shared_ptr<Signal>> sigP = searchSignals(sig);
 	if(!sigP.empty())
@@ -551,7 +551,7 @@ json_object* Composer::getsignalValue(const std::string& sig, json_object* optio
 		{
 			wrap_json_pack(&response, "{ss}",
 				"signal", sig->id().c_str());
-			if (!opts)
+			if (opts.empty())
 			{
 				struct signalValue value = sig->last();
 				if(value.hasBool)
