@@ -1,0 +1,24 @@
+--- a/lua/src/Makefile	2017-10-03 15:32:07.481452158 +0200
++++ b/lua/src/Makefile	2017-10-03 15:31:41.267283762 +0200
+@@ -6,13 +6,14 @@
+ # Your platform. See PLATS for possible values.
+ PLAT= none
+
+-CC= gcc -std=gnu99
+-CFLAGS= -O2 -Wall -Wextra -DLUA_COMPAT_5_2 $(SYSCFLAGS) $(MYCFLAGS)
+-LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)
+-LIBS= -lm $(SYSLIBS) $(MYLIBS)
++CC?= gcc
++CFLAGS+= -std=gnu99 -fPIC -O2 -Wall -Wextra -DLUA_COMPAT_5_2 $(SYSCFLAGS) $(MYCFLAGS)
++LDFLAGS+= $(SYSLDFLAGS) $(MYLDFLAGS)
++LIBS+= -lm $(SYSLIBS) $(MYLIBS)
+
+-AR= ar rcu
+-RANLIB= ranlib
++AR?= ar
++AR+= rcu
++RANLIB?= ranlib
+ RM= rm -f
+
+ SYSCFLAGS=
+

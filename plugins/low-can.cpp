@@ -141,29 +141,24 @@ CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
 		return -1;
 	}
 
-	struct signalValue value = {
-		.hasBool = true, .boolVal = eventStatus,
-		.hasNum = false, .numVal = 0,
-		.hasStr = false, .strVal = std::string()
-	};
 	if(strcasestr(eventName, "front_left"))
 	{
-		pluginCtx->pluginHandle->setSignalValue(eventName,(uint64_t)timestamp, value);
+		pluginCtx->pluginHandle->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
 		setDoor(&pluginCtx->allDoorsCtx.front_left, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "front_right"))
 	{
-		pluginCtx->pluginHandle->setSignalValue(eventName,(uint64_t)timestamp, value);
+		pluginCtx->pluginHandle->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
 		setDoor(&pluginCtx->allDoorsCtx.front_right, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "rear_left"))
 	{
-		pluginCtx->pluginHandle->setSignalValue(eventName,(uint64_t)timestamp, value);
+		pluginCtx->pluginHandle->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
 		setDoor(&pluginCtx->allDoorsCtx.rear_left, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "rear_right"))
 	{
-		pluginCtx->pluginHandle->setSignalValue(eventName,(uint64_t)timestamp, value);
+		pluginCtx->pluginHandle->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
 		setDoor(&pluginCtx->allDoorsCtx.rear_right, eventName, eventStatus);
 	}
 	else

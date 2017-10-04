@@ -46,8 +46,8 @@ extern "C" {
 typedef struct luaL_Reg luaL_Reg;
 
 typedef struct {
-    char *label;
-    char *info;
+    const char *label;
+    const char *info;
     afb_req request;
     void *context;
 } CtlSourceT;

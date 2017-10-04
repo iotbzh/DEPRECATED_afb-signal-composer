@@ -228,8 +228,7 @@ int loadConf()
 	std::string bindingDirPath = GetBindingDirPath();
 	std::string rootdir = bindingDirPath + "/etc";
 
-	Composer& composer = Composer::instance();
-	err = composer.loadConfig(rootdir.c_str());
+	err = Composer::instance().loadConfig(rootdir.c_str());
 
 	return err;
 }

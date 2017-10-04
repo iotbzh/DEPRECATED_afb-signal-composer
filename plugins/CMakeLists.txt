@@ -16,7 +16,7 @@
 # limitations under the License.
 ###########################################################################
 
-PROJECT_TARGET_ADD(lua2c-interface)
+PROJECT_TARGET_ADD(builtin)
 
 		# Define targets
 		ADD_LIBRARY(${TARGET_NAME} MODULE ${TARGET_NAME}.cpp)
@@ -31,7 +31,6 @@ PROJECT_TARGET_ADD(lua2c-interface)
 
 		# Library dependencies (include updates automatically)
 		TARGET_LINK_LIBRARIES(${TARGET_NAME}
-			afb-utilities
 			${link_libraries}
 		)
 
@@ -54,7 +53,6 @@ PROJECT_TARGET_ADD(low-can)
 
 	# Library dependencies (include updates automatically)
 	TARGET_LINK_LIBRARIES(${TARGET_NAME}
-		afb-utilities
 		${link_libraries}
 	)
 
@@ -77,7 +75,6 @@ PROJECT_TARGET_ADD(gps)
 
 	# Library dependencies (include updates automatically)
 	TARGET_LINK_LIBRARIES(${TARGET_NAME}
-		afb-utilities
 		${link_libraries}
 	)
 

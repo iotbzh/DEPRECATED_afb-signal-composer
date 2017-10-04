@@ -84,7 +84,6 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
     char *ldSearchPath = NULL;
     void *dlHandle;
 
-
     // plugin initialises at 1st load further init actions should be place into onload section
     if (!pluginJ) return 0;
 
