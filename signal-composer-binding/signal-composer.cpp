@@ -21,7 +21,7 @@
 
 #include "clientApp.hpp"
 
-extern "C" void setSignalValueHandle(const char* aName, uint64_t timestamp, struct signalValue value)
+extern "C" void searchNsetSignalValueHandle(const char* aName, uint64_t timestamp, struct signalValue value)
 {
 	std::vector<std::shared_ptr<Signal>> signals = Composer::instance().searchSignals(aName);
 	if(!signals.empty())
@@ -29,6 +29,12 @@ extern "C" void setSignalValueHandle(const char* aName, uint64_t timestamp, stru
 		for(auto& sig: signals)
 			{sig->set(timestamp, value);}
 	}
+}
+
+extern "C" void setSignalValueHandle(void* aSignal, uint64_t timestamp, struct signalValue value)
+{
+	Signal* sig = static_cast<Signal*>(aSignal);
+	sig->set(timestamp, value);
 }
 
 bool startsWith(const std::string& str, const std::string& pattern)
@@ -39,13 +45,16 @@ bool startsWith(const std::string& str, const std::string& pattern)
 	return false;
 }
 
+// aSignal member value will be initialized in sourceAPI->addSignal()
 static struct signalCBT pluginHandle = {
+	.searchNsetSignalValue = searchNsetSignalValueHandle,
 	.setSignalValue = setSignalValueHandle,
+	.aSignal = nullptr,
 };
 
 CtlSectionT Composer::ctlSections_[] = {
 	[0]={.key="plugins" , .label = "plugins", .info=nullptr,
-		.loadCB=PluginConfig,
+		.loadCB=pluginsLoad,
 		.handle=&pluginHandle},
 	[1]={.key="sources" , .label = "sources", .info=nullptr,
 		 .loadCB=loadSourcesAPI,
@@ -126,23 +135,17 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 		else if(startsWith(function, "builtin://"))
 		{
 			std::string uri = std::string(function).substr(10);
-			char b[8] = "builtin";
-			char* label = strncat(b , name.c_str(), name.size());
 			std::vector<std::string> uriV = Composer::parseURI(uri);
 			if(uriV.size() > 1) {AFB_WARNING("Too many thing specified. Uri has to be like: builtin://<builtin-function-name>");}
-			return new CtlActionT {
-				CTL_TYPE_CB,
-				nullptr,
-				uriV[0].c_str(),
-				functionArgsJ,
-				Signal::defaultOnReceivedCB,
-				CtlSourceT{
-					label,
-					nullptr,
-					{nullptr, nullptr},
-					nullptr,
-				}
-			};
+
+			json_object *callbackJ = nullptr;
+			wrap_json_pack(&callbackJ, "{ss,ss,so*}",
+				"plugin", "builtin",
+				"function", uriV[0].c_str(),
+				"args", functionArgsJ);
+			wrap_json_pack(&action, "{ss,so}",
+				"label", name.c_str(),
+				"callback", callbackJ);
 		}
 		else
 		{
@@ -152,6 +155,42 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 	}
 	if(action) {return ActionLoad(action);}
 	return nullptr;
+}
+
+/// @brief Add the builtin plugin in the default plugins section definition
+///
+/// @param[in] section - Control Section structure
+/// @param[in] pluginsJ - JSON object containing all plugins definition made in
+///  JSON configuration file.
+///
+/// @return 0 if OK, other if not.
+int Composer::pluginsLoad(CtlSectionT *section, json_object *pluginsJ)
+{
+	json_object* builtinJ = nullptr, * completePluginsJ = nullptr;
+
+	if(pluginsJ)
+	{
+		wrap_json_pack(&builtinJ, "{ss,ss,ss,ss,s[s]}",
+			"label", "builtin",
+			"version", "4.99",
+			"info", "Builtin routine for onReceived or getSignals routines",
+			"basename", "builtin",
+			"lua2c", "setSignalValueWrap");
+
+		if (json_object_get_type(pluginsJ) == json_type_array)
+		{
+				json_object_array_add(pluginsJ, builtinJ);
+				completePluginsJ = pluginsJ;
+		}
+		else
+		{
+			completePluginsJ = json_object_new_array();
+			json_object_array_add(completePluginsJ, pluginsJ);
+			json_object_array_add(completePluginsJ, builtinJ);
+		}
+	}
+
+	return PluginConfig(section, completePluginsJ);
 }
 
 int Composer::loadOneSourceAPI(json_object* sourceJ)
@@ -335,13 +374,18 @@ int Composer::loadOneSignal(json_object* signalJ)
 	unit = !unit ? "" : unit;
 
 	// Set default onReceived action if not specified
+	char* label = strndup("onReceived_", 11);
+	label = strncat(label, id, strlen(id));
 	if(!onReceivedJ)
 	{
 		onReceivedCtl = src->signalsDefault().onReceived ?
 			src->signalsDefault().onReceived :
 			nullptr;
+			// Overwrite label to the signal one instead of the default
+			if(onReceivedCtl)
+				{onReceivedCtl->source.label = label;}
 	}
-	else {onReceivedCtl = convert2Action("onReceived", onReceivedJ);}
+	else {onReceivedCtl = convert2Action(label, onReceivedJ);}
 
 	if(src != nullptr)
 		{src->addSignal(id, event, dependsV, retention, unit, frequency, onReceivedCtl, getSignalsArgs);}

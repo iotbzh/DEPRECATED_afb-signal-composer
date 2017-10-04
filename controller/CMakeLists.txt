@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###########################################################################
+
 # Include LUA only when requested
 get_property(COMPDEF DIRECTORY PROPERTY COMPILE_DEFINITIONS)
 if("CONTROL_SUPPORT_LUA=1" IN_LIST COMPDEF)
@@ -33,7 +34,7 @@ PROJECT_TARGET_ADD(afb-controller)
 
     # Library dependencies (include updates automatically)
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
-        afb-utilities
+        ${link_libraries}
     )
 
     # Define target includes for this target client

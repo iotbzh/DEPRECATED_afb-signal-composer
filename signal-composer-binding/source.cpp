@@ -52,6 +52,20 @@ void SourceAPI::addSignal(const std::string& id, const std::string& event, std::
 {
 	std::shared_ptr<Signal> sig = std::make_shared<Signal>(id, event, depends, unit, retention, frequency, onReceived, getSignalsArgs);
 
+	if(onReceived)
+	{
+		struct signalCBT* ctx = onReceived->source.context ?
+			(struct signalCBT*)onReceived->source.context :
+			(struct signalCBT*)calloc (1, sizeof(struct signalCBT));
+		if(!ctx->searchNsetSignalValue)
+			{ctx->searchNsetSignalValue = searchNsetSignalValueHandle;}
+		if(!ctx->setSignalValue)
+			{ctx->setSignalValue = setSignalValueHandle;}
+
+		ctx->aSignal = (void*)sig.get();
+		onReceived->source.context = (void*)ctx;
+	}
+
 	signalsMap_[id] = sig;
 }
 

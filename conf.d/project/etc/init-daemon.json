@@ -20,13 +20,6 @@
 			"version": "1.0",
 			"info": "Manage interaction with gps service",
 			"basename": "gps"
-		},
-		{
-			"label": "lua2c",
-			"version": "1.0",
-			"info": "Lua2C Interface",
-			"basename": "lua2c-interface",
-			"lua2c": ["setSignalValueWrap"]
 		}
 	]
 }

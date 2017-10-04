@@ -16,7 +16,6 @@
 */
 #pragma once
 
-
 #include <vector>
 #include <string>
 
@@ -35,6 +34,7 @@ private:
 	~Composer();
 
 	CtlActionT* convert2Action(const std::string& name, json_object* action);
+	static int pluginsLoad(CtlSectionT *section, json_object *pluginsJ);
 
 	int loadOneSourceAPI(json_object* sourcesJ);
 	static int loadSourcesAPI(CtlSectionT* section, json_object *signalsJ);

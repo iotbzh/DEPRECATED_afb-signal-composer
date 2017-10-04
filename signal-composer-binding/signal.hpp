@@ -40,6 +40,17 @@ struct signalValue {
 	double numVal;
 	bool hasStr;
 	std::string strVal;
+
+	signalValue():
+		hasBool(false), boolVal(false), hasNum(false), numVal(0), hasStr(false), strVal("") {};
+	signalValue(bool b):
+		hasBool(true), boolVal(b), hasNum(false), numVal(0), hasStr(false), strVal("") {};
+	signalValue(int b):
+		hasBool(true), boolVal(b), hasNum(false), numVal(0), hasStr(false), strVal("") {};
+	signalValue(double d):
+		hasBool(false), boolVal(false), hasNum(true), numVal(d), hasStr(false), strVal("") {};
+	signalValue(const std::string& s):
+		hasBool(false), boolVal(false), hasNum(false), numVal(0), hasStr(true), strVal(s) {};
 };
 
 /// @brief Holds a signal (raw or virtual) definition. Value could be of
@@ -68,6 +79,7 @@ public:
 	Signal();
 	Signal(const std::string& id, const std::string& event, std::vector<std::string>& depends, const std::string& unit, int retention, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 	Signal(const std::string& id, std::vector<std::string>& depends, const std::string& unit, int retention, double frequency, CtlActionT* onReceived);
+	~Signal();
 
 	explicit operator bool() const;
 	bool operator==(const Signal& other) const;
@@ -92,7 +104,13 @@ public:
 	int recursionCheck(Signal* obs);
 };
 
+extern "C" void searchNsetSignalValueHandle(const char* aName, uint64_t timestamp, struct signalValue value);
+extern "C" void setSignalValueHandle(void* aSignal, uint64_t timestamp, struct signalValue value);
+
+/// @brief Holds composer callbacks and obj to manipulate
 struct signalCBT
 {
-	void (*setSignalValue)(const char* aName, uint64_t timestamp, struct signalValue value);
+	void (*searchNsetSignalValue)(const char* aName, uint64_t timestamp, struct signalValue value);
+	void (*setSignalValue)(void* aSignal, uint64_t timestamp, struct signalValue value);
+	void* aSignal;
 };

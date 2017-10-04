@@ -84,6 +84,7 @@ set(CMAKE_INSTALL_PREFIX $ENV{HOME}/opt)
 # Customize link option
 # -----------------------------
 #list(APPEND link_libraries -an-option)
+list(APPEND link_libraries afb-utilities lua-lib)
 
 # Compilation options definition
 # Use CMake generator expressions to specify only for a specific language
@@ -162,7 +163,7 @@ set(WIDGET_TYPE application/vnd.agl.service)
 # This is the file that will be executed, loaded,
 # at launch time by the application framework.
 #
-set(WIDGET_ENTRY_POINT lib/afb-signals-composer.so)
+set(WIDGET_ENTRY_POINT afb/afb-signal-composer.so)
 
 # Optional dependencies order
 # ---------------------------

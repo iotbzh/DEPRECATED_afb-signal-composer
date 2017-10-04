@@ -28,7 +28,7 @@ Signal::Signal()
  event_(""),
  dependsSigV_(),
  timestamp_(0.0),
- value_({0,0,0,0,0,""}),
+ value_(),
  retention_(0),
  frequency_(0),
  unit_(""),
@@ -42,7 +42,7 @@ Signal::Signal(const std::string& id, const std::string& event, std::vector<std:
  event_(event),
  dependsSigV_(depends),
  timestamp_(0.0),
- value_({0,0,0,0,0,""}),
+ value_(),
  retention_(retention),
  frequency_(frequency),
  unit_(unit),
@@ -61,7 +61,7 @@ Signal::Signal(const std::string& id,
  event_(),
  dependsSigV_(depends),
  timestamp_(0.0),
- value_({0,0,0,0,0,""}),
+ value_(),
  retention_(retention),
  frequency_(frequency),
  unit_(unit),
@@ -69,6 +69,11 @@ Signal::Signal(const std::string& id,
  getSignalsArgs_(),
  subscribed_(false)
 {}
+
+Signal::~Signal()
+{
+	free(onReceived_);
+}
 
 Signal::operator bool() const
 {
@@ -168,15 +173,15 @@ void Signal::update(Signal* sig)
 
 /// @brief
 ///
-/// @param[in] queryJ - json_object containing event data to process
+/// @param[in] eventJ - json_object containing event data to process
 ///
 /// @return 0 if ok, -1 or others if not
-int Signal::defaultReceivedCB(json_object *queryJ)
+int Signal::defaultReceivedCB(json_object *eventJ)
 {
 	uint64_t ts = 0;
-	struct signalValue sv = {0,0,0,0,0,""};
-	json_object_iterator iter = json_object_iter_begin(queryJ);
-	json_object_iterator iterEnd = json_object_iter_end(queryJ);
+	struct signalValue sv;
+	json_object_iterator iter = json_object_iter_begin(eventJ);
+	json_object_iterator iterEnd = json_object_iter_end(eventJ);
 	while(!json_object_iter_equal(&iter, &iterEnd))
 	{
 		std::string name = json_object_iter_peek_name(&iter);
@@ -185,11 +190,11 @@ int Signal::defaultReceivedCB(json_object *queryJ)
 		if (name.find("value") || name.find(id_))
 		{
 			if(json_object_is_type(value, json_type_double))
-				{sv = {0,0,true,json_object_get_double(value),0,""};}
+				{sv = json_object_get_double(value);}
 			else if(json_object_is_type(value, json_type_boolean))
-				{sv = {true,json_object_get_int(value),0,0,0,""};}
+				{sv = json_object_get_int(value);}
 			else if(json_object_is_type(value, json_type_string))
-				{sv = {0,0,0,0,true,json_object_get_string(value)};}
+				{sv = json_object_get_string(value);}
 		}
 		else if (name.find("timestamp"))
 		{
@@ -200,7 +205,7 @@ int Signal::defaultReceivedCB(json_object *queryJ)
 
 	if(!sv.hasBool && !sv.hasNum && !sv.hasStr)
 	{
-		AFB_ERROR("No data found to set signal %s in %s", id_.c_str(), json_object_to_json_string(queryJ));
+		AFB_ERROR("No data found to set signal %s in %s", id_.c_str(), json_object_to_json_string(eventJ));
 		return -1;
 	}
 	else if(ts == 0)
@@ -217,15 +222,15 @@ int Signal::defaultReceivedCB(json_object *queryJ)
 /// @brief Notify observers that there is a change and execute callback defined
 /// when signal is received
 ///
-/// @param[in] queryJ - JSON query object to transmit to callback function
+/// @param[in] eventJ - JSON query object to transmit to callback function
 ///
 /// @return 0 if OK, -1 or other if not.
-int Signal::onReceivedCB(json_object *queryJ)
+int Signal::onReceivedCB(json_object *eventJ)
 {
 	if(onReceived_ && onReceived_->type == CTL_TYPE_LUA)
 	{
-		json_object_iterator iter = json_object_iter_begin(queryJ);
-		json_object_iterator iterEnd = json_object_iter_end(queryJ);
+		json_object_iterator iter = json_object_iter_begin(eventJ);
+		json_object_iterator iterEnd = json_object_iter_end(eventJ);
 		while(!json_object_iter_equal(&iter, &iterEnd))
 		{
 			const char *name = ::strdup(json_object_iter_peek_name(&iter));
@@ -234,15 +239,14 @@ int Signal::onReceivedCB(json_object *queryJ)
 			{
 				int64_t newVal = json_object_get_int64(value);
 				newVal = newVal > USEC_TIMESTAMP_FLAG ? newVal/MICRO:newVal;
-				json_object_object_del(queryJ, name);
+				json_object_object_del(eventJ, name);
 				json_object* luaVal = json_object_new_int64(newVal);
-				json_object_object_add(queryJ, name, luaVal);
+				json_object_object_add(eventJ, name, luaVal);
 			}
 			json_object_iter_next(&iter);
 		}
 	}
-	AFB_NOTICE("JSON %s", json_object_to_json_string(queryJ));
-	int err = onReceived_ ? ActionExecOne(onReceived_, queryJ) : defaultReceivedCB(queryJ);
+	int err = onReceived_ ? ActionExecOne(onReceived_, eventJ) : defaultReceivedCB(eventJ);
 	notify();
 	return err;
 }
@@ -277,7 +281,7 @@ void Signal::attachToSourceSignals(Composer& composer)
 double Signal::average(int seconds) const
 {
 	uint64_t begin = history_.begin()->first;
-	uint64_t end = !seconds ?
+	uint64_t end = seconds ?
 		begin+(seconds*MICRO) :
 		history_.rbegin()->first;
 	double total = 0.0;
@@ -314,7 +318,7 @@ double Signal::average(int seconds) const
 double Signal::minimum(int seconds) const
 {
 	uint64_t begin = history_.begin()->first;
-	uint64_t end = !seconds ?
+	uint64_t end = seconds ?
 	begin+(seconds*MICRO) :
 	history_.rbegin()->first;
 
@@ -346,7 +350,7 @@ double Signal::minimum(int seconds) const
 double Signal::maximum(int seconds) const
 {
 	uint64_t begin = history_.begin()->first;
-	uint64_t end = !seconds ?
+	uint64_t end = seconds ?
 	begin+(seconds*MICRO) :
 	history_.rbegin()->first;
 
@@ -375,7 +379,7 @@ double Signal::maximum(int seconds) const
 /// @return Last value
 struct signalValue Signal::last() const
 {
-	if(history_.empty()) {return signalValue({0,0,0,0,0,""});}
+	if(history_.empty()) {return signalValue();}
 	return history_.rbegin()->second;
 }
 
