@@ -1,7 +1,8 @@
 {
+	"$schema": "http://iot.bzh/download/public/schema/json/signal-composer-schema.json",
 	"signals": [
 		{
-			"id": "vehicle_speed",
+			"uid": "vehicle_speed",
 			"event": "low-can/diagnostic_messages.vehicle.speed",
 			"retention": 30,
 			"unit": "km/h",
@@ -19,7 +20,7 @@
 			}
 		},
 		{
-			"id": "engine_speed",
+			"uid": "engine_speed",
 			"event": "low-can/diagnostic_messages.engine.speed",
 			"retention": 30,
 			"unit": "rpm",
@@ -29,14 +30,14 @@
 			}
 		},
 		{
-			"id": "fuel_level",
+			"uid": "fuel_level",
 			"event": "low-can/diagnostic_messages.fuel.level",
 			"retention":30,
 			"unit": "liter",
 			"frequency": 1
 		},
 		{
-			"id": "engine_load",
+			"uid": "engine_load",
 			"event": "low-can/diagnostic_messages.engine.load",
 			"retention":30,
 			"unit": "Nm",

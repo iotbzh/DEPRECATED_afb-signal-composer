@@ -1,6 +1,8 @@
 {
+	"$schema": "http://iot.bzh/download/public/schema/json/signal-composer-schema.json",
 	"sources": [
 		{
+			"uid": "-serviceCAN",
 			"api": "low-can",
 			"info": "Low level binding to handle CAN bus communications",
 			"getSignals": {
@@ -9,7 +11,9 @@
 					"arg": "first argument"
 				}
 			}
-		}, {
+		},
+		{
+			"uid": "GPS-service",
 			"api": "gps",
 			"info": "Low level binding which retrieve Satellite positionning values",
 			"init": {
@@ -24,7 +28,9 @@
 					"arg": "first argument"
 				}
 			}
-		}, {
+		},
+		{
+			"uid": "MRAA-service",
 			"api": "mraa",
 			"info": "Low level binding which retrieve different values from several sensors like gyroscope, accelerometer, etc"
 		}

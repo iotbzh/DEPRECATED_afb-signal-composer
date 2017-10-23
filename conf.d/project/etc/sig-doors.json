@@ -1,7 +1,8 @@
 {
+	"$schema": "http://iot.bzh/download/public/schema/json/signal-composer-schema.json",
 	"signals": [
 		{
-			"id": "rear_left_window",
+			"uid": "rear_left_window",
 			"event": "low-can/messages.windows.rear_left.open",
 			"onReceived": {
 				"function": "plugin://low-can-callbacks/isOpen",
@@ -11,7 +12,7 @@
 			}
 		},
 		{
-			"id": "rear_left_door",
+			"uid": "rear_left_door",
 			"event": "low-can/messages.doors.rear_left.open",
 			"onReceived": {
 				"function": "plugin://low-can-callbacks/isOpen",
@@ -21,7 +22,7 @@
 			}
 		},
 		{
-			"id": "rear_right_window",
+			"uid": "rear_right_window",
 			"event": "low-can/messages.windows.rear_right.open",
 			"onReceived": {
 				"function": "plugin://low-can-callbacks/isOpen",
@@ -31,7 +32,7 @@
 			}
 		},
 		{
-			"id": "rear_right_door",
+			"uid": "rear_right_door",
 			"event": "low-can/messages.doors.rear_right.open",
 			"onReceived": {
 				"function": "plugin://low-can-callbacks/isOpen",
@@ -41,7 +42,7 @@
 			}
 		},
 		{
-			"id": "front_left_window",
+			"uid": "front_left_window",
 			"event": "low-can/messages.windows.front_left.open",
 			"onReceived": {
 				"function": "plugin://low-can-callbacks/isOpen",
@@ -51,7 +52,7 @@
 			}
 		},
 		{
-			"id": "front_left_door",
+			"uid": "front_left_door",
 			"event": "low-can/messages.doors.front_left.open",
 			"onReceived": {
 				"function": "plugin://low-can-callbacks/isOpen",
@@ -61,7 +62,7 @@
 			}
 		},
 		{
-			"id": "front_right_window",
+			"uid": "front_right_window",
 			"event": "low-can/messages.windows.front_right.open",
 			"onReceived": {
 				"function": "plugin://low-can-callbacks/isOpen",
@@ -71,7 +72,7 @@
 			}
 		},
 		{
-			"id": "front_right_door",
+			"uid": "front_right_door",
 			"event": "low-can/messages.doors.front_right.open",
 			"onReceived": {
 				"function": "plugin://low-can-callbacks/isOpen",
@@ -81,7 +82,7 @@
 			}
 		},
 		{
-			"id": "rear_left",
+			"uid": "rear_left",
 			"depends": [
 				"rear_left_window",
 				"rear_left_door"
@@ -94,7 +95,7 @@
 			}
 		},
 		{
-			"id": "rear_right",
+			"uid": "rear_right",
 			"depends": [
 				"rear_right_door",
 				"rear_right_window"
@@ -105,7 +106,7 @@
 			}
 		},
 		{
-			"id": "front_left",
+			"uid": "front_left",
 			"depends": [
 				"front_left_door",
 				"front_left_window"
@@ -116,7 +117,7 @@
 			}
 		},
 		{
-			"id": "front_right",
+			"uid": "front_right",
 			"depends": [
 				"front_right_door",
 				"front_right_window"
@@ -127,7 +128,7 @@
 			}
 		},
 		{
-			"id": "all_doors",
+			"uid": "all_doors",
 			"depends": [
 				"front_left_door",
 				"front_left_window",

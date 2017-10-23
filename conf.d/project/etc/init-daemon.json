@@ -1,25 +1,30 @@
 {
-	"$schema": "ToBeDone",
+	"$schema": "http://iot.bzh/download/public/schema/json/signal-composer-schema.json",
 	"metadata": {
-		"label": "Signal Composer",
+		"uid": "Signal Composer",
 		"version": "1.0",
 		"api": "test",
 		"info": "Signal composer Configuration",
-		"require": ["low-can"],
-		"files": ["sources", "sig-doors", "sig-demoboard"]
+		"require": ["low-can"]
 	},
 	"plugins": [
 		{
-			"label": "low-can-callbacks",
+			"uid": "low-can-callbacks",
 			"version": "1.0",
 			"info": "Manage interaction with low-can service",
 			"basename": "low-can"
 		},
 		{
-			"label": "gps-callbacks",
+			"uid": "gps-callbacks",
 			"version": "1.0",
 			"info": "Manage interaction with gps service",
 			"basename": "gps"
 		}
-	]
+	],
+	"signals": {
+		"files": ["sig-doors", "sig-demoboard" ]
+	},
+	"sources": {
+		"files": "sources"
+	}
 }
