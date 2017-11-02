@@ -28,14 +28,19 @@ SourceAPI::SourceAPI(const std::string& api, const std::string& info, CtlActionT
  signalsDefault_({onReceived, retention})
 {}
 
-int SourceAPI::init()
+void SourceAPI::init()
 {
 	if(init_)
-		{return ActionExecOne(init_, nullptr);}
+	{
+		CtlSourceT source;
+		source.uid = init_->uid;
+		source.api  = nullptr; // We use binding v2, no dynamic API.
+		source.request = {nullptr, nullptr};
+		ActionExecOne(&source, init_, nullptr);
+		return;
+	}
 	else if(api_ == afbBindingV2.api)
 		{api_ = Composer::instance().ctlConfig()->api;}
-
-	return 0;
 }
 
 std::string SourceAPI::api() const
@@ -51,20 +56,6 @@ const struct signalsDefault& SourceAPI::signalsDefault() const
 void SourceAPI::addSignal(const std::string& id, const std::string& event, std::vector<std::string>& depends, int retention, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs)
 {
 	std::shared_ptr<Signal> sig = std::make_shared<Signal>(id, event, depends, unit, retention, frequency, onReceived, getSignalsArgs);
-
-	if(onReceived)
-	{
-		struct signalCBT* ctx = onReceived->source.context ?
-			(struct signalCBT*)onReceived->source.context :
-			(struct signalCBT*)calloc (1, sizeof(struct signalCBT));
-		if(!ctx->searchNsetSignalValue)
-			{ctx->searchNsetSignalValue = searchNsetSignalValueHandle;}
-		if(!ctx->setSignalValue)
-			{ctx->setSignalValue = setSignalValueHandle;}
-
-		ctx->aSignal = (void*)sig.get();
-		onReceived->source.context = (void*)ctx;
-	}
 
 	signalsMap_[id] = sig;
 }
@@ -104,29 +95,29 @@ std::vector<std::shared_ptr<Signal>> SourceAPI::searchSignals(const std::string&
 	return signals;
 }
 
-int SourceAPI::makeSubscription()
+void SourceAPI::makeSubscription()
 {
-	int err = 0;
 	if(getSignals_)
 	{
+		CtlSourceT source;
+		source.uid = api_.c_str();
+		source.api  = nullptr; // We use binding v2, no dynamic API.
+		source.request = {nullptr, nullptr};
+
 		for(auto& sig: signalsMap_)
 		{
 			json_object* signalJ = sig.second->toJSON();
 			if(!signalJ)
 			{
 				AFB_ERROR("Error building JSON query object to subscribe to for signal %s", sig.second->id().c_str());
-				err = -1;
 				break;
 			}
-			err += ActionExecOne(getSignals_, signalJ);
-			if(err)
-				{AFB_WARNING("Fails to subscribe to signal '%s/%s'",
-				api_.c_str(), sig.second->id().c_str());}
-			else
-				{sig.second->subscribed_ = true;}
+			source.uid = sig.second->id().c_str();
+			source.context = (void*)sig.second->get_context();
+			ActionExecOne(&source, getSignals_, signalJ);
+			// Considerate signal subscribed no matter what
+			sig.second->subscribed_ = true;
 		}
-		err += ActionExecOne(getSignals_, nullptr);
+		ActionExecOne(&source, getSignals_, nullptr);
 	}
-
-	return err;
 }

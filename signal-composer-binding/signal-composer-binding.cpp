@@ -237,7 +237,7 @@ int execConf()
 {
 	Composer& composer = Composer::instance();
 	int err = 0;
-	CtlConfigExec(composer.ctlConfig());
+	CtlConfigExec(nullptr, composer.ctlConfig());
 	std::vector<std::shared_ptr<Signal>> allSignals = composer.getAllSignals();
 	ssize_t sigCount = allSignals.size();
 	for( std::shared_ptr<Signal>& sig: allSignals)

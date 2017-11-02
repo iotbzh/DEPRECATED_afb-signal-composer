@@ -18,7 +18,7 @@
  *   Json load using json_unpack https://jansson.readthedocs.io/en/2.9/apiref.html#parsing-and-validating-values
  */
 
- #define _GNU_SOURCE
+#define _GNU_SOURCE
 #include <string.h>
 #include <dlfcn.h>
 #include <link.h>
@@ -126,9 +126,9 @@ STATIC int PluginLoadOne (CtlPluginT *ctlPlugin, json_object *pluginJ, void* han
     }
 
     char pluginpath[CONTROL_MAXPATH_LEN];
-    strncpy(pluginpath, fullpath, sizeof (pluginpath));
-    strncat(pluginpath, "/", sizeof (pluginpath));
-    strncat(pluginpath, filename, sizeof (pluginpath));
+    strncpy(pluginpath, fullpath, strlen(fullpath));
+    strncat(pluginpath, "/", strlen("/"));
+    strncat(pluginpath, filename, strlen(filename));
     dlHandle = dlopen(pluginpath, RTLD_NOW);
     if (!dlHandle) {
         AFB_ERROR("CTL-PLUGIN-LOADONE Fail to load pluginpath=%s err= %s", pluginpath, dlerror());

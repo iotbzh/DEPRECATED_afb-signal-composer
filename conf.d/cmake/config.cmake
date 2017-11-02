@@ -128,8 +128,10 @@ list(APPEND link_libraries afb-utilities lua-lib)
 # -O2
 # CACHE STRING "Compilation flags for RELEASE build type.")
 
-add_definitions("-DCONTROL_SUPPORT_LUA=1")
-add_definitions("-DCTL_PLUGIN_MAGIC=3286576532")
+add_definitions(-DCONTROL_PLUGIN_PATH="${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}/lib/plugins")
+add_definitions(-DCONTROL_CONFIG_PATH="${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}/etc")
+add_definitions(-DCONTROL_SUPPORT_LUA=1)
+add_definitions(-DCTL_PLUGIN_MAGIC=3286576532)
 
 # (BUG!!!) as PKG_CONFIG_PATH does not work [should be an env variable]
 # ---------------------------------------------------------------------
@@ -139,7 +141,7 @@ set(LD_LIBRARY_PATH ${CMAKE_INSTALL_PREFIX}/lib64 ${CMAKE_INSTALL_PREFIX}/lib)
 # Optional location for config.xml.in
 # -----------------------------------
 #set(WIDGET_ICON conf.d/wgt/${PROJECT_ICON} CACHE PATH "Path to the widget icon")
-#set(WIDGET_CONFIG_TEMPLATE ${CMAKE_CURRENT_SOURCE_DIR}/conf.d/wgt/config.xml.in CACHE PATH "Path to widget config file template (config.xml.in)")
+set(WIDGET_CONFIG_TEMPLATE "${CMAKE_SOURCE_DIR}/conf.d/wgt/config.xml.in" CACHE PATH "Path to widget config file template (config.xml.in)")
 
 # Mandatory widget Mimetype specification of the main unit
 # --------------------------------------------------------------------------

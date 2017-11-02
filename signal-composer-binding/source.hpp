@@ -39,7 +39,7 @@ public:
 	SourceAPI();
 	SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal, CtlActionT* onReceived, int retention);
 
-	int init();
+	void init();
 	std::string api() const;
 	const struct signalsDefault& signalsDefault() const;
 	void addSignal(const std::string& id, const std::string& event, std::vector<std::string>& sources, int retention, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
@@ -47,5 +47,5 @@ public:
 	std::vector<std::shared_ptr<Signal>> getSignals() const;
 	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& name);
 
-	int makeSubscription();
+	void makeSubscription();
 };

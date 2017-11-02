@@ -140,6 +140,19 @@ json_object* Signal::toJSON() const
 	return queryJ;
 }
 
+struct signalCBT* Signal::get_context()
+{
+	struct signalCBT* ctx =	(struct signalCBT*)calloc (1, sizeof(struct signalCBT));
+
+	if(!ctx->searchNsetSignalValue)
+		{ctx->searchNsetSignalValue = searchNsetSignalValueHandle;}
+	if(!ctx->setSignalValue)
+		{ctx->setSignalValue = setSignalValueHandle;}
+
+	ctx->aSignal = (void*)this;
+	return ctx;
+}
+
 /// @brief Set Signal timestamp and value property when an incoming
 /// signal arrived. Called by a plugin because treatment can't be
 /// standard as signals sources format could changes. See low-can plugin
@@ -176,7 +189,7 @@ void Signal::update(Signal* sig)
 /// @param[in] eventJ - json_object containing event data to process
 ///
 /// @return 0 if ok, -1 or others if not
-int Signal::defaultReceivedCB(json_object *eventJ)
+void Signal::defaultReceivedCB(json_object *eventJ)
 {
 	uint64_t ts = 0;
 	struct signalValue sv;
@@ -206,7 +219,7 @@ int Signal::defaultReceivedCB(json_object *eventJ)
 	if(!sv.hasBool && !sv.hasNum && !sv.hasStr)
 	{
 		AFB_ERROR("No data found to set signal %s in %s", id_.c_str(), json_object_to_json_string(eventJ));
-		return -1;
+		return;
 	}
 	else if(ts == 0)
 	{
@@ -216,7 +229,6 @@ int Signal::defaultReceivedCB(json_object *eventJ)
 	}
 
 	set(ts, sv);
-	return 0;
 }
 
 /// @brief Notify observers that there is a change and execute callback defined
@@ -224,8 +236,7 @@ int Signal::defaultReceivedCB(json_object *eventJ)
 ///
 /// @param[in] eventJ - JSON query object to transmit to callback function
 ///
-/// @return 0 if OK, -1 or other if not.
-int Signal::onReceivedCB(json_object *eventJ)
+void Signal::onReceivedCB(json_object *eventJ)
 {
 	if(onReceived_ && onReceived_->type == CTL_TYPE_LUA)
 	{
@@ -246,9 +257,14 @@ int Signal::onReceivedCB(json_object *eventJ)
 			json_object_iter_next(&iter);
 		}
 	}
-	int err = onReceived_ ? ActionExecOne(onReceived_, eventJ) : defaultReceivedCB(eventJ);
+
+	CtlSourceT source;
+	source.uid = id_.c_str();
+	source.api  = nullptr; // We use binding v2, no dynamic API.
+	source.request = {nullptr, nullptr};
+	source.context = (void*)get_context();
+	onReceived_ ? ActionExecOne(&source, onReceived_, eventJ) : defaultReceivedCB(eventJ);
 	notify();
-	return err;
 }
 
 /// @brief Make a Signal observer observes Signals observables

@@ -35,7 +35,7 @@ PROJECT_TARGET_ADD(builtin)
 		)
 
 		target_include_directories(${TARGET_NAME}
-		PRIVATE "../controller"
+		PRIVATE "../ctl-utilities/ctl-lib"
 		PRIVATE "../signal-composer-binding")
 
 PROJECT_TARGET_ADD(low-can)
@@ -57,7 +57,7 @@ PROJECT_TARGET_ADD(low-can)
 	)
 
 	target_include_directories(${TARGET_NAME}
-		PRIVATE "../controller"
+		PRIVATE "../ctl-utilities/ctl-lib"
 		PRIVATE "../signal-composer-binding")
 
 PROJECT_TARGET_ADD(gps)
@@ -79,5 +79,5 @@ PROJECT_TARGET_ADD(gps)
 	)
 
 	target_include_directories(${TARGET_NAME}
-	PRIVATE "../controller"
+	PRIVATE "../ctl-utilities/ctl-lib"
 	PRIVATE "../signal-composer-binding")

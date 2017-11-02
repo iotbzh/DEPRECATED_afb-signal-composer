@@ -35,7 +35,7 @@ char* CtlConfigSearch(const char *dirList, const char* fileName) {
         strncpy(controlFile, fileName, CONTROL_MAXPATH_LEN);
     } else {
         strncpy(controlFile, CONTROL_CONFIG_PRE "-", CONTROL_MAXPATH_LEN);
-        strncat(controlFile, GetBinderName(), CONTROL_MAXPATH_LEN);
+        strncat(controlFile, GetBinderName(), strlen(GetBinderName())); // Only possible because returned GetBinderName value is a static variable.
     }
 
     // search for default dispatch config file
@@ -56,7 +56,7 @@ char* CtlConfigSearch(const char *dirList, const char* fileName) {
         if (index == 0) {
             if (strcasestr(filename, controlFile)) {
                 char filepath[CONTROL_MAXPATH_LEN];
-                strncpy(filepath, fullpath, sizeof (filepath));
+                strncpy(filepath, fullpath, strlen(fullpath));
                 strncat(filepath, "/", strlen("/"));
                 strncat(filepath, filename, strlen(filename));
                 return (strdup(filepath));

@@ -45,6 +45,14 @@ bool startsWith(const std::string& str, const std::string& pattern)
 	return false;
 }
 
+void extractString(void* closure, json_object* object)
+{
+	std::vector<std::string> *files = (std::vector<std::string>*) closure;
+	const char *oneFile = json_object_get_string(object);
+
+	files->push_back(oneFile);
+}
+
 // aSignal member value will be initialized in sourceAPI->addSignal()
 static struct signalCBT pluginHandle = {
 	.searchNsetSignalValue = searchNsetSignalValueHandle,
@@ -53,18 +61,22 @@ static struct signalCBT pluginHandle = {
 };
 
 CtlSectionT Composer::ctlSections_[] = {
-	[0]={.key="plugins" , .label = "plugins", .info=nullptr,
+	[0]={.key="plugins" , .uid="plugins", .info=nullptr,
 		.loadCB=pluginsLoad,
-		.handle=&pluginHandle},
-	[1]={.key="sources" , .label = "sources", .info=nullptr,
+		.handle=&pluginHandle,
+		.actions=nullptr},
+	[1]={.key="sources" , .uid="sources", .info=nullptr,
 		 .loadCB=loadSourcesAPI,
-		 .handle=nullptr},
-	[2]={.key="signals" , .label= "signals", .info=nullptr,
+		 .handle=nullptr,
+		 .actions=nullptr},
+	[2]={.key="signals" , .uid="signals", .info=nullptr,
 		 .loadCB=loadSignals,
-		 .handle=nullptr},
-	[3]={.key=nullptr, .label=nullptr, .info=nullptr,
+		 .handle=nullptr,
+		 .actions=nullptr},
+	[3]={.key=nullptr, .uid=nullptr, .info=nullptr,
 		 .loadCB=nullptr,
-		 .handle=nullptr}
+		 .handle=nullptr,
+		 .actions=nullptr}
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,21 +93,22 @@ Composer::~Composer()
 
 CtlActionT* Composer::convert2Action(const std::string& name, json_object* actionJ)
 {
-	json_object *functionArgsJ = nullptr, *action = nullptr;
+	json_object *functionArgsJ = nullptr, *ctlActionJ = nullptr;
 	char *function;
 	const char *plugin;
+	CtlActionT *ctlAction = nullptr;
 
 	if(actionJ &&
 		!wrap_json_unpack(actionJ, "{ss,s?s,s?o !}", "function", &function,
 			"plugin", &plugin,
 			"args", &functionArgsJ))
 	{
-		action = nullptr;
+		ctlActionJ = nullptr;
 		if(startsWith(function, "lua://"))
 		{
 			std::string fName = std::string(function).substr(6);
-			wrap_json_pack(&action, "{ss,ss,so*}",
-			"label", name.c_str(),
+			wrap_json_pack(&ctlActionJ, "{ss,ss,so*}",
+			"uid", name.c_str(),
 			"lua", fName.c_str(),
 			"args", functionArgsJ);
 		}
@@ -108,8 +121,8 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 				AFB_ERROR("Miss something in uri either plugin name or function name. Uri has to be like: api://<plugin-name>/<function-name>");
 				return nullptr;
 			}
-			wrap_json_pack(&action, "{ss,ss,ss,so*}",
-			"label", name.c_str(),
+			wrap_json_pack(&ctlActionJ, "{ss,ss,ss,so*}",
+			"uid", name.c_str(),
 			"api", uriV[0].c_str(),
 			"verb", uriV[1].c_str(),
 			"args", functionArgsJ);
@@ -128,8 +141,8 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 				"plugin", uriV[0].c_str(),
 				"function", uriV[1].c_str(),
 				"args", functionArgsJ);
-			wrap_json_pack(&action, "{ss,so}",
-				"label", name.c_str(),
+			wrap_json_pack(&ctlActionJ, "{ss,so}",
+				"uid", name.c_str(),
 				"callback", callbackJ);
 		}
 		else if(startsWith(function, "builtin://"))
@@ -143,8 +156,8 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 				"plugin", "builtin",
 				"function", uriV[0].c_str(),
 				"args", functionArgsJ);
-			wrap_json_pack(&action, "{ss,so}",
-				"label", name.c_str(),
+			wrap_json_pack(&ctlActionJ, "{ss,so}",
+				"uid", name.c_str(),
 				"callback", callbackJ);
 		}
 		else
@@ -153,8 +166,30 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 			return nullptr;
 		}
 	}
-	if(action) {return ActionLoad(action);}
-	return nullptr;
+
+	if(ctlActionJ)
+		{ActionLoadOne(nullptr, ctlAction, ctlActionJ, 0);}
+
+	return ctlAction;
+}
+
+void Composer::loadAdditionnalFiles(json_object* filesJ)
+{
+	std::vector<std::string> files;
+	if(filesJ)
+	{
+		wrap_json_optarray_for_all(filesJ, extractString, (void*)&files);
+		if(! files.empty())
+		{
+			for(const auto& oneFile: files)
+			{
+				std::string filepath = CtlConfigSearch(nullptr, CONTROL_CONFIG_PATH, oneFile.c_str());
+				json_object* oneFileJ = json_object_from_file(filepath.c_str());
+				if(oneFileJ)
+					{loadSourcesAPI(nullptr, nullptr, oneFileJ);}
+			}
+		}
+	}
 }
 
 /// @brief Add the builtin plugin in the default plugins section definition
@@ -164,14 +199,14 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 ///  JSON configuration file.
 ///
 /// @return 0 if OK, other if not.
-int Composer::pluginsLoad(CtlSectionT *section, json_object *pluginsJ)
+int Composer::pluginsLoad(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ)
 {
 	json_object* builtinJ = nullptr, * completePluginsJ = nullptr;
 
 	if(pluginsJ)
 	{
 		wrap_json_pack(&builtinJ, "{ss,ss,ss,ss,s[s]}",
-			"label", "builtin",
+			"uid", "builtin",
 			"version", "4.99",
 			"info", "Builtin routine for onReceived or getSignals routines",
 			"basename", "builtin",
@@ -190,28 +225,31 @@ int Composer::pluginsLoad(CtlSectionT *section, json_object *pluginsJ)
 		}
 	}
 
-	return PluginConfig(section, completePluginsJ);
+	return PluginConfig(nullptr, section, completePluginsJ);
 }
 
 int Composer::loadOneSourceAPI(json_object* sourceJ)
 {
 	json_object *initJ = nullptr,
 				*getSignalsJ = nullptr,
-				*onReceivedJ = nullptr;
+				*onReceivedJ = nullptr,
+				*filesJ = nullptr;
 	CtlActionT  *initCtl = nullptr,
 				*getSignalsCtl = nullptr,
 				*onReceivedCtl = nullptr;
 	const char *api, *info;
 	int retention = 0;
 
-	int err = wrap_json_unpack(sourceJ, "{ss,s?s,s?o,s?o,s?o, s?i !}",
+	int err = wrap_json_unpack(sourceJ, "{ss,s?s,s?o,s?o,s?o,s?i,s?o !}",
 			"api", &api,
 			"info", &info,
 			"init", &initJ,
 			"getSignals", &getSignalsJ,
 			// Signals field to make signals conf by sources
 			"onReceived", &onReceivedJ,
-			"retention", &retention);
+			"retention", &retention,
+			// External files to load where lies others sources obj
+			"files", &filesJ);
 	if (err)
 	{
 		AFB_ERROR("Missing something api|[info]|[init]|[getSignals] in %s", json_object_get_string(sourceJ));
@@ -240,10 +278,12 @@ int Composer::loadOneSourceAPI(json_object* sourceJ)
 
 	sourcesListV_.push_back(std::make_shared<SourceAPI>(api, info, initCtl, getSignalsCtl, onReceivedCtl, retention));
 
+	loadAdditionnalFiles(filesJ);
+
 	return err;
 }
 
-int Composer::loadSourcesAPI(CtlSectionT* section, json_object *sourcesJ)
+int Composer::loadSourcesAPI(AFB_ApiT apihandle, CtlSectionT* section, json_object *sourcesJ)
 {
 	int err = 0;
 	Composer& composer = instance();
@@ -276,7 +316,7 @@ int Composer::loadSourcesAPI(CtlSectionT* section, json_object *sourcesJ)
 		}
 	}
 	else
-		{err += Composer::instance().initSourcesAPI();}
+		{Composer::instance().initSourcesAPI();}
 
 	return err;
 }
@@ -285,7 +325,8 @@ int Composer::loadOneSignal(json_object* signalJ)
 {
 	json_object *onReceivedJ = nullptr,
 				*dependsJ = nullptr,
-				*getSignalsArgs = nullptr;
+				*getSignalsArgs = nullptr,
+				*filesJ = nullptr;
 	CtlActionT* onReceivedCtl;
 	const char *id = nullptr,
 			   *event = nullptr,
@@ -304,7 +345,9 @@ int Composer::loadOneSignal(json_object* signalJ)
 			"retention", &retention,
 			"unit", &unit,
 			"frequency", &frequency,
-			"onReceived", &onReceivedJ);
+			"onReceived", &onReceivedJ,
+			// External files to load where lies others sources obj
+			"files", &filesJ);
 	if (err)
 	{
 		AFB_ERROR("Missing something id|[event|depends]|[getSignalsArgs]|[retention]|[unit]|[frequency]|[onReceived] in %s", json_object_get_string(signalJ));
@@ -374,28 +417,30 @@ int Composer::loadOneSignal(json_object* signalJ)
 	unit = !unit ? "" : unit;
 
 	// Set default onReceived action if not specified
-	char* label = strndup("onReceived_", 11);
-	label = strncat(label, id, strlen(id));
+	char* uid = strndup("onReceived_", 11);
+	uid = strncat(uid, id, strlen(id));
 	if(!onReceivedJ)
 	{
 		onReceivedCtl = src->signalsDefault().onReceived ?
 			src->signalsDefault().onReceived :
 			nullptr;
-			// Overwrite label to the signal one instead of the default
+			// Overwrite uid to the signal one instead of the default
 			if(onReceivedCtl)
-				{onReceivedCtl->source.label = label;}
+				{onReceivedCtl->uid = uid;}
 	}
-	else {onReceivedCtl = convert2Action(label, onReceivedJ);}
+	else {onReceivedCtl = convert2Action(uid, onReceivedJ);}
 
 	if(src != nullptr)
 		{src->addSignal(id, event, dependsV, retention, unit, frequency, onReceivedCtl, getSignalsArgs);}
 	else
 		{err = -1;}
 
+	loadAdditionnalFiles(filesJ);
+
 	return err;
 }
 
-int Composer::loadSignals(CtlSectionT* section, json_object *signalsJ)
+int Composer::loadSignals(AFB_ApiT apihandle, CtlSectionT* section, json_object *signalsJ)
 {
 	int err = 0;
 	Composer& composer = instance();
@@ -528,14 +573,41 @@ std::vector<std::string> Composer::parseURI(const std::string& uri)
 
 int Composer::loadConfig(const std::string& filepath)
 {
-	ctlConfig_ = CtlConfigLoad(filepath.c_str(), ctlSections_);
-	if(ctlConfig_ != nullptr) {return 0;}
-	return -1;
+	const char *dirList= getenv("CONTROL_CONFIG_PATH");
+	if (!dirList) dirList=CONTROL_CONFIG_PATH;
+	const char *configPath = CtlConfigSearch (nullptr, dirList, "control-");
+
+	if (!configPath) {
+		AFB_ApiError(apiHandle, "CtlPreInit: No control-* config found invalid JSON %s ", dirList);
+		return -1;
+	}
+
+	// create one API per file
+	ctlConfig_ = CtlLoadMetaData(nullptr, configPath);
+	if (!ctlConfig_) {
+		AFB_ApiError(apiHandle, "CtrlPreInit No valid control config file in:\n-- %s", configPath);
+		return -1;
+	}
+
+	if (ctlConfig_->api) {
+		int err = afb_daemon_rename_api(ctlConfig_->api);
+		if (err) {
+			AFB_ApiError(apiHandle, "Fail to rename api to:%s", ctlConfig_->api);
+			return -1;
+		}
+	}
+
+	int err= CtlLoadSections(nullptr, ctlConfig_, ctlSections_);
+	return err;
+
+//	ctlConfig_ = CtlConfigLoad(filepath.c_str(), ctlSections_);
+//	if(ctlConfig_ != nullptr) {return 0;}
+//	return -1;
 }
 
 int Composer::loadSignals(json_object* signalsJ)
 {
-	return loadSignals(nullptr, signalsJ);
+	return loadSignals(nullptr, nullptr, signalsJ);
 }
 
 CtlConfigT* Composer::ctlConfig()
@@ -543,14 +615,12 @@ CtlConfigT* Composer::ctlConfig()
 	return ctlConfig_;
 }
 
-int Composer::initSourcesAPI()
+void Composer::initSourcesAPI()
 {
-	int err = 0;
 	for(auto& src: sourcesListV_)
 	{
-		err += src->init();
+		src->init();
 	}
-	return err;
 }
 
 std::shared_ptr<SourceAPI> Composer::getSourceAPI(const std::string& api)
@@ -649,15 +719,13 @@ json_object* Composer::getsignalValue(const std::string& sig, json_object* optio
 	return finalResponse;
 }
 
-int Composer::execSignalsSubscription()
+void Composer::execSignalsSubscription()
 {
-	int err = 0;
 	for(std::shared_ptr<SourceAPI> srcAPI: sourcesListV_)
 	{
 		if (srcAPI->api() != std::string(ctlConfig_->api))
 		{
-			err = srcAPI->makeSubscription();
+			srcAPI->makeSubscription();
 		}
 	}
-	return err;
 }

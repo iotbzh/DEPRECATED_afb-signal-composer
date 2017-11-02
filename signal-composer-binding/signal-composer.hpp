@@ -18,7 +18,6 @@
 
 #include <vector>
 #include <string>
-
 #include "source.hpp"
 
 class Composer
@@ -34,15 +33,16 @@ private:
 	~Composer();
 
 	CtlActionT* convert2Action(const std::string& name, json_object* action);
-	static int pluginsLoad(CtlSectionT *section, json_object *pluginsJ);
+	void loadAdditionnalFiles(json_object* filesJ);
+	static int pluginsLoad(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ);
 
 	int loadOneSourceAPI(json_object* sourcesJ);
-	static int loadSourcesAPI(CtlSectionT* section, json_object *signalsJ);
+	static int loadSourcesAPI(AFB_ApiT apihandle, CtlSectionT* section, json_object *signalsJ);
 
 	int loadOneSignal(json_object* signalsJ);
-	static int loadSignals(CtlSectionT* section, json_object *signalsJ);
+	static int loadSignals(AFB_ApiT apihandle, CtlSectionT* section, json_object *signalsJ);
 
-	int initSourcesAPI();
+	void initSourcesAPI();
 	std::shared_ptr<SourceAPI> getSourceAPI(const std::string& api);
 	void processOptions(const std::map<std::string, int>& opts, std::shared_ptr<Signal> sig, json_object* response) const;
 public:
@@ -58,5 +58,5 @@ public:
 	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& aName);
 	json_object* getsignalValue(const std::string& sig, json_object* options);
 
-	int execSignalsSubscription();
+	void execSignalsSubscription();
 };

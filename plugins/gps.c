@@ -28,15 +28,15 @@
 #include "ctl-plugin.h"
 #include "wrap-json.h"
 
-CTLP_REGISTER("gps");
+CTLP_LUA_REGISTER("gps");
 
 // Call at initialisation time
 CTLP_ONLOAD(plugin, api) {
-	AFB_NOTICE ("GPS plugin: label='%s' version='%s' info='%s'", plugin->label, plugin->version, plugin->info);
+	AFB_NOTICE ("GPS plugin: uid='%s' 'info='%s'", plugin->uid, plugin->info);
 	return api;
 }
 
-CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
+CTLP_CAPI (subscribeToLow, source, argsJ, eventJ) {
 	json_object* subscribeArgsJ = NULL, *responseJ = NULL;
 
 	int err = 0;

@@ -2,7 +2,7 @@
 	"$schema": "http://iot.bzh/download/public/schema/json/signal-composer-schema.json",
 	"sources": [
 		{
-			"uid": "-serviceCAN",
+			"uid": "CAN-service",
 			"api": "low-can",
 			"info": "Low level binding to handle CAN bus communications",
 			"getSignals": {

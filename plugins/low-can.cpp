@@ -31,7 +31,7 @@
 extern "C"
 {
 
-CTLP_REGISTER("low-can");
+CTLP_CAPI_REGISTER("low-can");
 
 typedef struct {
 	bool door;
@@ -66,15 +66,14 @@ CTLP_ONLOAD(plugin, composerHandle)
 	pluginCtx->pluginHandle = (struct signalCBT*)composerHandle;
 	pluginCtx->subscriptionBatch = json_object_new_array();
 
-	AFB_NOTICE ("Low-can plugin: label='%s' version='%s' info='%s'",
-		plugin->label,
-		plugin->version,
+	AFB_NOTICE ("Low-can plugin: label='%s' info='%s'",
+		plugin->uid,
 		plugin->info);
 
 	return (void*)pluginCtx;
 }
 
-CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
+CTLP_CAPI (subscribeToLow, source, argsJ, eventJ) {
 	lowCANCtxT *pluginCtx = (lowCANCtxT*)source->context;
 	json_object* dependsArrayJ = nullptr, *subscribeArgsJ = nullptr, *subscribeFilterJ = nullptr, *responseJ = nullptr, *filterJ = nullptr;
 	const char *id = nullptr, *event = nullptr, *unit = nullptr;
@@ -125,7 +124,7 @@ CTLP_CAPI (subscribeToLow, source, argsJ, eventJ, context) {
 	return err;
 }
 
-CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
+CTLP_CAPI (isOpen, source, argsJ, eventJ) {
 	const char *eventName = nullptr;
 	int eventStatus;
 	uint64_t timestamp;
@@ -168,7 +167,7 @@ CTLP_CAPI (isOpen, source, argsJ, eventJ, context) {
 	}
 
 	AFB_DEBUG("This is the situation: source:%s, args:%s, event:%s,\n fld: %s, flw: %s, frd: %s, frw: %s, rld: %s, rlw: %s, rrd: %s, rrw: %s",
-	source->label,
+	source->uid,
 	json_object_to_json_string(argsJ),
 	json_object_to_json_string(eventJ),
 	pluginCtx->allDoorsCtx.front_left.door ? "true":"false",

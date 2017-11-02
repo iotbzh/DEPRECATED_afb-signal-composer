@@ -29,9 +29,7 @@
 
 extern "C"
 {
-
-CTLP_LUALOAD
-CTLP_REGISTER("builtin");
+CTLP_LUA_REGISTER("builtin");
 
 static struct signalCBT* pluginCtx = NULL;
 
@@ -40,18 +38,17 @@ CTLP_ONLOAD(plugin, handle) {
 	pluginCtx = (struct signalCBT*)calloc (1, sizeof(struct signalCBT));
 	pluginCtx = (struct signalCBT*)handle;
 
-	AFB_NOTICE ("Low-can plugin: label='%s' version='%s' info='%s'",
-		plugin->label,
-		plugin->version,
+	AFB_NOTICE ("Low-can plugin: label='%s' info='%s'",
+		plugin->uid,
 		plugin->info);
 
 	return (void*)pluginCtx;
 }
 
-CTLP_CAPI (defaultOnReceived, source, argsJ, eventJ, context)
+CTLP_CAPI (defaultOnReceived, source, argsJ, eventJ)
 {
 	struct signalCBT* ctx = (struct signalCBT*)source->context;
-	AFB_NOTICE("source: %s argj: %s, eventJ %s", source->label,
+	AFB_NOTICE("source: %s argj: %s, eventJ %s", source->uid,
 		json_object_to_json_string(argsJ),
 		json_object_to_json_string(eventJ));
 	void* sig = ctx->aSignal;
@@ -70,7 +67,7 @@ CTLP_CAPI (defaultOnReceived, source, argsJ, eventJ, context)
 	return 0;
 }
 
-CTLP_LUA2C (setSignalValueWrap, label, argsJ)
+CTLP_LUA2C (setSignalValueWrap, source, argsJ, responseJ)
 {
 	const char* name = nullptr;
 	double resultNum;
@@ -80,7 +77,7 @@ CTLP_LUA2C (setSignalValueWrap, label, argsJ)
 		"value", &resultNum,
 		"timestamp", &timestamp))
 	{
-		AFB_ERROR("Fail to set value for label: %s, argsJ: %s", label, json_object_to_json_string(argsJ));
+		AFB_ERROR("Fail to set value for uid: %s, argsJ: %s", source->uid, json_object_to_json_string(argsJ));
 		return -1;
 	}
 	struct signalValue result = resultNum;
