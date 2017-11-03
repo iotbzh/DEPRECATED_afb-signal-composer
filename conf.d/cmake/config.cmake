@@ -128,9 +128,9 @@ list(APPEND link_libraries afb-utilities lua-lib)
 # -O2
 # CACHE STRING "Compilation flags for RELEASE build type.")
 
-add_definitions(-DCONTROL_PLUGIN_PATH="${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}/lib/plugins")
-add_definitions(-DCONTROL_CONFIG_PATH="${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}/etc")
-add_definitions(-DCONTROL_SUPPORT_LUA=1)
+set(CONTROL_SUPPORT_LUA 1)
+add_definitions(-DCONTROL_PLUGIN_PATH="${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}/lib/plugins:${CMAKE_BINARY_DIR}/package/lib/plugins")
+add_definitions(-DCONTROL_CONFIG_PATH="${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}/etc:${CMAKE_BINARY_DIR}/package/etc")
 add_definitions(-DCTL_PLUGIN_MAGIC=3286576532)
 
 # (BUG!!!) as PKG_CONFIG_PATH does not work [should be an env variable]
