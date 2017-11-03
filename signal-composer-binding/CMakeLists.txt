@@ -37,7 +37,6 @@ PROJECT_TARGET_ADD(signal-composer)
 
 	# Library dependencies (include updates automatically)
 	TARGET_LINK_LIBRARIES(${TARGET_NAME}
-		#afb-controller
 		ctl-utilities
 		${link_libraries}
 	)

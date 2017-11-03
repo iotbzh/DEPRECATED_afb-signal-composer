@@ -1,6 +1,6 @@
 {
 	"openapi": "3.0.0",
-	"$schema": "http:iot.bzh/download/openapi/schema-3.0/default-schema.json",
+	"$schema": "http://iot.bzh/download/openapi/schema-3.0/default-schema.json",
 	"info": {
 		"description": "",
 		"title": "signals-composer-service",
