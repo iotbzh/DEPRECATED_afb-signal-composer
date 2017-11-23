@@ -207,7 +207,7 @@ int Composer::pluginsLoad(AFB_ApiT apiHandle, CtlSectionT *section, json_object 
 	{
 		wrap_json_pack(&builtinJ, "{ss,ss,ss,ss,s[s]}",
 			"uid", "builtin",
-			"version", "4.99",
+			"ldpath", CONTROL_PLUGIN_PATH,
 			"info", "Builtin routine for onReceived or getSignals routines",
 			"basename", "builtin",
 			"lua2c", "setSignalValueWrap");

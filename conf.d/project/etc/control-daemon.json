@@ -10,13 +10,13 @@
 	"plugins": [
 		{
 			"uid": "low-can-callbacks",
-			"version": "1.0",
+			"ldpath": "/home/claneys/Workspace/Sources/IOTbzh/Signaling/afb-signal-composer/build/package/lib/plugins",
 			"info": "Manage interaction with low-can service",
 			"basename": "low-can"
 		},
 		{
 			"uid": "gps-callbacks",
-			"version": "1.0",
+			"ldpath": "/home/claneys/Workspace/Sources/IOTbzh/Signaling/afb-signal-composer/build/package/lib/plugins",
 			"info": "Manage interaction with gps service",
 			"basename": "gps"
 		}
