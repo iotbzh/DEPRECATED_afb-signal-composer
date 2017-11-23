@@ -38,7 +38,7 @@ CTLP_ONLOAD(plugin, handle) {
 	pluginCtx = (struct signalCBT*)calloc (1, sizeof(struct signalCBT));
 	pluginCtx = (struct signalCBT*)handle;
 
-	AFB_NOTICE ("Low-can plugin: label='%s' info='%s'",
+	AFB_NOTICE ("Signal Composer builtin plugin: label='%s' info='%s'",
 		plugin->uid,
 		plugin->info);
 

@@ -290,6 +290,7 @@ int Composer::loadSourcesAPI(AFB_ApiT apihandle, CtlSectionT* section, json_obje
 
 	if(sourcesJ)
 	{
+		AFB_ApiNotice("Sources JSON: %s", json_object_to_json_string(sourcesJ));
 		json_object *sigCompJ = nullptr;
 		// add the signal composer itself as source
 		wrap_json_pack(&sigCompJ, "{ss,ss}",
