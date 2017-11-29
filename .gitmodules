@@ -1,9 +1,9 @@
 [submodule "afb-utilities"]
 	path = afb-utilities
-	url = https://github.com/iotbzh/afb-utilities.git
+	url = https://gerrit.automotivelinux.org/gerrit/apps/app-afb-helpers-submodule
 [submodule "conf.d/app-templates"]
 	path = conf.d/app-templates
 	url = https://gerrit.automotivelinux.org/gerrit/apps/app-templates
 [submodule "ctl-utilities"]
 	path = ctl-utilities
-	url = git@github.com:fulup-bzh/ctl-utilities.git
+	url = https://gerrit.automotivelinux.org/gerrit/apps/app-controller-submodule
