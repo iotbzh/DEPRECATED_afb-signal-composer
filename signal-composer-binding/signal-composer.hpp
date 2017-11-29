@@ -33,7 +33,6 @@ private:
 	~Composer();
 
 	CtlActionT* convert2Action(const std::string& name, json_object* action);
-	void loadAdditionnalFiles(json_object* filesJ);
 	static int pluginsLoad(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ);
 
 	int loadOneSourceAPI(json_object* sourcesJ);

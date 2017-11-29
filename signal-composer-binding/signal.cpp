@@ -123,7 +123,7 @@ json_object* Signal::toJSON() const
 	}
 
 	wrap_json_pack(&queryJ, "{ss,so*}",
-			"id", id_.c_str(),
+			"uid", id_.c_str(),
 			"getSignalsArgs", getSignalsArgs_);
 
 	if (!event_.empty()) {json_object_object_add(queryJ, "event", json_object_new_string(event_.c_str()));}

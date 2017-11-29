@@ -101,7 +101,7 @@ void SourceAPI::makeSubscription()
 	{
 		CtlSourceT source;
 		source.uid = api_.c_str();
-		source.api  = nullptr; // We use binding v2, no dynamic API.
+		source.api = nullptr; // We use binding v2, no dynamic API.
 		source.request = {nullptr, nullptr};
 
 		for(auto& sig: signalsMap_)

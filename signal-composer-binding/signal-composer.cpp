@@ -96,7 +96,7 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 	json_object *functionArgsJ = nullptr, *ctlActionJ = nullptr;
 	char *function;
 	const char *plugin;
-	CtlActionT *ctlAction = nullptr;
+	CtlActionT *ctlAction = new CtlActionT;
 
 	if(actionJ &&
 		!wrap_json_unpack(actionJ, "{ss,s?s,s?o !}", "function", &function,
@@ -173,25 +173,6 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 	return ctlAction;
 }
 
-void Composer::loadAdditionnalFiles(json_object* filesJ)
-{
-	std::vector<std::string> files;
-	if(filesJ)
-	{
-		wrap_json_optarray_for_all(filesJ, extractString, (void*)&files);
-		if(! files.empty())
-		{
-			for(const auto& oneFile: files)
-			{
-				std::string filepath = CtlConfigSearch(nullptr, CONTROL_CONFIG_PATH, oneFile.c_str());
-				json_object* oneFileJ = json_object_from_file(filepath.c_str());
-				if(oneFileJ)
-					{loadSourcesAPI(nullptr, nullptr, oneFileJ);}
-			}
-		}
-	}
-}
-
 /// @brief Add the builtin plugin in the default plugins section definition
 ///
 /// @param[in] section - Control Section structure
@@ -232,24 +213,22 @@ int Composer::loadOneSourceAPI(json_object* sourceJ)
 {
 	json_object *initJ = nullptr,
 				*getSignalsJ = nullptr,
-				*onReceivedJ = nullptr,
-				*filesJ = nullptr;
+				*onReceivedJ = nullptr;
 	CtlActionT  *initCtl = nullptr,
 				*getSignalsCtl = nullptr,
 				*onReceivedCtl = nullptr;
-	const char *api, *info;
+	const char *uid, *api, *info;
 	int retention = 0;
 
 	int err = wrap_json_unpack(sourceJ, "{ss,s?s,s?o,s?o,s?o,s?i,s?o !}",
+			"uid", &uid,
 			"api", &api,
 			"info", &info,
 			"init", &initJ,
 			"getSignals", &getSignalsJ,
 			// Signals field to make signals conf by sources
 			"onReceived", &onReceivedJ,
-			"retention", &retention,
-			// External files to load where lies others sources obj
-			"files", &filesJ);
+			"retention", &retention);
 	if (err)
 	{
 		AFB_ERROR("Missing something api|[info]|[init]|[getSignals] in %s", json_object_get_string(sourceJ));
@@ -277,9 +256,6 @@ int Composer::loadOneSourceAPI(json_object* sourceJ)
 	onReceivedCtl = onReceivedJ ? convert2Action("onReceived", onReceivedJ) : nullptr;
 
 	sourcesListV_.push_back(std::make_shared<SourceAPI>(api, info, initCtl, getSignalsCtl, onReceivedCtl, retention));
-
-	loadAdditionnalFiles(filesJ);
-
 	return err;
 }
 
@@ -290,14 +266,14 @@ int Composer::loadSourcesAPI(AFB_ApiT apihandle, CtlSectionT* section, json_obje
 
 	if(sourcesJ)
 	{
-		AFB_ApiNotice("Sources JSON: %s", json_object_to_json_string(sourcesJ));
 		json_object *sigCompJ = nullptr;
 		// add the signal composer itself as source
 		wrap_json_pack(&sigCompJ, "{ss,ss}",
 		"api", afbBindingV2.api,
 		"info", "Api on behalf the virtual signals are sent");
 
-		json_object_array_add(sourcesJ, sigCompJ);
+		if(json_object_is_type(sourcesJ, json_type_array))
+			json_object_array_add(sourcesJ, sigCompJ);
 
 		if (json_object_get_type(sourcesJ) == json_type_array)
 		{
@@ -326,8 +302,7 @@ int Composer::loadOneSignal(json_object* signalJ)
 {
 	json_object *onReceivedJ = nullptr,
 				*dependsJ = nullptr,
-				*getSignalsArgs = nullptr,
-				*filesJ = nullptr;
+				*getSignalsArgs = nullptr;
 	CtlActionT* onReceivedCtl;
 	const char *id = nullptr,
 			   *event = nullptr,
@@ -339,16 +314,14 @@ int Composer::loadOneSignal(json_object* signalJ)
 	std::shared_ptr<SourceAPI> src = nullptr;
 
 	int err = wrap_json_unpack(signalJ, "{ss,s?s,s?o,s?o,s?F,s?s,s?F,s?o !}",
-			"id", &id,
+			"uid", &id,
 			"event", &event,
 			"depends", &dependsJ,
 			"getSignalsArgs", &getSignalsArgs,
 			"retention", &retention,
 			"unit", &unit,
 			"frequency", &frequency,
-			"onReceived", &onReceivedJ,
-			// External files to load where lies others sources obj
-			"files", &filesJ);
+			"onReceived", &onReceivedJ);
 	if (err)
 	{
 		AFB_ERROR("Missing something id|[event|depends]|[getSignalsArgs]|[retention]|[unit]|[frequency]|[onReceived] in %s", json_object_get_string(signalJ));
@@ -435,8 +408,6 @@ int Composer::loadOneSignal(json_object* signalJ)
 		{src->addSignal(id, event, dependsV, retention, unit, frequency, onReceivedCtl, getSignalsArgs);}
 	else
 		{err = -1;}
-
-	loadAdditionnalFiles(filesJ);
 
 	return err;
 }
