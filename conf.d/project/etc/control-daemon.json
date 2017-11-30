@@ -22,7 +22,7 @@
 		}
 	],
 	"signals": {
-		"files": ["sig-doors", "sig-demoboard" ]
+		"files": ["sig-doors", "sig-demoboard", "sig-geoloc" ]
 	},
 	"sources": {
 		"files": "sources"
