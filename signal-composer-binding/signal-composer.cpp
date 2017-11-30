@@ -376,14 +376,14 @@ int Composer::loadOneSignal(json_object* signalJ)
 			"onReceived", &onReceivedJ);
 	if (err)
 	{
-		AFB_ERROR("Missing something id|[event|depends]|[getSignalsArgs]|[retention]|[unit]|[frequency]|[onReceived] in %s", json_object_get_string(signalJ));
+		AFB_ERROR("Missing something uid|[event|depends]|[getSignalsArgs]|[retention]|[unit]|[frequency]|[onReceived] in %s", json_object_get_string(signalJ));
 		return err;
 	}
 
 	// event or depends field manadatory
 	if( (!event && !dependsJ) || (event && dependsJ) )
 	{
-		AFB_ERROR("Missing something id|[event|depends]|[getSignalsArgs]|[retention]|[unit]|[frequency]|[onReceived] in %s. Or you declare event AND depends, only one of them is needed.", json_object_get_string(signalJ));
+		AFB_ERROR("Missing something uid|[event|depends]|[getSignalsArgs]|[retention]|[unit]|[frequency]|[onReceived] in %s. Or you declare event AND depends, only one of them is needed.", json_object_get_string(signalJ));
 		return -1;
 	}
 
@@ -478,8 +478,7 @@ int Composer::loadSignals(AFB_ApiT apihandle, CtlSectionT* section, json_object 
 			for (int idx = 0; idx < count; idx++)
 			{
 				json_object *signalJ = json_object_array_get_idx(signalsJ, idx);
-				err = composer.loadOneSignal(signalJ);
-				if (err) return err;
+				err += composer.loadOneSignal(signalJ);
 			}
 		}
 		else
