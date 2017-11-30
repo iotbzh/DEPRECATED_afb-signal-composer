@@ -33,6 +33,9 @@ private:
 	~Composer();
 
 	CtlActionT* convert2Action(const std::string& name, json_object* action);
+	json_object* buildPluginAction(std::string name, std::string function, json_object *functionArgsJ);
+	json_object* buildApiAction(std::string name, std::string function, json_object *functionArgsJ);
+	json_object* buildLuaAction(std::string name, std::string function, json_object *functionArgsJ);
 	static int pluginsLoad(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ);
 
 	int loadOneSourceAPI(json_object* sourcesJ);
