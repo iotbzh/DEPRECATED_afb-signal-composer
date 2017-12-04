@@ -117,7 +117,7 @@ void SourceAPI::makeSubscription()
 			ActionExecOne(&source, getSignals_, signalJ);
 			// Considerate signal subscribed no matter what
 			sig.second->subscribed_ = true;
-			delete(source.context);
+			delete((struct signalCBT*)source.context);
 		}
 		source.uid = "";
 		ActionExecOne(&source, getSignals_, nullptr);

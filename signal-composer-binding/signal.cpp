@@ -72,7 +72,7 @@ Signal::Signal(const std::string& id,
 
 Signal::~Signal()
 {
-	free(onReceived_);
+	delete(onReceived_);
 }
 
 Signal::operator bool() const
