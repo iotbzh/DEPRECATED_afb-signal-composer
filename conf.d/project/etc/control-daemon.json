@@ -3,7 +3,7 @@
 	"metadata": {
 		"uid": "Signal Composer",
 		"version": "1.0",
-		"api": "test",
+		"api": "signal-composer",
 		"info": "Signal composer Configuration",
 		"require": ["low-can"]
 	},
