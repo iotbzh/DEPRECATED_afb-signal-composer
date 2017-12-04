@@ -37,10 +37,8 @@
 			"retention": 30,
 			"unit": "degree",
 			"frequency": 1,
-			"actions": {
-				"uid": "Heading calculation",
-				"function": "lua://_Heading",
-				"args": {}
+			"onReceived": {
+				"function": "lua://_Heading"
 			}
 		},
 		{
