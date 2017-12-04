@@ -112,12 +112,14 @@ void SourceAPI::makeSubscription()
 				AFB_ERROR("Error building JSON query object to subscribe to for signal %s", sig.second->id().c_str());
 				break;
 			}
-			source.uid = sig.second->id().c_str();
+			source.uid = sig.first.c_str();
 			source.context = (void*)sig.second->get_context();
 			ActionExecOne(&source, getSignals_, signalJ);
 			// Considerate signal subscribed no matter what
 			sig.second->subscribed_ = true;
+			delete(source.context);
 		}
+		source.uid = "";
 		ActionExecOne(&source, getSignals_, nullptr);
 	}
 }

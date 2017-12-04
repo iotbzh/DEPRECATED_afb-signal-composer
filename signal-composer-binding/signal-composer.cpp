@@ -177,6 +177,7 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 	char *function;
 	const char *plugin;
 	CtlActionT *ctlAction = new CtlActionT;
+	memset(ctlAction, 0, sizeof(CtlActionT));
 
 	if(actionJ &&
 		!wrap_json_unpack(actionJ, "{ss,s?s,s?o !}", "function", &function,
@@ -218,9 +219,12 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 	}
 
 	if(ctlActionJ)
-		{ActionLoadOne(nullptr, ctlAction, ctlActionJ, 0);}
+	{
+		if(!ActionLoadOne(nullptr, ctlAction, ctlActionJ, 0))
+			return ctlAction;
+	}
 
-	return ctlAction;
+	return nullptr;
 }
 
 /// @brief Add the builtin plugin in the default plugins section definition
@@ -359,13 +363,13 @@ int Composer::loadOneSignal(json_object* signalJ)
 	const char *id = nullptr,
 			   *event = nullptr,
 			   *unit = nullptr;
-	int retention;
+	int retention = 0;
 	double frequency=0.0;
 	std::vector<std::string> dependsV;
 	ssize_t sep;
 	std::shared_ptr<SourceAPI> src = nullptr;
 
-	int err = wrap_json_unpack(signalJ, "{ss,s?s,s?o,s?o,s?F,s?s,s?F,s?o !}",
+	int err = wrap_json_unpack(signalJ, "{ss,s?s,s?o,s?o,s?i,s?s,s?F,s?o !}",
 			"uid", &id,
 			"event", &event,
 			"depends", &dependsJ,
@@ -443,8 +447,9 @@ int Composer::loadOneSignal(json_object* signalJ)
 	unit = !unit ? "" : unit;
 
 	// Set default onReceived action if not specified
-	char* uid = strndup("onReceived_", 11);
-	uid = strncat(uid, id, strlen(id));
+	char uid[CONTROL_MAXPATH_LEN] = "onReceived_";
+	strncat(uid, id, strlen(id));
+
 	if(!onReceivedJ)
 	{
 		onReceivedCtl = src->signalsDefault().onReceived ?

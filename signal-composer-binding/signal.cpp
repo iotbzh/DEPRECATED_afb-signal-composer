@@ -142,7 +142,7 @@ json_object* Signal::toJSON() const
 
 struct signalCBT* Signal::get_context()
 {
-	struct signalCBT* ctx =	(struct signalCBT*)calloc (1, sizeof(struct signalCBT));
+	struct signalCBT* ctx =	new struct signalCBT;
 
 	if(!ctx->searchNsetSignalValue)
 		{ctx->searchNsetSignalValue = searchNsetSignalValueHandle;}
