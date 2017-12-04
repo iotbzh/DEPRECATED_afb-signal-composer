@@ -144,10 +144,8 @@ struct signalCBT* Signal::get_context()
 {
 	struct signalCBT* ctx =	new struct signalCBT;
 
-	if(!ctx->searchNsetSignalValue)
-		{ctx->searchNsetSignalValue = searchNsetSignalValueHandle;}
-	if(!ctx->setSignalValue)
-		{ctx->setSignalValue = setSignalValueHandle;}
+	ctx->searchNsetSignalValue = searchNsetSignalValueHandle;
+	ctx->setSignalValue = setSignalValueHandle;
 
 	ctx->aSignal = (void*)this;
 	return ctx;
