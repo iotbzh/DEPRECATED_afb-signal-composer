@@ -575,7 +575,7 @@ void* Composer::createContext(void* ctx)
 
 void Composer::destroyContext(void* ctx)
 {
-	delete(ctx);
+	delete(reinterpret_cast<clientAppCtx*>(ctx));
 }
 
 std::vector<std::string> Composer::parseURI(const std::string& uri)
