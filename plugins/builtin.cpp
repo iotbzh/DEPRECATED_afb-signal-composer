@@ -34,7 +34,7 @@ CTLP_LUA_REGISTER("builtin");
 static struct signalCBT* pluginCtx = NULL;
 
 // Call at initialisation time
-CTLP_ONLOAD(plugin, handle) {
+/*CTLP_ONLOAD(plugin, handle) {
 	pluginCtx = (struct signalCBT*)calloc (1, sizeof(struct signalCBT));
 	pluginCtx = (struct signalCBT*)handle;
 
@@ -43,7 +43,7 @@ CTLP_ONLOAD(plugin, handle) {
 		plugin->info);
 
 	return (void*)pluginCtx;
-}
+}*/
 
 CTLP_CAPI (defaultOnReceived, source, argsJ, eventJ)
 {

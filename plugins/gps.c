@@ -31,10 +31,10 @@
 CTLP_LUA_REGISTER("gps");
 
 // Call at initialisation time
-CTLP_ONLOAD(plugin, api) {
+/*CTLP_ONLOAD(plugin, api) {
 	AFB_NOTICE ("GPS plugin: uid='%s' 'info='%s'", plugin->uid, plugin->info);
 	return api;
-}
+}*/
 
 CTLP_CAPI (subscribeToLow, source, argsJ, eventJ) {
 	json_object* subscribeArgsJ = NULL, *responseJ = NULL;
