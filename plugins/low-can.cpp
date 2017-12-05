@@ -50,11 +50,6 @@ struct pluginCtxT {
 	allDoorsCtxT allDoorsCtx;
 };
 
-struct pluginCtxT pluginCtx = {
-	json_object_new_array(),
-	{false, false, false, false, false, false, false, false}
-};
-
 void setDoor(doorT* aDoor, const char* eventName, int eventStatus)
 {
 	if(strcasestr(eventName, "door")) {aDoor->door = eventStatus;}
@@ -63,27 +58,26 @@ void setDoor(doorT* aDoor, const char* eventName, int eventStatus)
 }
 
 // Call at initialisation time
-/*
 CTLP_ONLOAD(plugin, composerHandle)
 {
-	lowCANCtxT *pluginCtx = (lowCANCtxT*)calloc (1, sizeof(lowCANCtxT));
-
-	pluginCtx->pluginHandle = (struct signalCBT*)composerHandle;
+	struct pluginCtxT* pluginCtx = new struct pluginCtxT;
 	pluginCtx->subscriptionBatch = json_object_new_array();
+	memset(&pluginCtx->allDoorsCtx, 0, sizeof(allDoorsCtxT));
 
-	AFB_NOTICE ("Low-can plugin: label='%s' info='%s'",
-		plugin->uid,
-		plugin->info);
+	struct signalCBT* handle = (struct signalCBT*)composerHandle;
+	handle->pluginCtx = pluginCtx;
 
-	return (void*)pluginCtx;
+	return (void*)handle;
 }
-*/
 
 CTLP_CAPI (subscribeToLow, source, argsJ, eventJ) {
 	json_object* dependsArrayJ = nullptr, *subscribeArgsJ = nullptr, *subscribeFilterJ = nullptr, *responseJ = nullptr, *filterJ = nullptr;
 	const char *id = nullptr, *event = nullptr, *unit = nullptr;
 	double frequency = 0;
 	int err = 0;
+
+	struct signalCBT* context = reinterpret_cast<struct signalCBT*>(source->context);
+	struct pluginCtxT* pluginCtx = reinterpret_cast<struct pluginCtxT*>(context->pluginCtx);
 
 	if(eventJ)
 	{
@@ -104,7 +98,10 @@ CTLP_CAPI (subscribeToLow, source, argsJ, eventJ) {
 		if(frequency > 0 && !filterJ)
 			{wrap_json_pack(&subscribeFilterJ, "{sf}", "frequency", frequency);}
 		else
-			{subscribeFilterJ = filterJ;}
+		{
+			json_object_get(filterJ);
+			subscribeFilterJ = filterJ;
+		}
 
 		std::string eventStr = std::string(event);
 		std::string lowEvent = eventStr.substr(eventStr.find("/")+1);
@@ -116,14 +113,14 @@ CTLP_CAPI (subscribeToLow, source, argsJ, eventJ) {
 			AFB_ERROR("Error building subscription query object");
 			return err;
 		}
-		json_object_array_add(pluginCtx.subscriptionBatch, subscribeArgsJ);
+		json_object_array_add(pluginCtx->subscriptionBatch, subscribeArgsJ);
 	}
 	else
 	{
-		AFB_DEBUG("Calling subscribe with %s", json_object_to_json_string_ext(pluginCtx.subscriptionBatch, JSON_C_TO_STRING_PRETTY));
-		err = afb_service_call_sync("low-can", "subscribe", pluginCtx.subscriptionBatch, &responseJ);
+		AFB_DEBUG("Calling subscribe with %s", json_object_to_json_string_ext(pluginCtx->subscriptionBatch, JSON_C_TO_STRING_PRETTY));
+		err = afb_service_call_sync("low-can", "subscribe", pluginCtx->subscriptionBatch, &responseJ);
 		if(err)
-			{AFB_ERROR("Subscribe to '%s' responseJ:%s", json_object_to_json_string_ext(pluginCtx.subscriptionBatch, JSON_C_TO_STRING_PRETTY), json_object_to_json_string(responseJ));}
+			{AFB_ERROR("Subscribe to '%s' responseJ:%s", json_object_to_json_string_ext(pluginCtx->subscriptionBatch, JSON_C_TO_STRING_PRETTY), json_object_to_json_string(responseJ));}
 	}
 
 	return err;
@@ -133,7 +130,8 @@ CTLP_CAPI (isOpen, source, argsJ, eventJ) {
 	const char *eventName = nullptr;
 	int eventStatus;
 	uint64_t timestamp;
-	signalCBT *sourceCtx=(signalCBT*)source->context;
+	struct signalCBT* context = reinterpret_cast<struct signalCBT*>(source->context);
+	struct pluginCtxT* pluginCtx = reinterpret_cast<struct pluginCtxT*>(context->pluginCtx);
 
 	int err = wrap_json_unpack(eventJ, "{ss,sb,s?F}",
 		"name", &eventName,
@@ -147,23 +145,23 @@ CTLP_CAPI (isOpen, source, argsJ, eventJ) {
 
 	if(strcasestr(eventName, "front_left"))
 	{
-		sourceCtx->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
-		setDoor(&pluginCtx.allDoorsCtx.front_left, eventName, eventStatus);
+		context->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
+		setDoor(&pluginCtx->allDoorsCtx.front_left, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "front_right"))
 	{
-		sourceCtx->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
-		setDoor(&pluginCtx.allDoorsCtx.front_right, eventName, eventStatus);
+		context->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
+		setDoor(&pluginCtx->allDoorsCtx.front_right, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "rear_left"))
 	{
-		sourceCtx->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
-		setDoor(&pluginCtx.allDoorsCtx.rear_left, eventName, eventStatus);
+		context->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
+		setDoor(&pluginCtx->allDoorsCtx.rear_left, eventName, eventStatus);
 	}
 	else if(strcasestr(eventName, "rear_right"))
 	{
-		sourceCtx->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
-		setDoor(&pluginCtx.allDoorsCtx.rear_right, eventName, eventStatus);
+		context->searchNsetSignalValue(eventName,(uint64_t)timestamp, eventStatus);
+		setDoor(&pluginCtx->allDoorsCtx.rear_right, eventName, eventStatus);
 	}
 	else
 	{
@@ -173,16 +171,16 @@ CTLP_CAPI (isOpen, source, argsJ, eventJ) {
 
 	AFB_DEBUG("This is the situation: source:%s, args:%s, event:%s,\n fld: %s, flw: %s, frd: %s, frw: %s, rld: %s, rlw: %s, rrd: %s, rrw: %s",
 	source->uid,
-	json_object_to_json_string(argsJ),
-	json_object_to_json_string(eventJ),
-	pluginCtx.allDoorsCtx.front_left.door ? "true":"false",
-	pluginCtx.allDoorsCtx.front_left.window ? "true":"false",
-	pluginCtx.allDoorsCtx.front_right.door ? "true":"false",
-	pluginCtx.allDoorsCtx.front_right.window ? "true":"false",
-	pluginCtx.allDoorsCtx.rear_left.door ? "true":"false",
-	pluginCtx.allDoorsCtx.rear_left.window ? "true":"false",
-	pluginCtx.allDoorsCtx.rear_right.door ? "true":"false",
-	pluginCtx.allDoorsCtx.rear_right.window ? "true":"false"
+	argsJ ? json_object_to_json_string(argsJ):"",
+	eventJ ? json_object_to_json_string(eventJ):"",
+	pluginCtx->allDoorsCtx.front_left.door ? "true":"false",
+	pluginCtx->allDoorsCtx.front_left.window ? "true":"false",
+	pluginCtx->allDoorsCtx.front_right.door ? "true":"false",
+	pluginCtx->allDoorsCtx.front_right.window ? "true":"false",
+	pluginCtx->allDoorsCtx.rear_left.door ? "true":"false",
+	pluginCtx->allDoorsCtx.rear_left.window ? "true":"false",
+	pluginCtx->allDoorsCtx.rear_right.door ? "true":"false",
+	pluginCtx->allDoorsCtx.rear_right.window ? "true":"false"
 );
 
 	return 0;

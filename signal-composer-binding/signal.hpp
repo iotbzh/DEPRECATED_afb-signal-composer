@@ -73,6 +73,7 @@ private:
 	std::string unit_;
 	CtlActionT* onReceived_;
 	json_object* getSignalsArgs_;
+	struct signalCBT* signalCtx_;
 
 public:
 	bool subscribed_; ///< subscribed_ - boolean value telling if yes or no the signal has been subcribed to the low level binding.
@@ -114,4 +115,5 @@ struct signalCBT
 	void (*searchNsetSignalValue)(const char* aName, uint64_t timestamp, struct signalValue value);
 	void (*setSignalValue)(void* aSignal, uint64_t timestamp, struct signalValue value);
 	void* aSignal;
+	void* pluginCtx;
 };

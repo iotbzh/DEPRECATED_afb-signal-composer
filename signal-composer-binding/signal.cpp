@@ -34,6 +34,7 @@ Signal::Signal()
  unit_(""),
  onReceived_(nullptr),
  getSignalsArgs_(nullptr),
+ signalCtx_(new struct signalCBT),
  subscribed_(false)
 {}
 
@@ -48,6 +49,7 @@ Signal::Signal(const std::string& id, const std::string& event, std::vector<std:
  unit_(unit),
  onReceived_(onReceived),
  getSignalsArgs_(getSignalsArgs),
+ signalCtx_(new struct signalCBT),
  subscribed_(false)
 {}
 
@@ -67,11 +69,13 @@ Signal::Signal(const std::string& id,
  unit_(unit),
  onReceived_(onReceived),
  getSignalsArgs_(),
+ signalCtx_(new struct signalCBT),
  subscribed_(false)
 {}
 
 Signal::~Signal()
 {
+	delete(signalCtx_);
 	delete(onReceived_);
 }
 
@@ -126,9 +130,16 @@ json_object* Signal::toJSON() const
 			"uid", id_.c_str(),
 			"getSignalsArgs", getSignalsArgs_);
 
-	if (!event_.empty()) {json_object_object_add(queryJ, "event", json_object_new_string(event_.c_str()));}
-	if (json_object_array_length(nameArrayJ)) {json_object_object_add(queryJ, "depends", nameArrayJ);}
+	if (!event_.empty())
+		{json_object_object_add(queryJ, "event", json_object_new_string(event_.c_str()));}
+
+	if (json_object_array_length(nameArrayJ))
+		{json_object_object_add(queryJ, "depends", nameArrayJ);}
+	else
+		{json_object_put(nameArrayJ);}
+
 	if (!unit_.empty()) {json_object_object_add(queryJ, "unit", json_object_new_string(unit_.c_str()));}
+
 	if (frequency_) {json_object_object_add(queryJ, "frequency", json_object_new_double(frequency_));}
 
 	if(timestamp_) {json_object_object_add(queryJ, "timestamp", json_object_new_int64(timestamp_));}
@@ -140,15 +151,31 @@ json_object* Signal::toJSON() const
 	return queryJ;
 }
 
+/// @brief Initialize signal context if not already done and return it.
+///  Signal context is a handle to be use by plugins then they can call
+///  some signal object method setting signal values.
+///  Also if plugin set a context it retrieve it and initiaze the pluginCtx
+///  member then plugin can find a persistent memory area where to hold its
+///  value.
+///
+/// @return a pointer to the signalCtx_ member initialized.
 struct signalCBT* Signal::get_context()
 {
-	struct signalCBT* ctx =	new struct signalCBT;
+	if(!signalCtx_->aSignal ||
+		!signalCtx_->searchNsetSignalValue ||
+		!signalCtx_->setSignalValue)
+	{
+		signalCtx_->searchNsetSignalValue = searchNsetSignalValueHandle;
+		signalCtx_->setSignalValue = setSignalValueHandle;
 
-	ctx->searchNsetSignalValue = searchNsetSignalValueHandle;
-	ctx->setSignalValue = setSignalValueHandle;
+		signalCtx_->aSignal = (void*)this;
 
-	ctx->aSignal = (void*)this;
-	return ctx;
+		signalCtx_->pluginCtx = onReceived_ && onReceived_->type == CTL_TYPE_CB ?
+			onReceived_->exec.cb.plugin->context:
+			nullptr;
+	}
+
+	return signalCtx_;
 }
 
 /// @brief Set Signal timestamp and value property when an incoming

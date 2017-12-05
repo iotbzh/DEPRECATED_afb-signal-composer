@@ -113,11 +113,13 @@ void SourceAPI::makeSubscription()
 				break;
 			}
 			source.uid = sig.first.c_str();
-			source.context = (void*)sig.second->get_context();
+			source.context = getSignals_->type == CTL_TYPE_CB ?
+				getSignals_->exec.cb.plugin->context:
+				nullptr;
 			ActionExecOne(&source, getSignals_, signalJ);
 			// Considerate signal subscribed no matter what
 			sig.second->subscribed_ = true;
-			delete((struct signalCBT*)source.context);
+			json_object_put(signalJ);
 		}
 		source.uid = "";
 		ActionExecOne(&source, getSignals_, nullptr);

@@ -58,6 +58,7 @@ static struct signalCBT pluginHandle = {
 	.searchNsetSignalValue = searchNsetSignalValueHandle,
 	.setSignalValue = setSignalValueHandle,
 	.aSignal = nullptr,
+	.pluginCtx = nullptr,
 };
 
 CtlSectionT Composer::ctlSections_[] = {
