@@ -26,6 +26,7 @@ private:
 	CtlConfigT* ctlConfig_;
 
 	static CtlSectionT ctlSections_[]; ///< Config Section definition (note: controls section index should match handle retrieval in)
+	std::vector<std::shared_ptr<SourceAPI>> newSourcesListV_;
 	std::vector<std::shared_ptr<SourceAPI>> sourcesListV_;
 
 	explicit Composer(const std::string& filepath);
@@ -45,6 +46,7 @@ private:
 	static int loadSignals(AFB_ApiT apihandle, CtlSectionT* section, json_object *signalsJ);
 
 	void initSourcesAPI();
+	void execSignalsSubscription();
 	std::shared_ptr<SourceAPI> getSourceAPI(const std::string& api);
 	void processOptions(const std::map<std::string, int>& opts, std::shared_ptr<Signal> sig, json_object* response) const;
 public:
@@ -53,12 +55,12 @@ public:
 	static void destroyContext(void* ctx);
 	static std::vector<std::string> parseURI(const std::string& uri);
 	int loadConfig(const std::string& filepath);
+	int loadSources(json_object* sourcesJ);
 	int loadSignals(json_object* signalsJ);
+	void initSignals();
 
 	CtlConfigT* ctlConfig();
 	std::vector<std::shared_ptr<Signal>> getAllSignals();
 	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& aName);
 	json_object* getsignalValue(const std::string& sig, json_object* options);
-
-	void execSignalsSubscription();
 };

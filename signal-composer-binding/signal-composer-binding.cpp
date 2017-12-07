@@ -165,19 +165,30 @@ void unsubscribe(afb_req request)
 /// @brief verb that loads JSON configuration (old SigComp.json file now)
 void loadConf(afb_req request)
 {
-	json_object* args = afb_req_json(request), *fileJ;
-	const char* filepath;
+	Composer& composer = Composer::instance();
+	json_object *sourcesJ = nullptr,
+				*signalsJ = nullptr;
+	const char* filepath = afb_req_value(request, "filepath");
 
-	wrap_json_unpack(args, "{s:s}", "filepath", &filepath);
-	fileJ = json_object_from_file(filepath);
+	json_object *fileJ = json_object_from_file(filepath);
 
-	if(Composer::instance().loadSignals(fileJ))
-		{afb_req_fail_f(request, "Loading configuration or subscription error", "Error code: -1");}
-	else
+	json_object_object_get_ex(fileJ, "sources", &sourcesJ);
+	json_object_object_get_ex(fileJ, "signals", &signalsJ);
+
+	if( sourcesJ && composer.loadSources(sourcesJ))
 	{
-
-		afb_req_success(request, NULL, NULL);
+		afb_req_fail_f(request, "Loading 'sources' configuration or subscription error", "Error code: -1");
+		return;
 	}
+	if(signalsJ && composer.loadSignals(signalsJ))
+	{
+		afb_req_fail_f(request, "Loading 'signals' configuration or subscription error", "Error code: -1");
+		return;
+	}
+	else
+		{composer.initSignals();}
+
+	afb_req_success(request, NULL, NULL);
 }
 
 /// @brief entry point to list available signals
@@ -189,7 +200,7 @@ void list(afb_req request)
 	for(auto& sig: allSignals)
 		{json_object_array_add(allSignalsJ, sig->toJSON());}
 
-	if(json_object_array_length(allSignalsJ) && !execConf())
+	if(json_object_array_length(allSignalsJ))
 		{afb_req_success(request, allSignalsJ, NULL);}
 	else
 		{afb_req_fail(request, "error", "No Signals recorded so far");}
@@ -238,25 +249,10 @@ int execConf()
 	Composer& composer = Composer::instance();
 	int err = 0;
 	CtlConfigExec(nullptr, composer.ctlConfig());
-	std::vector<std::shared_ptr<Signal>> allSignals = composer.getAllSignals();
-	ssize_t sigCount = allSignals.size();
-	for( std::shared_ptr<Signal>& sig: allSignals)
-	{
-		sig->attachToSourceSignals(composer);
-	}
 
-	for(auto& sig: allSignals)
-	{
-		if( (err += sig->initialRecursionCheck()) )
-		{
-			AFB_ERROR("There is an infinite recursion loop in your signals definition. Root coming from signal: %s", sig->id().c_str());
-			return err;
-		}
-	}
+	composer.initSignals();
 
-	composer.execSignalsSubscription();
-
-	AFB_DEBUG("Signal Composer Control configuration Done.\n signals=%d", (int)sigCount);
+	AFB_DEBUG("Signal Composer Control configuration Done.");
 
 	return err;
 }

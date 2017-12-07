@@ -33,7 +33,8 @@ private:
 	// Parameters inherited by source's signals if none defined for it
 	struct signalsDefault signalsDefault_;
 
-	std::map<std::string, std::shared_ptr<Signal>> signalsMap_;
+	std::map<std::string, std::shared_ptr<Signal>> newSignalsM_;
+	std::map<std::string, std::shared_ptr<Signal>> signalsM_;
 
 public:
 	SourceAPI();
@@ -44,6 +45,7 @@ public:
 	const struct signalsDefault& signalsDefault() const;
 	void addSignal(const std::string& id, const std::string& event, std::vector<std::string>& sources, int retention, const std::string& unit, double frequency, CtlActionT* onReceived, json_object* getSignalsArgs);
 
+	void initSignals();
 	std::vector<std::shared_ptr<Signal>> getSignals() const;
 	std::vector<std::shared_ptr<Signal>> searchSignals(const std::string& name);
 

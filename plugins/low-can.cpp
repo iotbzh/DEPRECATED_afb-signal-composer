@@ -65,7 +65,7 @@ CTLP_ONLOAD(plugin, composerHandle)
 	memset(&pluginCtx->allDoorsCtx, 0, sizeof(allDoorsCtxT));
 
 	struct signalCBT* handle = (struct signalCBT*)composerHandle;
-	handle->pluginCtx = pluginCtx;
+	handle->pluginCtx = (void*)pluginCtx;
 
 	return (void*)handle;
 }
@@ -117,10 +117,15 @@ CTLP_CAPI (subscribeToLow, source, argsJ, eventJ) {
 	}
 	else
 	{
-		AFB_DEBUG("Calling subscribe with %s", json_object_to_json_string_ext(pluginCtx->subscriptionBatch, JSON_C_TO_STRING_PRETTY));
+		json_object_get(pluginCtx->subscriptionBatch);
+		AFB_DEBUG("Calling subscribe with %s", json_object_to_json_string(pluginCtx->subscriptionBatch));
 		err = afb_service_call_sync("low-can", "subscribe", pluginCtx->subscriptionBatch, &responseJ);
 		if(err)
-			{AFB_ERROR("Subscribe to '%s' responseJ:%s", json_object_to_json_string_ext(pluginCtx->subscriptionBatch, JSON_C_TO_STRING_PRETTY), json_object_to_json_string(responseJ));}
+			{AFB_ERROR("Subscribe to '%s' responseJ:%s", json_object_to_json_string(pluginCtx->subscriptionBatch), json_object_to_json_string(responseJ));}
+
+		// Renew subscription json object for the next time we need it
+		json_object_put(pluginCtx->subscriptionBatch);
+		pluginCtx->subscriptionBatch = json_object_new_array();
 	}
 
 	return err;

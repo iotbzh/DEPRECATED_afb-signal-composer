@@ -57,16 +57,41 @@ void SourceAPI::addSignal(const std::string& id, const std::string& event, std::
 {
 	std::shared_ptr<Signal> sig = std::make_shared<Signal>(id, event, depends, unit, retention, frequency, onReceived, getSignalsArgs);
 
-	signalsMap_[id] = sig;
+	newSignalsM_[id] = sig;
+}
+
+void SourceAPI::initSignals()
+{
+	Composer& composer = Composer::instance();
+	int err = 0;
+	for(auto& i: newSignalsM_)
+		{i.second->attachToSourceSignals(composer);}
+
+	for(auto i = newSignalsM_.begin(); i != newSignalsM_.end();)
+	{
+		if (err += i->second->initialRecursionCheck())
+		{
+			AFB_ERROR("There is an infinite recursion loop in your signals definition. Root coming from signal: %s. Ignoring it.", i->second->id().c_str());
+			++i;
+			continue;
+		}
+		signalsM_[i->first] = i->second;
+		i = newSignalsM_.erase(i);
+	}
 }
 
 std::vector<std::shared_ptr<Signal>> SourceAPI::getSignals() const
 {
 	std::vector<std::shared_ptr<Signal>> signals;
-	for (auto& sig: signalsMap_)
+	for (auto& sig: signalsM_)
 	{
 		signals.push_back(sig.second);
 	}
+	for (auto& sig: newSignalsM_)
+	{
+		signals.push_back(sig.second);
+	}
+
 	return signals;
 }
 
@@ -81,11 +106,18 @@ std::vector<std::shared_ptr<Signal>> SourceAPI::searchSignals(const std::string&
 {
 	std::vector<std::shared_ptr<Signal>> signals;
 
-	if(signalsMap_.count(name))
-		{signals.emplace_back(signalsMap_[name]);}
+	if(signalsM_.count(name))
+		{signals.emplace_back(signalsM_[name]);}
+	if(newSignalsM_.count(name))
+		{signals.emplace_back(signalsM_[name]);}
 	else
 	{
-		for (auto& sig: signalsMap_)
+		for (auto& sig: signalsM_)
+		{
+			if(*sig.second == name)
+				{signals.emplace_back(sig.second);}
+		}
+		for (auto& sig: newSignalsM_)
 		{
 			if(*sig.second == name)
 				{signals.emplace_back(sig.second);}
@@ -104,22 +136,25 @@ void SourceAPI::makeSubscription()
 		source.api = nullptr; // We use binding v2, no dynamic API.
 		source.request = {nullptr, nullptr};
 
-		for(auto& sig: signalsMap_)
+		for(auto& sig: signalsM_)
 		{
-			json_object* signalJ = sig.second->toJSON();
-			if(!signalJ)
+			if(!sig.second->subscribed_)
 			{
-				AFB_ERROR("Error building JSON query object to subscribe to for signal %s", sig.second->id().c_str());
-				break;
+				json_object* signalJ = sig.second->toJSON();
+				if(!signalJ)
+				{
+					AFB_ERROR("Error building JSON query object to subscribe to for signal %s", sig.second->id().c_str());
+					break;
+				}
+				source.uid = sig.first.c_str();
+				source.context = getSignals_->type == CTL_TYPE_CB ?
+					getSignals_->exec.cb.plugin->context:
+					nullptr;
+				ActionExecOne(&source, getSignals_, signalJ);
+				// Considerate signal subscribed no matter what
+				sig.second->subscribed_ = true;
+				json_object_put(signalJ);
 			}
-			source.uid = sig.first.c_str();
-			source.context = getSignals_->type == CTL_TYPE_CB ?
-				getSignals_->exec.cb.plugin->context:
-				nullptr;
-			ActionExecOne(&source, getSignals_, signalJ);
-			// Considerate signal subscribed no matter what
-			sig.second->subscribed_ = true;
-			json_object_put(signalJ);
 		}
 		source.uid = "";
 		ActionExecOne(&source, getSignals_, nullptr);

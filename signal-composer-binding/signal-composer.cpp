@@ -634,6 +634,18 @@ int Composer::loadConfig(const std::string& filepath)
 //	return -1;
 }
 
+int Composer::loadSources(json_object* sourcesJ)
+{
+	int err = loadSourcesAPI(nullptr, nullptr, sourcesJ);
+	if(err)
+	{
+		AFB_ERROR("Loading sources failed. JSON: %s", json_object_to_json_string(sourcesJ));
+		return err;
+	}
+	initSourcesAPI();
+	return err;
+}
+
 int Composer::loadSignals(json_object* signalsJ)
 {
 	return loadSignals(nullptr, nullptr, signalsJ);
@@ -646,15 +658,33 @@ CtlConfigT* Composer::ctlConfig()
 
 void Composer::initSourcesAPI()
 {
-	for(auto& src: sourcesListV_)
+	for(int i=0; i < newSourcesListV_.size(); i++)
 	{
+		std::shared_ptr<SourceAPI> src = newSourcesListV_.back();
+		newSourcesListV_.pop_back();
 		src->init();
+		sourcesListV_.push_back(src);
 	}
+}
+
+void Composer::initSignals()
+{
+	for(int i=0; i < sourcesListV_.size(); i++)
+	{
+		std::shared_ptr<SourceAPI> src = sourcesListV_[i];
+		src->initSignals();
+	}
+	execSignalsSubscription();
 }
 
 std::shared_ptr<SourceAPI> Composer::getSourceAPI(const std::string& api)
 {
 	for(auto& source: sourcesListV_)
+	{
+		if (source->api() == api)
+			{return source;}
+	}
+	for(auto& source: newSourcesListV_)
 	{
 		if (source->api() == api)
 			{return source;}
