@@ -178,16 +178,19 @@ void loadConf(afb_req request)
 	if( sourcesJ && composer.loadSources(sourcesJ))
 	{
 		afb_req_fail_f(request, "Loading 'sources' configuration or subscription error", "Error code: -1");
+		json_object_put(fileJ);
 		return;
 	}
 	if(signalsJ && composer.loadSignals(signalsJ))
 	{
 		afb_req_fail_f(request, "Loading 'signals' configuration or subscription error", "Error code: -1");
+		json_object_put(fileJ);
 		return;
 	}
 	else
 		{composer.initSignals();}
 
+	json_object_put(fileJ);
 	afb_req_success(request, NULL, NULL);
 }
 

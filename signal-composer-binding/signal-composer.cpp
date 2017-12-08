@@ -89,6 +89,12 @@ Composer::Composer()
 
 Composer::~Composer()
 {
+	for(auto& j: ctlActionsJ_)
+	{
+		json_object_put(j);
+	}
+	json_object_put(ctlConfig_->configJ);
+	json_object_put(ctlConfig_->requireJ);
 	free(ctlConfig_);
 }
 
@@ -174,7 +180,7 @@ json_object* Composer::buildLuaAction(std::string name, std::string function, js
 CtlActionT* Composer::convert2Action(const std::string& name, json_object* actionJ)
 {
 	json_object *functionArgsJ = nullptr,
-		*ctlActionJ = nullptr;
+				*ctlActionJ = nullptr;
 	char *function;
 	const char *plugin;
 	CtlActionT *ctlAction = new CtlActionT;
@@ -219,10 +225,13 @@ CtlActionT* Composer::convert2Action(const std::string& name, json_object* actio
 		}
 	}
 
+	// Register json object for later release
+	ctlActionsJ_.push_back(ctlActionJ);
 	if(ctlActionJ)
 	{
-		if(!ActionLoadOne(nullptr, ctlAction, ctlActionJ, 0))
-			return ctlAction;
+		int err = ActionLoadOne(nullptr, ctlAction, ctlActionJ, 0);
+		if(! err)
+			{return ctlAction;}
 	}
 
 	return nullptr;
@@ -306,6 +315,8 @@ int Composer::loadOneSourceAPI(json_object* sourceJ)
 	{
 		std::string function = "api://" + std::string(api) + "/subscribe";
 		getSignalsJ = buildApiAction("getSignals", function, nullptr);
+		// Register json object for later release
+		ctlActionsJ_.push_back(getSignalsJ);
 	}
 	getSignalsCtl = convert2Action("getSignals", getSignalsJ);
 

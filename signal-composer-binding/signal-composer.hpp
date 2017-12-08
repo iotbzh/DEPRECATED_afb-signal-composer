@@ -26,6 +26,7 @@ private:
 	CtlConfigT* ctlConfig_;
 
 	static CtlSectionT ctlSections_[]; ///< Config Section definition (note: controls section index should match handle retrieval in)
+	std::vector<json_object*> ctlActionsJ_; ///< Vector of action json object to be kept if we want to freed them correctly avoiding leak mem.
 	std::vector<std::shared_ptr<SourceAPI>> newSourcesListV_;
 	std::vector<std::shared_ptr<SourceAPI>> sourcesListV_;
 
