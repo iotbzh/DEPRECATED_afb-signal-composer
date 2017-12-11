@@ -26,6 +26,7 @@ struct signalsDefault {
 
 class SourceAPI {
 private:
+	std::string uid_;
 	std::string api_;
 	std::string info_;
 	CtlActionT* init_;
@@ -38,7 +39,10 @@ private:
 
 public:
 	SourceAPI();
-	SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal, CtlActionT* onReceived, int retention);
+	SourceAPI(const std::string& uid_, const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignal, CtlActionT* onReceived, int retention);
+
+	bool operator==(const SourceAPI& other) const;
+	bool operator==(const std::string& aName) const;
 
 	void init();
 	std::string api() const;

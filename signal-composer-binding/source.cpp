@@ -21,12 +21,26 @@
 SourceAPI::SourceAPI()
 {}
 
-SourceAPI::SourceAPI(const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignals, CtlActionT* onReceived, int retention):api_(api),
- info_(info),
- init_(init),
- getSignals_(getSignals),
+SourceAPI::SourceAPI(const std::string& uid, const std::string& api, const std::string& info, CtlActionT* init, CtlActionT* getSignals, CtlActionT* onReceived, int retention):
+ uid_{uid},
+ api_{api},
+ info_{info},
+ init_{init},
+ getSignals_{getSignals},
  signalsDefault_({onReceived, retention})
 {}
+
+bool SourceAPI::operator ==(const SourceAPI& other) const
+{
+	if(uid_ == other.uid_) {return true;}
+	return false;
+}
+
+bool SourceAPI::operator ==(const std::string& other) const
+{
+	if(uid_ == other) {return true;}
+	return false;
+}
 
 void SourceAPI::init()
 {

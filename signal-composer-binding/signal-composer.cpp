@@ -300,6 +300,16 @@ int Composer::loadOneSourceAPI(json_object* sourceJ)
 		return err;
 	}
 
+	// Checking duplicate entry and ignore if so
+	for(auto& src: sourcesListV_)
+	{
+		if(*src == uid)
+		{
+			json_object_put(sourceJ);
+			return 0;
+		}
+	}
+
 	if(ctlConfig_ && ctlConfig_->requireJ)
 	{
 		const char* requireS = json_object_to_json_string(ctlConfig_->requireJ);
@@ -322,7 +332,7 @@ int Composer::loadOneSourceAPI(json_object* sourceJ)
 
 	onReceivedCtl = onReceivedJ ? convert2Action("onReceived", onReceivedJ) : nullptr;
 
-	sourcesListV_.push_back(std::make_shared<SourceAPI>(api, info, initCtl, getSignalsCtl, onReceivedCtl, retention));
+	sourcesListV_.push_back(std::make_shared<SourceAPI>(uid, api, info, initCtl, getSignalsCtl, onReceivedCtl, retention));
 	return err;
 }
 
