@@ -1,5 +1,24 @@
 # Signal Composer API
 
+## subscribe/unsubscribe
+
+Using subscribe you can get update on change for signals you chose and you can
+using wildcard to subscribe several signals in the same time.
+
+```json
+signal-composer subscribe {"signal": "rear_left*"}
+ON-REPLY 1:signal-composer/subscribe: {"jtype":"afb-reply","request":{"status":"success","uuid":"3d4b743b-7ac6-4d3c-8fce-721107f9dee5"}}
+```
+
+Then event comes up like the following:
+
+```json
+ON-EVENT signal-composer/257b343e-8ea9-4cd7-8f9e-1904fa77f8f2({"event":"signal-composer\/257b343e-8ea9-4cd7-8f9e-1904fa77f8f2","data":{"uid":"rear_left_door","event":"low-can\/messages.doors.rear_left.open","timestamp":4833910845032292484,"value":false},"jtype":"afb-event"})
+```
+
+Unsubscribe happens the same way. When no more signals are holded by the client
+then it unsubscribe from the *AGL Application Framework* event handle.
+
 ## get
 
 You can get a signal value be requesting the API with the verb *get*:
@@ -29,5 +48,5 @@ Verb **loadConf** let you add new files to be able to add new **sources** or
 **signals**.
 
 ```json
-signal-composer loadConf {"filepath": "/path/to/your/json/file.json"}
+signal-composer loadConf {"file": "/path/to/your/json/file.json"}
 ```
