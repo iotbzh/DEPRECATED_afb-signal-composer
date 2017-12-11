@@ -1,9 +1,9 @@
-[submodule "afb-utilities"]
-	path = afb-utilities
-	url = https://gerrit.automotivelinux.org/gerrit/apps/app-afb-helpers-submodule
 [submodule "conf.d/app-templates"]
 	path = conf.d/app-templates
 	url = https://gerrit.automotivelinux.org/gerrit/apps/app-templates
 [submodule "ctl-utilities"]
 	path = ctl-utilities
 	url = https://gerrit.automotivelinux.org/gerrit/apps/app-controller-submodule
+[submodule "afb-helpers"]
+	path = afb-helpers
+	url = https://gerrit.automotivelinux.org/gerrit/apps/app-afb-helpers-submodule
