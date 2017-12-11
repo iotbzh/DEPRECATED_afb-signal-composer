@@ -18,7 +18,8 @@
 #include "clientApp.hpp"
 
 clientAppCtx::clientAppCtx(const char* uuid)
-: uuid_(uuid)
+: uuid_{uuid},
+  event_{nullptr,nullptr}
 {}
 
 void clientAppCtx::update(Signal* sig)
@@ -33,8 +34,8 @@ void clientAppCtx::appendSignals(std::vector<std::shared_ptr<Signal>>& sigV)
 {
 	bool set = false;
 	// Clean up already subscribed signals to avoid duplicata
-	for (std::vector<std::shared_ptr<Signal>>::const_iterator it = sigV.begin();
-	it != sigV.end(); ++it)
+	for (std::vector<std::shared_ptr<Signal>>::const_iterator it = sigV.cbegin();
+	it != sigV.cend(); ++it)
 	{
 		for (auto& ctxSig: subscribedSignals_)
 			{if(*it == ctxSig) {set = true;}}
@@ -51,6 +52,26 @@ void clientAppCtx::appendSignals(std::vector<std::shared_ptr<Signal>>& sigV)
 	subscribedSignals_.insert(subscribedSignals_.end(), sigV.begin(), sigV.end());
 }
 
+void clientAppCtx::subtractSignals(std::vector<std::shared_ptr<Signal>>& sigV)
+{
+	// Clean up already subscribed signals to avoid duplicata
+	for (std::vector<std::shared_ptr<Signal>>::const_iterator it = sigV.cbegin();
+	it != sigV.cend(); ++it)
+	{
+		for (auto ctxSig = subscribedSignals_.cbegin(); ctxSig != subscribedSignals_.cend();ctxSig++)
+		{
+			if(*it == *ctxSig)
+			{
+				subscribedSignals_.erase(ctxSig);
+				break;
+			}
+		}
+		std::shared_ptr<Signal> sig = *it;
+		sig->delObserver(this);
+		AFB_NOTICE("Signal %s delete from subscription", sig->id().c_str());
+	}
+}
+
 int clientAppCtx::makeSubscription(struct afb_req request)
 {
 	event_ = afb_event_is_valid(event_) ?
@@ -60,6 +81,11 @@ int clientAppCtx::makeSubscription(struct afb_req request)
 
 int clientAppCtx::makeUnsubscription(struct afb_req request)
 {
-	return afb_event_is_valid(event_) ?
-		afb_req_unsubscribe(request, event_) : -1;
+	if(subscribedSignals_.empty())
+	{
+		AFB_NOTICE("No more signals subscribed, releasing.");
+		return afb_event_is_valid(event_) ?
+			afb_req_unsubscribe(request, event_) : -1;
+	}
+	return 0;
 }

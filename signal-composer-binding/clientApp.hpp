@@ -29,6 +29,7 @@ public:
 
 	void update(Signal* sig);
 	void appendSignals(std::vector<std::shared_ptr<Signal>>& sigV);
+	void subtractSignals(std::vector<std::shared_ptr<Signal>>& sigV);
 	int makeSubscription(struct afb_req request);
 	int makeUnsubscription(struct afb_req request);
 };

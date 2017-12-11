@@ -85,11 +85,16 @@ static int one_subscribe_unsubscribe(struct afb_req request,
 	int err = 0;
 	std::vector<std::shared_ptr<Signal>> signals = Composer::instance().searchSignals(event);
 
-	cContext->appendSignals(signals);
 	if(subscribe)
-		{err = cContext->makeSubscription(request);}
+	{
+		cContext->appendSignals(signals);
+		err = cContext->makeSubscription(request);
+	}
 	else
-		{err = cContext->makeUnsubscription(request);}
+	{
+		cContext->subtractSignals(signals);
+		err = cContext->makeUnsubscription(request);
+	}
 
 	return err;
 }
@@ -100,20 +105,20 @@ static int subscribe_unsubscribe(struct afb_req request,
 	clientAppCtx* cContext)
 {
 	int rc = 0;
-	json_object *event = nullptr;
-	if (args == NULL || !json_object_object_get_ex(args, "event", &event))
+	json_object *eventJ = nullptr;
+	if (args == NULL || !json_object_object_get_ex(args, "signal", &eventJ))
 	{
 		rc = one_subscribe_unsubscribe(request, subscribe, "*", args, cContext);
 	}
-	else if (json_object_get_type(event) == json_type_string)
+	else if (json_object_get_type(eventJ) == json_type_string)
 	{
-		rc = one_subscribe_unsubscribe(request, subscribe, json_object_get_string(event), args, cContext);
+		rc = one_subscribe_unsubscribe(request, subscribe, json_object_get_string(eventJ), args, cContext);
 	}
-	else if (json_object_get_type(event) == json_type_array)
+	else if (json_object_get_type(eventJ) == json_type_array)
 	{
-		for (int i = 0 ; i < json_object_array_length(event) ; i++)
+		for (int i = 0 ; i < json_object_array_length(eventJ) ; i++)
 		{
-			json_object *x = json_object_array_get_idx(event, i);
+			json_object *x = json_object_array_get_idx(eventJ, i);
 			rc += one_subscribe_unsubscribe(request, subscribe, json_object_get_string(x), args, cContext);
 		}
 	}
