@@ -34,7 +34,7 @@ Signal::Signal()
  unit_(""),
  onReceived_(nullptr),
  getSignalsArgs_(nullptr),
- signalCtx_(new struct signalCBT),
+ signalCtx_({nullptr, nullptr, nullptr, nullptr}),
  subscribed_(false)
 {}
 
@@ -49,7 +49,7 @@ Signal::Signal(const std::string& id, const std::string& event, std::vector<std:
  unit_(unit),
  onReceived_(onReceived),
  getSignalsArgs_(getSignalsArgs),
- signalCtx_(new struct signalCBT),
+ signalCtx_({nullptr, nullptr, nullptr, nullptr}),
  subscribed_(false)
 {}
 
@@ -69,7 +69,7 @@ Signal::Signal(const std::string& id,
  unit_(unit),
  onReceived_(onReceived),
  getSignalsArgs_(),
- signalCtx_(new struct signalCBT),
+ signalCtx_({nullptr, nullptr, nullptr, nullptr}),
  subscribed_(false)
 {}
 
@@ -77,7 +77,6 @@ Signal::~Signal()
 {
 	json_object_put(onReceived_->argsJ);
 	json_object_put(getSignalsArgs_);
-	delete(signalCtx_);
 	delete(onReceived_);
 }
 
@@ -163,21 +162,21 @@ json_object* Signal::toJSON() const
 /// @return a pointer to the signalCtx_ member initialized.
 struct signalCBT* Signal::get_context()
 {
-	if(!signalCtx_->aSignal ||
-		!signalCtx_->searchNsetSignalValue ||
-		!signalCtx_->setSignalValue)
+	if(!signalCtx_.aSignal ||
+		!signalCtx_.searchNsetSignalValue ||
+		!signalCtx_.setSignalValue)
 	{
-		signalCtx_->searchNsetSignalValue = searchNsetSignalValueHandle;
-		signalCtx_->setSignalValue = setSignalValueHandle;
+		signalCtx_.searchNsetSignalValue = searchNsetSignalValueHandle;
+		signalCtx_.setSignalValue = setSignalValueHandle;
 
-		signalCtx_->aSignal = (void*)this;
+		signalCtx_.aSignal = (void*)this;
 
-		signalCtx_->pluginCtx = onReceived_ && onReceived_->type == CTL_TYPE_CB ?
+		signalCtx_.pluginCtx = onReceived_ && onReceived_->type == CTL_TYPE_CB ?
 			onReceived_->exec.cb.plugin->context:
 			nullptr;
 	}
 
-	return signalCtx_;
+	return &signalCtx_;
 }
 
 /// @brief Set Signal timestamp and value property when an incoming

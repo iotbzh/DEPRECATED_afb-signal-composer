@@ -53,6 +53,19 @@ struct signalValue {
 		hasBool(false), boolVal(false), hasNum(false), numVal(0), hasStr(true), strVal(s) {};
 };
 
+extern "C" void searchNsetSignalValueHandle(const char* aName, uint64_t timestamp, struct signalValue value);
+extern "C" void setSignalValueHandle(void* aSignal, uint64_t timestamp, struct signalValue value);
+
+/// @brief Holds composer callbacks and obj to manipulate
+struct signalCBT
+{
+	void (*searchNsetSignalValue)(const char* aName, uint64_t timestamp, struct signalValue value);
+	void (*setSignalValue)(void* aSignal, uint64_t timestamp, struct signalValue value);
+	void* aSignal;
+	void* pluginCtx;
+};
+
+
 /// @brief Holds a signal (raw or virtual) definition. Value could be of
 ///  different types, so an intermediate structure is use to store them.
 ///  A signal could also be a subject or an observer at the same time, this
@@ -73,7 +86,7 @@ private:
 	std::string unit_;
 	CtlActionT* onReceived_;
 	json_object* getSignalsArgs_;
-	struct signalCBT* signalCtx_;
+	struct signalCBT signalCtx_;
 
 public:
 	bool subscribed_; ///< subscribed_ - boolean value telling if yes or no the signal has been subcribed to the low level binding.
@@ -104,16 +117,4 @@ public:
 
 	int initialRecursionCheck();
 	int recursionCheck(Signal* obs);
-};
-
-extern "C" void searchNsetSignalValueHandle(const char* aName, uint64_t timestamp, struct signalValue value);
-extern "C" void setSignalValueHandle(void* aSignal, uint64_t timestamp, struct signalValue value);
-
-/// @brief Holds composer callbacks and obj to manipulate
-struct signalCBT
-{
-	void (*searchNsetSignalValue)(const char* aName, uint64_t timestamp, struct signalValue value);
-	void (*setSignalValue)(void* aSignal, uint64_t timestamp, struct signalValue value);
-	void* aSignal;
-	void* pluginCtx;
 };
