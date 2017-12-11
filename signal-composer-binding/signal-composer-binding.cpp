@@ -168,30 +168,37 @@ void loadConf(afb_req request)
 	Composer& composer = Composer::instance();
 	json_object *sourcesJ = nullptr,
 				*signalsJ = nullptr;
-	const char* filepath = afb_req_value(request, "filepath");
+	const char* filepath = afb_req_value(request, "file");
 
-	json_object *fileJ = json_object_from_file(filepath);
-
-	json_object_object_get_ex(fileJ, "sources", &sourcesJ);
-	json_object_object_get_ex(fileJ, "signals", &signalsJ);
-
-	if( sourcesJ && composer.loadSources(sourcesJ))
+	if(filepath)
 	{
-		afb_req_fail_f(request, "Loading 'sources' configuration or subscription error", "Error code: -1");
+		json_object *fileJ = json_object_from_file(filepath);
+
+		json_object_object_get_ex(fileJ, "sources", &sourcesJ);
+		json_object_object_get_ex(fileJ, "signals", &signalsJ);
+
+		if( sourcesJ && composer.loadSources(sourcesJ))
+		{
+			afb_req_fail_f(request, "Loading 'sources' configuration or subscription error", "Error code: -2");
+			json_object_put(fileJ);
+			return;
+		}
+		if(signalsJ)
+		{
+			if(!composer.loadSignals(signalsJ))
+				{composer.initSignals();}
+			else
+			{
+				afb_req_fail_f(request, "Loading 'signals' configuration or subscription error", "Error code: -2");
+				json_object_put(fileJ);
+				return;
+			}
+		}
 		json_object_put(fileJ);
-		return;
-	}
-	if(signalsJ && composer.loadSignals(signalsJ))
-	{
-		afb_req_fail_f(request, "Loading 'signals' configuration or subscription error", "Error code: -1");
-		json_object_put(fileJ);
-		return;
+		afb_req_success(request, NULL, NULL);
 	}
 	else
-		{composer.initSignals();}
-
-	json_object_put(fileJ);
-	afb_req_success(request, NULL, NULL);
+		{afb_req_fail_f(request, "No 'file' key found in request argument", "Error code: -1");}
 }
 
 /// @brief entry point to list available signals
