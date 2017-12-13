@@ -138,7 +138,7 @@ CTLP_CAPI (isOpen, source, argsJ, eventJ) {
 	struct signalCBT* context = reinterpret_cast<struct signalCBT*>(source->context);
 	struct pluginCtxT* pluginCtx = reinterpret_cast<struct pluginCtxT*>(context->pluginCtx);
 
-	int err = wrap_json_unpack(eventJ, "{ss,sb,s?F}",
+	int err = wrap_json_unpack(eventJ, "{ss,sb,s?I}",
 		"name", &eventName,
 		"value", &eventStatus,
 		"timestamp", &timestamp);
