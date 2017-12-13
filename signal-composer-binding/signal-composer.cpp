@@ -649,10 +649,6 @@ int Composer::loadConfig(const std::string& filepath)
 
 	int err= CtlLoadSections(nullptr, ctlConfig_, ctlSections_);
 	return err;
-
-//	ctlConfig_ = CtlConfigLoad(filepath.c_str(), ctlSections_);
-//	if(ctlConfig_ != nullptr) {return 0;}
-//	return -1;
 }
 
 int Composer::loadSources(json_object* sourcesJ)

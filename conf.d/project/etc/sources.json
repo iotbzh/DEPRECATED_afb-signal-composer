@@ -6,10 +6,7 @@
 			"api": "low-can",
 			"info": "Low level binding to handle CAN bus communications",
 			"getSignals": {
-				"function": "plugin://low-can-callbacks/subscribeToLow",
-				"args": {
-					"arg": "first argument"
-				}
+				"function": "plugin://low-can-callbacks/subscribeToLow"
 			}
 		},
 		{
@@ -23,10 +20,7 @@
 				}
 			},
 			"getSignals": {
-				"function": "lua://_Simple_Echo_Args",
-				"args": {
-					"arg": "first argument"
-				}
+				"function": "lua://_Simple_Echo_Args"
 			}
 		},
 		{

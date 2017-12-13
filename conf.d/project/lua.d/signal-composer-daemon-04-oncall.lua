@@ -74,7 +74,7 @@ end
 -- Display receive arguments and echo them to caller
 function _Simple_Echo_Args (source, args, event)
     _count=_count+1
-    AFB:notice("LUA OnCall Echo Args count=%d args=%s event=%s", count, args, event)
+    AFB:notice(source, "LUA OnCall Echo Args count=%d args=%s event=%s", count, args, event)
 
     print ("--inlua-- source=", Dump_Table(source))
     print ("--inlua-- args=", Dump_Table(args))
@@ -95,7 +95,7 @@ local function Test_Async_CB (request, result, context)
      ["context"]=context,
    }
 
-   AFB:notice ("Test_Async_CB result=%s context=%s", result, context)
+   AFB:notice (source, "Test_Async_CB result=%s context=%s", result, context)
    AFB:success (request, response)
 end
 
@@ -105,18 +105,18 @@ function _Test_Call_Async (request, args)
      ["value2"]=1234
    }
 
-   AFB:notice ("Test_Call_Async args=%s cb=Test_Async_CB", args)
-   AFB:service("monitor","ping", "Test_Async_CB", context)
+   AFB:notice (source, "Test_Call_Async args=%s cb=Test_Async_CB", args)
+   AFB:service(source, "monitor","ping", "Test_Async_CB", context)
 end
 
 function _Simple_Monitor_Call (request, args)
 
-    AFB:notice ("_Simple_Server_Call args=%s", args)
-    local err, result= AFB:servsync ("monitor","get", args)
+    AFB:notice (source, "_Simple_Server_Call args=%s", args)
+    local err, result= AFB:servsync (source, "monitor","get", args)
     if (err) then
-        AFB:fail ("AFB:service_call_sync fail");
+        AFB:fail (source, "AFB:service_call_sync fail");
     else
-        AFB:success (request, result["response"])
+        AFB:success(source, request, result["response"])
     end
 end
 
